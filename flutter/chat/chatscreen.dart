@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:testproj/models.dart';
-
+import 'package:hive_listener/hive_listener.dart';
+import 'package:hive/hive.dart';
 
 class ChatScreen extends StatefulWidget {
   final Stream stream;
@@ -21,6 +22,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   List _chatList = [];
   String curuser;
+  String threadName;
   // Stream stream;
   // _updateList(data){
   //   print(data);
@@ -30,7 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState(){
     super.initState();
-
+    threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     _chatList = widget.thread.chatList;
 
@@ -121,17 +123,28 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
             children:<Widget>[
                 Expanded(
-                  child: ListView.builder(
-                                       itemCount: _chatList.length,
-                                       itemBuilder: (context,index){
-                                          if(_chatList[index].senderName == curuser){
-                                            return ChatCloud(text:_chatList[index].message,self:true);
-                                          }
-                                          else{
-                                            return ChatCloud(text:_chatList[index].message,self:false);
-                                          }
-                                       }
-                                       )
+                  child: HiveListener(
+                                      box:Hive.box("Threads"),
+                                      keys:[threadName],
+                                      builder: (box){
+                                      
+                                        var thread = box.get(threadName);
+                                        
+                                        List __chatList = thread.chatList;
+
+                                        return ListView.builder(
+                                         itemCount: __chatList.length,
+                                         itemBuilder: (context,index){
+                                            if(__chatList[index].senderName == curuser){
+                                              return ChatCloud(text:__chatList[index].message,self:true);
+                                            }
+                                            else{
+                                              return ChatCloud(text:__chatList[index].message,self:false);
+                                            }
+                                         }
+                                         );},
+                                       
+                  )
                   ),
                 
                 Container(
