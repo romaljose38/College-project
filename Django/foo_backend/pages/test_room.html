@@ -1,0 +1,125 @@
+<html>
+<head>
+
+    <title>Test room</title>
+
+</head>
+<style>
+    #container{
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        flex-direction:column;
+    }
+    ul{
+        list-style-type:none;
+    }
+    #chats{
+        padding:8vh;
+        border:1px solid rgba(0,0,0,.3);
+        align-items:flex-start;
+        width:70vh;
+        border-radius:10px;
+       
+    }
+    li{
+        margin:5px 0px;
+    }
+    .chat_message{
+        padding:10px;
+        border:1px solid rgba(0,0,0,.16);
+        width:fit-content;
+        border-radius:10px;
+        box-shadow:1px 3px 10px 4px rgba(0,100,0,.1);
+        margin:5px 0px;
+    }
+    #form{
+        padding:20px 0px;
+    }
+    input{
+        width:78vh;
+        margin:10px 0px;
+        border:1px solid rgba(0,0,0,.2);
+        height:35px;
+        box-shadow:0px 0px 3px 1px rgba(0,0,0,.1);
+        border-radius:4px;
+        padding-inline:20px;
+    }
+    input:focus{
+        outline:none;
+        border:1px solid rgba(0,0,0,.3) !important;
+        box-shadow:0px 0px 5px 1px rgba(0,150,0,.2);
+    }
+    button{
+        padding: 8px 20px;
+    outline: none;
+    background: rgb(61 76 78);
+    color: white;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,.1);
+    box-shadow: 0px 0px 5px 2px rgb(0 0 50 / 10%);
+}
+    button:active{
+        transform:translateY(2px);
+    }
+</style>
+<body>
+
+    <div id="container">
+        <h3>Test chat room</h3>
+        <div id="chats">           
+        </div>
+
+        <div id="form">
+             <input type="text" placeholder="From" id="from"><br>
+            <input type="text" placeholder="To" id='to'><br>
+             <input type="text" placeholder="Message" id='msg'><br>
+
+                    
+        
+        </div>
+
+<button id="snd">Send</button>
+    </div>
+</body>
+
+<script>
+
+var socket = new WebSocket('ws://127.0.0.1:8000/ws/test_room/'
+        );
+
+    socket.onmessage = function(e){
+        var data = JSON.parse(e.data).message;
+        var message = data.message;
+        var senderName = data.from;
+        var chatContainer = document.querySelector('#chats');
+        chatContainer.innerHTML += `<div class="chat_message"><b>${senderName} :</b> ${message}</div>`;
+    }
+
+    socket.onclose = function(e){
+        console.log("Socket closed");
+    }
+
+    document.querySelector('#msg').focus();
+        document.querySelector('#msg').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#snd').click();
+            }
+        };
+
+        document.querySelector('#snd').onclick = function(e) {
+            const messageInputDom = document.querySelector('#msg');
+            const senderName = document.querySelector('#from');
+            const receiverName = document.querySelector('#to');
+
+            const message = messageInputDom.value;
+            socket.send(JSON.stringify({
+                'message': message,
+                'from':senderName.value,
+                'to':receiverName.value,
+            }));
+            messageInputDom.value = '';
+        };
+    
+</script>
+</html>
