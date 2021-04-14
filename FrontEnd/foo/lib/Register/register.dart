@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:password/password.dart';
 
 class RegisterView extends StatelessWidget {
   @override
@@ -35,8 +36,30 @@ class _RegisterFormState extends State<RegisterForm> {
   final focusEmail = FocusNode();
   final focusUprn = FocusNode();
   final focusPassword = FocusNode();
+  final focusConfirmPassword = FocusNode();
   final focusSubmit = FocusNode();
+  final TextEditingController passwordController =
+      TextEditingController(); // This can be used for conforming the password
 
+  //Now we create two variables to toggle the obscureText property
+  //One for `password` and the other for `Confirm password`
+  bool _passwordHidden = true;
+  bool _confirmPasswordHidden = true;
+
+  //Now we write functions to toggle obscureText property of the above given variables
+  void _isTogglePassword() {
+    setState(() {
+      _passwordHidden = !_passwordHidden;
+    });
+  }
+
+  void _isToggleConfirmPassword() {
+    setState(() {
+      _confirmPasswordHidden = !_confirmPasswordHidden;
+    });
+  }
+
+  //OnSubmit
   void _submitHandle() {
     if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
@@ -61,7 +84,7 @@ class _RegisterFormState extends State<RegisterForm> {
         FocusScope.of(context).requestFocus(
             focusLastName); // To focus on LastName field when hit enter on the keyboard
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         //icon: ,
         labelText: "First name",
       ),
@@ -77,7 +100,7 @@ class _RegisterFormState extends State<RegisterForm> {
       onFieldSubmitted: (v) {
         FocusScope.of(context).requestFocus(focusUsername);
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         //icon: ,
         labelText: "Last name",
       ),
@@ -93,7 +116,7 @@ class _RegisterFormState extends State<RegisterForm> {
       onFieldSubmitted: (v) {
         FocusScope.of(context).requestFocus(focusEmail);
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         icon: Icon(Icons.person),
         labelText: "Username",
       ),
@@ -109,7 +132,7 @@ class _RegisterFormState extends State<RegisterForm> {
       onFieldSubmitted: (v) {
         FocusScope.of(context).requestFocus(focusUprn);
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         icon: Icon(Icons.mail),
         labelText: "Email ID",
       ),
@@ -133,7 +156,7 @@ class _RegisterFormState extends State<RegisterForm> {
           return "Your UPRN should only contain numbers";
         return null;
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         icon: Icon(Icons.book),
         labelText: "UPRN",
       ),
@@ -142,12 +165,15 @@ class _RegisterFormState extends State<RegisterForm> {
 
   Widget _buildPasswordField() {
     return TextFormField(
+      controller: passwordController,
       focusNode: focusPassword,
       onSaved: (String value) {
-        registerData['password'] = value;
+        final hashedPassword = Password.hash(
+            value, PBKDF2()); //This hashes the password for security
+        registerData['password'] = hashedPassword;
       },
-      onFieldSubmitted: (v) {
-        FocusScope.of(context).requestFocus(focusSubmit);
+      onFieldSubmitted: (value) {
+        FocusScope.of(context).requestFocus(focusConfirmPassword);
       },
       // validator
       validator: (value) {
@@ -156,10 +182,45 @@ class _RegisterFormState extends State<RegisterForm> {
         }
         return null;
       },
-      obscureText: true,
-      decoration: const InputDecoration(
+      obscureText: _passwordHidden,
+      decoration: InputDecoration(
         icon: Icon(Icons.lock),
         labelText: "Password",
+        suffix: InkWell(
+          onTap: _isTogglePassword,
+          child: Icon(
+            _passwordHidden ? Icons.visibility : Icons.visibility_off,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordConfirmField() {
+    return TextFormField(
+      focusNode: focusConfirmPassword,
+      // validator
+      onFieldSubmitted: (v) {
+        FocusScope.of(context).requestFocus(focusSubmit);
+      },
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "Enter a password";
+        }
+        if (value != passwordController.text) {
+          return "These passwords don't match! Try again";
+        }
+        return null;
+      },
+      obscureText: _confirmPasswordHidden,
+      decoration: InputDecoration(
+        icon: Icon(Icons.lock),
+        labelText: "Confirm Password",
+        suffix: InkWell(
+            onTap: _isToggleConfirmPassword,
+            child: Icon(
+              _passwordHidden ? Icons.visibility : Icons.visibility_off,
+            )),
       ),
     );
   }
@@ -175,48 +236,54 @@ class _RegisterFormState extends State<RegisterForm> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  //First Name
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: _buildFirstNameField(),
+      child: SingleChildScrollView(
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    //First Name
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: _buildFirstNameField(),
+                    ),
                   ),
-                ),
-                Expanded(
-                  //Second Name
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: _buildLastNameField(),
+                  Expanded(
+                    //Second Name
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: _buildLastNameField(),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            Padding(
-              //Username
-              padding: const EdgeInsets.all(8.0),
-              child: _buildUsernameField(),
-            ),
-            Padding(
-              //Email
-              padding: const EdgeInsets.all(8.0),
-              child: _buildEmailField(),
-            ),
-            Padding(
-                //UPRN
+                ],
+              ),
+              Padding(
+                //Username
                 padding: const EdgeInsets.all(8.0),
-                child: _buildUprnField()),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: _buildPasswordField(),
-            ),
-            _buildSubmitField(),
-          ]),
+                child: _buildUsernameField(),
+              ),
+              Padding(
+                //Email
+                padding: const EdgeInsets.all(8.0),
+                child: _buildEmailField(),
+              ),
+              Padding(
+                  //UPRN
+                  padding: const EdgeInsets.all(8.0),
+                  child: _buildUprnField()),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: _buildPasswordField(),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: _buildPasswordConfirmField(),
+              ),
+              _buildSubmitField(),
+            ]),
+      ),
     );
   }
 }
