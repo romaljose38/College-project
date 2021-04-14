@@ -1,0 +1,51 @@
+<iDoctype html>
+<head>
+    <title>Login</title>
+</head>
+<style>
+    body{
+        display:flex;
+        justify-content:center;
+        align-items:center;
+    }
+
+    form{
+        display: flex;
+        flex-direction: column;
+        padding:2rem;
+        border:1px solid rgba(0,200,0,.3);
+        justify-items: stretch;
+        border-radius: 5px;
+        box-shadow:0 0 5px 2px rgba(0,150,0,.4);
+    }
+    input{
+        height:40px;
+        width:250px;
+        margin:.1rem 2rem;
+        outline:none !important;
+        border:1px solid rgba(0,0,0,.2);
+        padding-inline: 10px;
+        border-radius: 3px;
+        
+    }
+    button{
+        align-self: center;
+        justify-self: center;
+    }   
+    div{
+        align-self: center;
+    } 
+</style>
+<body>
+        <form action="/login/" method="post">
+                <div><h3>Login</h3></div>
+            {% csrf_token %}
+            <input type="text" name="email" placeholder="Email"><br>
+            <input type='password' name='password' placeholder="Password"><br>
+            <button type="submit">Login</button>
+        </form>
+        
+
+</body>
+
+</html>

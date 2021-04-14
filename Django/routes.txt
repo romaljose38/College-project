@@ -1,0 +1,13 @@
+
+
+The routes in the application are
+ 
+ 	http://127.0.0.1/login - Login
+
+ 	http://127.0.0.1/chat/test - Test chat room which doesn't require the user to login (For testing)
+ 	
+ 	http://127.0.0.1//chat/room - The main chat room which requires authentication
+
+ API Endpoints
+
+  	http://127.0.0.1/api/register - The end point to register a new user
