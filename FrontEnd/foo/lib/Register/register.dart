@@ -171,36 +171,32 @@ class _RegisterFormState extends State<RegisterForm> {
                   children: [
                     Expanded(
                       //First Name
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: formTextField(
-                          focusField: focusFirstName,
-                          nextFocusField: focusLastName,
-                          fieldName: 'f_name',
-                          labeltext: 'First Name',
-                          passwordHidden: false,
-                          whenSaved: _whenSaved,
-                        ),
+                      child: FormTextField(
+                        focusField: focusFirstName,
+                        nextFocusField: focusLastName,
+                        fieldName: 'f_name',
+                        labeltext: 'First Name',
+                        passwordHidden: false,
+                        whenSaved: _whenSaved,
                       ),
                     ),
+                    SizedBox(width: 15),
                     Expanded(
                       //Second Name
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: formTextField(
-                          focusField: focusLastName,
-                          nextFocusField: focusUsername,
-                          fieldName: 'l_name',
-                          labeltext: 'Last Name',
-                          passwordHidden: false,
-                          whenSaved: _whenSaved,
-                        ),
+                      child: FormTextField(
+                        focusField: focusLastName,
+                        nextFocusField: focusUsername,
+                        fieldName: 'l_name',
+                        labeltext: 'Last Name',
+                        passwordHidden: false,
+                        whenSaved: _whenSaved,
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: 15),
-                formTextField(
+                //Username
+                FormTextField(
                   focusField: focusUsername,
                   nextFocusField: focusEmail,
                   fieldName: 'username',
@@ -209,7 +205,8 @@ class _RegisterFormState extends State<RegisterForm> {
                   whenSaved: _whenSaved,
                 ),
                 SizedBox(height: 15),
-                formTextField(
+                //Email
+                FormTextField(
                   focusField: focusEmail,
                   nextFocusField: focusUprn,
                   fieldName: 'email',
@@ -218,7 +215,8 @@ class _RegisterFormState extends State<RegisterForm> {
                   whenSaved: _whenSaved,
                 ),
                 SizedBox(height: 15),
-                formTextField(
+                //UPRN
+                FormTextField(
                   focusField: focusUprn,
                   nextFocusField: focusPassword,
                   fieldName: 'uprn',
@@ -227,13 +225,15 @@ class _RegisterFormState extends State<RegisterForm> {
                   whenSaved: _whenSaved,
                 ),
                 SizedBox(height: 15),
-                formTextField(
+                //Password
+                FormTextField(
                   focusField: focusPassword,
                   nextFocusField: focusSubmit,
                   fieldName: 'password',
                   labeltext: 'Password',
-                  passwordHidden: true,
+                  passwordHidden: _passwordHidden,
                   whenSaved: _whenSaved,
+                  isToggledView: _isTogglePassword,
                 ),
                 SizedBox(height: 60),
                 ElevatedGradientButton(

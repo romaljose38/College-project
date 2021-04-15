@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'registerinputdecoration.dart';
 
-class formTextField extends StatelessWidget {
+class FormTextField extends StatelessWidget {
   final FocusNode focusField;
   final FocusNode nextFocusField;
   final String fieldName;
   final String labeltext;
   bool passwordHidden;
   Function whenSaved;
+  Function isToggledView = () => null;
 
-  formTextField(
+  FormTextField(
       {this.focusField,
       this.nextFocusField,
       this.fieldName,
       this.labeltext,
       this.passwordHidden,
-      this.whenSaved});
+      this.whenSaved,
+      this.isToggledView});
 
   String validate(value, fieldName) {
     switch (fieldName) {
@@ -58,7 +60,9 @@ class formTextField extends StatelessWidget {
         return validate(value, fieldName);
       },
       obscureText: passwordHidden,
-      decoration: decorationField(labeltext),
+      decoration: (fieldName == "password")
+          ? passwordDecorationField("Password", isToggledView, passwordHidden)
+          : decorationField(labeltext),
     );
   }
 }
