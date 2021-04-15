@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:foo/Login/login.dart';
+//import 'package:foo/Login/login.dart';
 import 'Register/router.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -16,8 +16,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Foo Register',
       theme: ThemeData.dark(),
-      // onGenerateRoute: generateRoute,
-      home:LoginScreen(),
+      onGenerateRoute: generateRoute,
+      // home:LoginScreen(),
     );
   }
 }

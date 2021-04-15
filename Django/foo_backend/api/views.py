@@ -4,6 +4,7 @@ from django.shortcuts import redirect
 from rest_framework.decorators import api_view
 from .serializers import UserSerializer
 from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
 def login(request):
@@ -21,6 +22,7 @@ def login(request):
         else:
             return render(request,'login.html')
 
+@csrf_exempt
 @api_view(['POST'])                                               # To ensure only post requests can access this view
 def register(request):
     serialized = UserSerializer(data=request.data)

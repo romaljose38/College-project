@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:password/password.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'dart:convert' as convert;
 
 class RegisterView extends StatelessWidget {
   @override
@@ -39,22 +39,44 @@ class _RegisterFormState extends State<RegisterForm> {
     registerData['token'] = await messaging.getToken();
   }
 
+  String userJson; //JSON file to be POSTed
+
+  //Initialising the FocusNodes
+  FocusNode focusLastName;
+  FocusNode focusUsername;
+  FocusNode focusEmail;
+  FocusNode focusUprn;
+  FocusNode focusPassword;
+  FocusNode focusConfirmPassword;
+  FocusNode focusSubmit;
+
   @override
   void initState() {
     super.initState();
+    // We need some focus nodes to move to the next textfield when hitting enter on the keyboard
+    focusLastName = FocusNode();
+    focusUsername = FocusNode();
+    focusEmail = FocusNode();
+    focusUprn = FocusNode();
+    focusPassword = FocusNode();
+    focusConfirmPassword = FocusNode();
+    focusSubmit = FocusNode();
     //State.initState() must be a void method without an 'async' keyword
     //So we'll call the messaging.getToken() by nesting an async function call
     saveToken();
   }
 
-  // We need some focus nodes to move to the next textfield when hitting enter on the keyboard
-  final focusLastName = FocusNode();
-  final focusUsername = FocusNode();
-  final focusEmail = FocusNode();
-  final focusUprn = FocusNode();
-  final focusPassword = FocusNode();
-  final focusConfirmPassword = FocusNode();
-  final focusSubmit = FocusNode();
+  @override
+  void dispose() {
+    focusLastName.dispose();
+    focusUsername.dispose();
+    focusEmail.dispose();
+    focusPassword.dispose();
+    focusConfirmPassword.dispose();
+    focusSubmit.dispose();
+    super.dispose();
+  }
+
   final TextEditingController passwordController =
       TextEditingController(); // This can be used for conforming the password
 
@@ -76,14 +98,33 @@ class _RegisterFormState extends State<RegisterForm> {
     });
   }
 
+  //This function handles the http post request to the server
+  Future<void> httpPostRegisterData() async {
+    var url = Uri.http("192.168.1.38", "/api/register");
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: userJson,
+    );
+
+    if (response.statusCode == 400) {
+      //var jsonResponse = convert.jsonDecode(response.body);
+      print("Error in some field. Check again!");
+    }
+    print(response);
+  }
+
   //OnSubmit
   void _submitHandle() {
     if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Processing Data')));
       //To encode the Map object to JSON file
-      String userJson = jsonEncode(registerData);
+      userJson = convert.jsonEncode(registerData);
+
+      //To submit the http POST
+      httpPostRegisterData();
 
       Navigator.push(
         context,
@@ -118,6 +159,7 @@ class _RegisterFormState extends State<RegisterForm> {
         registerData['l_name'] = value;
       },
       onFieldSubmitted: (v) {
+        focusLastName.unfocus();
         FocusScope.of(context).requestFocus(focusUsername);
       },
       decoration: InputDecoration(
@@ -134,6 +176,7 @@ class _RegisterFormState extends State<RegisterForm> {
         registerData['username'] = value;
       },
       onFieldSubmitted: (v) {
+        focusUsername.unfocus();
         FocusScope.of(context).requestFocus(focusEmail);
       },
       decoration: InputDecoration(
@@ -150,6 +193,7 @@ class _RegisterFormState extends State<RegisterForm> {
         registerData['email'] = value;
       },
       onFieldSubmitted: (v) {
+        focusEmail.unfocus();
         FocusScope.of(context).requestFocus(focusUprn);
       },
       decoration: InputDecoration(
@@ -166,6 +210,7 @@ class _RegisterFormState extends State<RegisterForm> {
         registerData['uprn'] = value;
       },
       onFieldSubmitted: (v) {
+        focusUprn.unfocus();
         FocusScope.of(context).requestFocus(focusPassword);
       },
       // validator
@@ -188,11 +233,10 @@ class _RegisterFormState extends State<RegisterForm> {
       controller: passwordController,
       focusNode: focusPassword,
       onSaved: (String value) {
-        final hashedPassword = Password.hash(
-            value, PBKDF2()); //This hashes the password for security
-        registerData['password'] = hashedPassword;
+        registerData["password"] = value;
       },
       onFieldSubmitted: (value) {
+        focusPassword.unfocus();
         FocusScope.of(context).requestFocus(focusConfirmPassword);
       },
       // validator
@@ -221,6 +265,7 @@ class _RegisterFormState extends State<RegisterForm> {
       focusNode: focusConfirmPassword,
       // validator
       onFieldSubmitted: (v) {
+        focusConfirmPassword.unfocus();
         FocusScope.of(context).requestFocus(focusSubmit);
       },
       validator: (value) {
