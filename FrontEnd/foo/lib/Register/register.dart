@@ -100,7 +100,7 @@ class _RegisterFormState extends State<RegisterForm> {
 
   //This function handles the http post request to the server
   Future<void> httpPostRegisterData() async {
-    var url = Uri.http("192.168.1.38", "/api/register");
+    var url = Uri.http("192.168.1.38:8000", "/api/register");
     var response = await http.post(
       url,
       headers: <String, String>{
