@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:foo/Login/elevatedgradientbutton.dart';
 import 'package:foo/Login/logintextfield.dart';
+import 'package:password/password.dart';
 
 class LoginScreen extends StatelessWidget {
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  void _authenticate() async{
+    final email = _emailController.text;
+    final password = _passwordController.text;
+    print(email + password);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,22 +38,22 @@ class LoginScreen extends StatelessWidget {
                                                 ),),
                                                 SizedBox(height:7,),
                                       Text("Sign in to continue!", style: TextStyle(
-                                        color:Color.fromRGBO(170,185,202,1),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 18,
+                                              color:Color.fromRGBO(170,185,202,1),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 18,
                                       ),),
                                       SizedBox(height:60),                                      
-                                      Field(labelText: "Email",isObscure: false),
+                                      Field(labelText: "Email",isObscure: false,controller: _emailController,),
                                       SizedBox(height: 15),
-                                      Field(labelText: "Password",isObscure: true,),
+                                      Field(labelText: "Password",isObscure: true,controller: _passwordController,),
                                       SizedBox(height: 8,),
                                       Align(
                                         alignment:Alignment.centerRight,
                                         child: Text("Forgot password?",style: TextStyle(color: Colors.black,fontSize:13,fontWeight: FontWeight.w600),),),
                                       SizedBox(height: 40,),
-                                      ElevatedGradientButton(text: "Login"),
+                                      ElevatedGradientButton(text: "Login",onPressed:_authenticate ,),
                                       ])),
-                    Align(child: Text("Im a new user. Sign up",style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500),))],
+                                      Align(child: Text("Im a new user. Sign up",style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500),))],
               )
                  )
             )

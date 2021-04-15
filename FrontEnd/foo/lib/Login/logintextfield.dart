@@ -4,12 +4,15 @@ class Field extends StatelessWidget {
 
   final String labelText;
   final bool isObscure;
+  final TextEditingController controller;
 
-  Field({this.labelText,this.isObscure});
+  Field({this.labelText,this.isObscure,this.controller});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      style: TextStyle(color:Colors.black,fontWeight: FontWeight.w500),
+      controller: this.controller,
                       obscureText: this.isObscure,
                       maxLines: 1,
                       decoration: InputDecoration(
