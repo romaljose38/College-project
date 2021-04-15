@@ -8,10 +8,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = User
-        fields = ['f_name','l_name','email','password','uprn','username']
+        fields = ['f_name','l_name','email','password','uprn','username','token']
         extra_kwargs = {
             'password':{'write_only':True},
-            'uprn':{'required':True} 
+            'uprn':{'required':True},
+            'token':{'required':True},
             }
 
     # overriding the default create method. Because password is not encrypted in default create()
@@ -25,5 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
         user.f_name = validated_data['f_name']
         user.l_name = validated_data['l_name']
         user.username = validated_data['username']
+        user.token = validated_data['token']
         user.save()
         return user
