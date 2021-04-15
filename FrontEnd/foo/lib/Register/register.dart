@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:password/password.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:convert';
 
 class RegisterView extends StatelessWidget {
   @override
@@ -29,6 +31,21 @@ class _RegisterFormState extends State<RegisterForm> {
     'password': null,
     'token': null,
   };
+
+  //Firebase messaging initialization
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  //Here we'll store our device token
+  Future<void> saveToken() async {
+    registerData['token'] = await messaging.getToken();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    //State.initState() must be a void method without an 'async' keyword
+    //So we'll call the messaging.getToken() by nesting an async function call
+    saveToken();
+  }
 
   // We need some focus nodes to move to the next textfield when hitting enter on the keyboard
   final focusLastName = FocusNode();
@@ -65,11 +82,14 @@ class _RegisterFormState extends State<RegisterForm> {
       _formKey.currentState.save();
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Processing Data')));
+      //To encode the Map object to JSON file
+      String userJson = jsonEncode(registerData);
+
       Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => FormCheck(
-                  registerData: registerData,
+                  userJson: userJson,
                 )),
       );
     }
@@ -289,8 +309,8 @@ class _RegisterFormState extends State<RegisterForm> {
 }
 
 class FormCheck extends StatelessWidget {
-  final Map<String, dynamic> registerData;
-  FormCheck({Key key, @required this.registerData}) : super(key: key);
+  final String userJson;
+  FormCheck({Key key, @required this.userJson}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -299,12 +319,7 @@ class FormCheck extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Text("${registerData["firstName"]}"),
-          Text("${registerData["lastName"]}"),
-          Text("${registerData["username"]}"),
-          Text("${registerData["email"]}"),
-          Text("${registerData["uprn"]}"),
-          Text("${registerData["password"]}"),
+          Text("$userJson"),
         ],
       ),
     );
