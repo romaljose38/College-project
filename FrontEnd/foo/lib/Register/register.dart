@@ -23,8 +23,8 @@ class RegisterForm extends StatefulWidget {
 class _RegisterFormState extends State<RegisterForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> registerData = {
-    'firstName': null,
-    'lastName': null,
+    'f_name': null,
+    'l_name': null,
     'username': null,
     'email': null,
     'uprn': null,
@@ -98,7 +98,7 @@ class _RegisterFormState extends State<RegisterForm> {
   Widget _buildFirstNameField() {
     return TextFormField(
       onSaved: (String value) {
-        registerData['firstName'] = value;
+        registerData['f_name'] = value;
       },
       onFieldSubmitted: (v) {
         FocusScope.of(context).requestFocus(
@@ -115,7 +115,7 @@ class _RegisterFormState extends State<RegisterForm> {
     return TextFormField(
       focusNode: focusLastName,
       onSaved: (String value) {
-        registerData['lastName'] = value;
+        registerData['l_name'] = value;
       },
       onFieldSubmitted: (v) {
         FocusScope.of(context).requestFocus(focusUsername);
@@ -239,7 +239,7 @@ class _RegisterFormState extends State<RegisterForm> {
         suffix: InkWell(
             onTap: _isToggleConfirmPassword,
             child: Icon(
-              _passwordHidden ? Icons.visibility : Icons.visibility_off,
+              _confirmPasswordHidden ? Icons.visibility : Icons.visibility_off,
             )),
       ),
     );
