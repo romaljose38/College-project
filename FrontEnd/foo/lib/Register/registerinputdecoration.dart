@@ -34,9 +34,7 @@ InputDecoration passwordDecorationField(
     labelText: labeltext,
     suffix: InkWell(
         onTap: () {
-          if (labeltext == "Password") {
-            isToggleView();
-          }
+          isToggleView();
         },
         child: Icon(
           hidePassword ? Icons.visibility : Icons.visibility_off,
