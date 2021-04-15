@@ -62,6 +62,7 @@ class User(AbstractBaseUser):
     l_name = models.CharField(max_length=50)
     username = models.CharField(max_length=50,)
     uprn = models.IntegerField(null=True,blank=False,unique=True)
+    token = models.CharField(max_length=240,null=True,unique=True)
     dob = models.DateField(null=True,blank=True)
     is_active = models.BooleanField(default=True)
     staff = models.BooleanField(default=False) # a admin user; non super-user
