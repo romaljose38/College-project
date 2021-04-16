@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 //import 'package:foo/Login/login.dart';
-import 'Register/router.dart';
+import 'router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'dart:async';
 import 'dart:io';

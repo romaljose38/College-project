@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-InputDecoration decorationField(String labeltext) {
+InputDecoration decorationField(String labeltext, Function isToggleView,
+    {bool hidePassword = false}) {
   return InputDecoration(
     labelText: labeltext,
     labelStyle: TextStyle(
@@ -25,5 +26,16 @@ InputDecoration decorationField(String labeltext) {
       borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide(width: 1, color: Color.fromRGBO(250, 87, 142, .7)),
     ),
+    suffix: (labeltext == "Password")
+        ? InkWell(
+            onTap: () {
+              isToggleView();
+            },
+            child: Icon(
+              hidePassword ? Icons.visibility : Icons.visibility_off,
+              color: Colors.black38,
+            ),
+          )
+        : Text(''),
   );
 }
