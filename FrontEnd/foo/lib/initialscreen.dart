@@ -26,7 +26,7 @@ class _RendererState extends State<Renderer> {
         setState((){
           isConnected=true;
         });
-        print('YAY! Free cute dog pics!');
+        
       } else {
          setState((){
           isConnected=false;

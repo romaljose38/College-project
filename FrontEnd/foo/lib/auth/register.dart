@@ -146,7 +146,9 @@ class _RegisterFormState extends State<RegisterForm> {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(
-                  child: Column(children: [
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 Text(
                   "Welcome",
                   style: TextStyle(

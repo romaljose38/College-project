@@ -30,6 +30,7 @@ class LoginScreen extends StatelessWidget {
                      crossAxisAlignment: CrossAxisAlignment.start,
                   children: [Expanded(
                                     child:Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children:[
                                       Text("Welcome," , style: TextStyle(
                                                 color:Colors.black,
