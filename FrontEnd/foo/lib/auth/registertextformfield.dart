@@ -20,13 +20,12 @@ class FormTextField extends StatelessWidget {
       this.whenSaved,
       this.isToggledView});
 
-  String validate(value, fieldName) {
+  String validate(value, fieldName, labelText) {
+    if (value == null || value.isEmpty) return "Enter your $labelText";
     switch (fieldName) {
       case 'uprn':
         {
-          if (value == null || value.isEmpty)
-            return "Enter your UPRN";
-          else if (num.tryParse(value) == null)
+          if (num.tryParse(value) == null)
             return "Your UPRN should only contain numbers";
           return null;
         }
@@ -34,9 +33,6 @@ class FormTextField extends StatelessWidget {
 
       case 'password':
         {
-          if (value == null || value.isEmpty) {
-            return "Enter a password";
-          }
           return null;
         }
         break;
@@ -58,7 +54,7 @@ class FormTextField extends StatelessWidget {
       },
       // validator
       validator: (value) {
-        return validate(value, fieldName);
+        return validate(value, fieldName, labeltext);
       },
       obscureText: passwordHidden,
       decoration: (fieldName == "password")
