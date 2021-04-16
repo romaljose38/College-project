@@ -244,12 +244,18 @@ class _RegisterFormState extends State<RegisterForm> {
                   focusNode: focusSubmit,
                 ),
               ])),
-              Align(
-                  child: Text(
-                "Already registered?. Sign in",
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
-              ))
+             Align(child: 
+                                      GestureDetector(
+                                                  child: RichText(
+                                                          text:TextSpan(
+                                                            text:"Already have an account?.",
+                                                          style:TextStyle(color: Colors.black,fontWeight: FontWeight.w500),
+                                                          children:[
+                                                            TextSpan(text:"Log in",style: TextStyle(color: Color.fromRGBO(250, 57, 142, 1),fontWeight: FontWeight.w700))
+                                                            ])),
+                                                onTap:(){ Navigator.pushNamed(context,'/login');}
+                                      ),
+              )
             ]),
           ),
         ),

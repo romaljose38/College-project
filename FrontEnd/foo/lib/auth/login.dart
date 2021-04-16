@@ -54,12 +54,22 @@ class LoginScreen extends StatelessWidget {
                                       SizedBox(height: 40,),
                                       ElevatedGradientButton(text: "Login",onPressed:_authenticate ,),
                                       ])),
-                                      Align(child: Text("Im a new user. Sign up",style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500),))],
+                                      Align(child: 
+                                      GestureDetector(
+                                                  child: RichText(
+                                                          text:TextSpan(
+                                                            text:"Im a new user.",
+                                                          style:TextStyle(color: Colors.black,fontWeight: FontWeight.w500),
+                                                          children:[
+                                                            TextSpan(text:"Sign up",style: TextStyle(color: Color.fromRGBO(250, 57, 142, 1),fontWeight: FontWeight.w700))
+                                                            ])),
+                                                onTap:(){ Navigator.pushNamed(context,'/register');}
+                                      ),
               )
-                 )
+                  ])
             )
             ),
           ),
-    );
+    ));
   }
 }

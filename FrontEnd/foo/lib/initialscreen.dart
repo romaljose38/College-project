@@ -19,7 +19,6 @@ class _RendererState extends State<Renderer> {
         Duration(seconds: 2), (Timer t) => _checkConnectionStatus());
   }
 
-<<<<<<< HEAD
   void _checkConnectionStatus() async{
  bool result = await DataConnectionChecker().hasConnection;  
 
@@ -34,22 +33,6 @@ class _RendererState extends State<Renderer> {
         });
       }
   } 
-=======
-  void _checkConnectionStatus() async {
-    bool result = await DataConnectionChecker().hasConnection;
-
-    if (result == true) {
-      setState(() {
-        isConnected = true;
-      });
-      print('YAY! Free cute dog pics!');
-    } else {
-      setState(() {
-        isConnected = false;
-      });
-    }
-  }
->>>>>>> 1208e00615f41be7881e6945c03a9faf04c34161
 
   @override
   Widget build(BuildContext context) {
