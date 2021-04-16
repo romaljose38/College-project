@@ -27,14 +27,21 @@ InputDecoration decorationField(String labeltext, Function isToggleView,
       borderSide: BorderSide(width: 1, color: Color.fromRGBO(250, 87, 142, .7)),
     ),
     suffix: (labeltext == "Password")
-        ? InkWell(
+        ? GestureDetector(
             onTap: () {
               isToggleView();
             },
-            child: Icon(
-              hidePassword ? Icons.visibility : Icons.visibility_off,
-              color: Colors.black38,
-            ),
+            child: hidePassword
+                ? RichText(
+                    text: TextSpan(
+                        text: "Show",
+                        style: TextStyle(
+                            color: Colors.black, fontWeight: FontWeight.w400)))
+                : RichText(
+                    text: TextSpan(
+                        text: "Hide",
+                        style: TextStyle(
+                            color: Colors.black, fontWeight: FontWeight.w400))),
           )
         : Text(''),
   );

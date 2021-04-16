@@ -19,20 +19,19 @@ class _RendererState extends State<Renderer> {
         Duration(seconds: 2), (Timer t) => _checkConnectionStatus());
   }
 
-  void _checkConnectionStatus() async{
- bool result = await DataConnectionChecker().hasConnection;  
+  void _checkConnectionStatus() async {
+    bool result = await DataConnectionChecker().hasConnection;
 
-      if(result == true) {
-        setState((){
-          isConnected=true;
-        });
-        
-      } else {
-         setState((){
-          isConnected=false;
-        });
-      }
-  } 
+    if (result == true) {
+      setState(() {
+        isConnected = true;
+      });
+    } else {
+      setState(() {
+        isConnected = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
