@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:foo/Login/elevatedgradientbutton.dart';
-import 'package:foo/Login/logintextfield.dart';
-import 'package:password/password.dart';
+import 'elevatedgradientbuttonlogin.dart';
+import 'logintextfield.dart';
+
 
 class LoginScreen extends StatelessWidget {
 

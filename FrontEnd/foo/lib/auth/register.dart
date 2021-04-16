@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:foo/Register/elevatedgradientbutton.dart';
+import 'elevatedgradientbutton.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
