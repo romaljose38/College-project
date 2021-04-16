@@ -61,8 +61,9 @@ class FormTextField extends StatelessWidget {
       },
       obscureText: passwordHidden,
       decoration: (fieldName == "password")
-          ? passwordDecorationField("Password", isToggledView, passwordHidden)
-          : decorationField(labeltext),
+          ? decorationField("Password", isToggledView,
+              hidePassword: passwordHidden)
+          : decorationField(labeltext, () {}),
     );
   }
 }
