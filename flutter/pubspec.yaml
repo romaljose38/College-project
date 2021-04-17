@@ -30,6 +30,7 @@ dependencies:
   hive_flutter:
   path_provider:
   hive_listener: ^0.1.0
+  firebase_messaging: ^9.1.1
 
 
   # The following adds the Cupertino Icons font to your application.

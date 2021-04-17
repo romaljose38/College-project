@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:testproj/chat/chatcloudlist.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'chatcloud.dart';
 import 'package:web_socket_channel/io.dart';
@@ -9,11 +12,12 @@ import 'package:testproj/models.dart';
 import 'package:hive_listener/hive_listener.dart';
 import 'package:hive/hive.dart';
 
+
 class ChatScreen extends StatefulWidget {
-  final Stream stream;
+  final WebSocketChannel channel;
   final Thread thread;
 
-  ChatScreen({Key key, this.stream, this.thread}) : super(key:key);
+  ChatScreen({Key key, this.channel, this.thread}) : super(key:key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -21,8 +25,12 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   List _chatList = [];
-  String curuser;
+  String curUser;
+  String otherUser;
   String threadName;
+  TextEditingController _chatController = TextEditingController();
+  ScrollController _scrollController = ScrollController();
+  Thread thread;
   // Stream stream;
   // _updateList(data){
   //   print(data);
@@ -32,10 +40,12 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState(){
     super.initState();
+    otherUser = widget.thread.second.name;
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     _chatList = widget.thread.chatList;
-
+    thread = Hive.box('threads').get(threadName);
+    // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     //Gets the username of the logged in user.
     //We need the current username to distinguish between the sender and receiver. So that the chatclouds can be aligned 
     //on their respective sides.
@@ -44,11 +54,26 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _getUserName() async{
     SharedPreferences _prefs = await SharedPreferences.getInstance();
-      curuser= _prefs.getString('user');
+      curUser= _prefs.getString('user');
   }
   
+  void _sendMessage() {
+    
+    print(widget.channel.protocol);
+    var data = jsonEncode({
+      'message':_chatController.text,
+      'from':curUser,
+      'to':otherUser,
+    });
+    if (_chatController.text.isNotEmpty) {
+      widget.channel.sink.add(data);
+    }
+  }
+  
+
   @override
   Widget build(BuildContext context) {
+
     
     return Scaffold(
       backgroundColor: Color.fromRGBO(240, 247, 255, 1),
@@ -130,21 +155,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                       
                                         var thread = box.get(threadName);
                                         
-                                        List __chatList = thread.chatList;
+                                        List __chatList = thread.chatList ?? [];
 
-                                        return ListView.builder(
-                                         itemCount: __chatList.length,
-                                         itemBuilder: (context,index){
-                                            if(__chatList[index].senderName == curuser){
-                                              return ChatCloud(text:__chatList[index].message,self:true);
-                                            }
-                                            else{
-                                              return ChatCloud(text:__chatList[index].message,self:false);
-                                            }
-                                         }
-                                         );},
+                                        return ChatCloudList(chatList: __chatList,needScroll: true,);
+                                        },
                                        
                   )
+                
                   ),
                 
                 Container(
@@ -162,6 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: [
                       Expanded(
                         child:TextField(
+                          controller: _chatController,
                           decoration: InputDecoration.collapsed(
                             hintText: "Send a message",
                             hintStyle: TextStyle(
@@ -170,7 +188,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                       IconButton(icon: Icon(Icons.send), 
-                      onPressed:(){},
+                      onPressed:_sendMessage,
                       splashColor: Colors.pinkAccent,
                       splashRadius: 16,
                       padding:EdgeInsets.fromLTRB(0, 0, 0, 16),)

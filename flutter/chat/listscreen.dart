@@ -7,16 +7,22 @@ import 'package:hive/hive.dart';
 
 class ChatListScreen extends StatefulWidget {
 
-  final Stream stream;
+  final WebSocketChannel channel;
   List threads = [];
 
-  ChatListScreen({Key key, @required this.stream, this.threads}) : super(key:key);
+  ChatListScreen({Key key, @required this.channel, this.threads}) : super(key:key);
 
   @override
   _ChatListScreenState createState() => _ChatListScreenState();
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
+
+  @override
+  void initState(){
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -37,9 +43,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
             decoration: BoxDecoration(color: Color.fromRGBO(241, 247, 255, 1)),
             child: Padding(padding: EdgeInsets.only(top: 80),
              child: ListView.builder(
-               itemCount: widget.threads.length,
+               itemCount: widget.threads==null?0:widget.threads.length,
                itemBuilder: (context,index){
-                return ChatTile(stream:widget.stream,thread:widget.threads[index]);
+                return ChatTile(channel:widget.channel,thread:widget.threads[index]);
                },
              ),
 

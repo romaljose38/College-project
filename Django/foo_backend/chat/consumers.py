@@ -4,7 +4,7 @@ from channels.db import database_sync_to_async
 from .models import Thread,Profile,ChatMessage
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-
+from datetime import datetime
 
 User = get_user_model()
 
@@ -52,6 +52,7 @@ class DevelopmentChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self,event):
         
         print("In chat_message", event)
+        event['message']['time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Converting the json object to a string
         message = json.dumps({                  

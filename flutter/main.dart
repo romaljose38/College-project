@@ -8,14 +8,15 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart' as pathProvider;
 import 'models.dart';
 import 'dart:convert';
-import 'package:intl/intl.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:firebase_core/firebase_core.dart';
 // import 'models.g.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   Directory directory = await pathProvider.getApplicationDocumentsDirectory();
   Hive.init(directory.path);
   
-
   //Registering the hive model adapters. Will change this to register the adapters for corresponding boxes only.
   //Eg:"Threads" box is the only box which uses ThreadAdpater
   Hive.registerAdapter(UserAdapter());
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
 
 
   //Only one subscriber is allowed for a stream at a time. So it is initialized here.
-  final Stream stream = IOWebSocketChannel.connect("ws://10.0.2.2:8000/ws/chat/").stream.asBroadcastStream();
+  final WebSocketChannel channel = IOWebSocketChannel.connect("ws://10.0.2.2:8000/ws/test_room/");
 
   @override
   Widget build(BuildContext context) {
@@ -38,15 +39,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: title,
-      home: Renderer(stream:stream)
+      home: Renderer(channel:channel)
     );
   }
 }
 
 class Renderer extends StatefulWidget {
-  final Stream stream;
+  final WebSocketChannel channel;
 
-  Renderer({Key key,this.stream}) : super(key:key);
+  Renderer({Key key,this.channel}) : super(key:key);
 
   @override
   _RendererState createState() => _RendererState();
@@ -60,12 +61,14 @@ class _RendererState extends State<Renderer> {
   List threadList = Hive.box('Threads').values.toList();
   Stream stream;
   
+  
 
   @override
   void initState(){
     super.initState();
     _setPrefs();
-    stream = widget.stream;
+    
+    stream = widget.channel.stream.asBroadcastStream();
   }
 
   //Initializing shared_preference instance and setting the user name for current user.
@@ -74,18 +77,22 @@ class _RendererState extends State<Renderer> {
     prefs = await SharedPreferences.getInstance();
     prefs.setString('user', 'romal');
     print(prefs.getString('user'));
-    stream = widget.stream;
+    
   }
+
+  
 
   //Function for putting the new thread into the database. Since it requires an async function. It returns nothing.
   //So that _createThread is not interrupted
-  _chicanery(threadName,thread,data) async{
+  _chicanery(threadName,thread,data,) async{
     var box = Hive.box("Threads");
     await box.put(threadName,thread);
     thread.addChat(
-    ChatMessage(message:data['message']['message'],
-    senderName:data['message']['from'],
-    time:DateTime.now()));
+    ChatMessage(
+      message:data['message']['message'],
+      senderName:data['message']['from'],
+      time:DateTime.now())
+      );
     thread.save();
   }
 
@@ -119,12 +126,61 @@ class _RendererState extends State<Renderer> {
       existingThread.save();
     }
 
- 
-      return threadBox.values.toList();
-    
-   
-    
+      List list = threadBox.values.toList();
+      return list;
   }
+
+
+
+_chicaneryForMe(threadName,thread,data,) async{
+  var me = prefs.getString('user');
+    var box = Hive.box("Threads");
+    await box.put(threadName,thread);
+    thread.addChat(
+    ChatMessage(
+      message:data['message']['message'],
+      senderName:me,
+      time:DateTime.now())
+      );
+    thread.save();
+  }
+
+
+
+
+  List _createThreadForMe(data){
+     if(data=="None"){
+      return null;
+    }
+    var threadBox = Hive.box('Threads');
+    var me = prefs.getString('user');
+
+    //Creating thread with the given data
+    var thread = Thread(first:User(name:me),second:User(name:data['message']['from']));
+
+    //Thread is named in the format "self_sender" eg:anna_deepika
+    var threadName = me + '_' + data['message']['to'];
+
+    //Checking if thread already exists in box, if exists, the new chat messaeg if added else new thread is created and saved to box.
+    if(!threadBox.containsKey(threadName)){
+      print("new_thread");
+      _chicaneryForMe(threadName,thread,data);
+    }
+    else{
+      print("existing thread");
+      var existingThread = threadBox.get(threadName);
+      existingThread.addChat(
+        ChatMessage(message:data['message']['message'],
+        senderName:me,
+        time:DateTime.now())
+        );  
+      existingThread.save();
+    }
+
+      List list = threadBox.values.toList();
+      return list;
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -132,30 +188,56 @@ class _RendererState extends State<Renderer> {
       stream: stream,
       builder: (context,snapshot){
       if(snapshot.hasData){
-
+        print(snapshot.data);
         if(snapshot.connectionState==ConnectionState.active){
         var data = jsonDecode(snapshot.data);
+            List threads;
+              if(data['message']['to']==prefs.getString('user')){
+               
+                
+              threads = _createThread(data);
+              threads.sort((a,b){
+                return a.lastAccessed.compareTo(b.lastAccessed);
+              });
+                }
+              else if(data['message']['from']==prefs.getString('user')){
+                
+                threads = _createThreadForMe(data);
 
-        //Checking if the message is addressed to the user
-        if(data['message']['user']==prefs.getString('user')){
-          List threads;
-          
-        threads = _createThread(data);
-        return ChatListScreen(
-            stream:widget.stream,
-            threads:threads
-          );
-        }
+              }
+              return ChatListScreen(
+                  channel:widget.channel,
+                  threads:threads
+                );
+        
       
         }
       }
       return ChatListScreen(
-            stream:widget.stream,
+           channel:widget.channel,
             threads:threadList
           );
     });
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // import 'package:flutter/foundation.dart';
