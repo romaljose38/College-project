@@ -14,7 +14,7 @@ class ChatCloudList extends StatefulWidget {
 }
 
 class _ChatCloudListState extends State<ChatCloudList> {
-
+ScrollController _scrollController = ScrollController();
   String curUser;
 
   @override
@@ -28,12 +28,12 @@ class _ChatCloudListState extends State<ChatCloudList> {
     curUser= _prefs.getString('user');
   }
 
-  ScrollController _scrollController = ScrollController();
+  
 
 
   void _scrollToEnd() async {
   _scrollController.animateTo(
-    _scrollController.position.maxScrollExtent,
+    _scrollController.position.minScrollExtent,
     duration: Duration(milliseconds: 100),
     curve:Curves.linear
     );
@@ -41,7 +41,7 @@ class _ChatCloudListState extends State<ChatCloudList> {
 
   @override
   Widget build(BuildContext context) {
-
+    
     if (widget.needScroll) {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => Timer(Duration(milliseconds: 100),()=>_scrollToEnd()));
@@ -50,19 +50,20 @@ class _ChatCloudListState extends State<ChatCloudList> {
     
 
     return ListView.builder(
-                                          
-                                          controller: _scrollController,
-                                         itemCount: widget.chatList.length??0,
-                                         itemBuilder: (context,index){
-                                            if(widget.chatList[index].senderName == curUser){
-                                              
-                                              return ChatCloud(text:widget.chatList[index].message,self:true);
-                                            }
-                                            else{
-                                              
-                                              return ChatCloud(text:widget.chatList[index].message,self:false);
-                                            }
-                                         }
-                                         );
+        reverse: true,                       
+        controller: _scrollController,
+        itemCount: widget.chatList.length??0,
+        itemBuilder: (context,index){
+          final reversedIndex = widget.chatList.length -1-index;
+          if(widget.chatList[reversedIndex].senderName == curUser){
+            
+            return ChatCloud(text:widget.chatList[reversedIndex].message,self:true);
+          }
+          else{
+            
+            return ChatCloud(text:widget.chatList[reversedIndex].message,self:false);
+          }
+        }
+        );
   }
 }

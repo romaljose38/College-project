@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:testproj/chat/chatcloudlist.dart';
+import 'package:testproj/chat/socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'chatcloud.dart';
 import 'package:web_socket_channel/io.dart';
@@ -14,10 +15,10 @@ import 'package:hive/hive.dart';
 
 
 class ChatScreen extends StatefulWidget {
-  final WebSocketChannel channel;
+  final NotificationController controller;
   final Thread thread;
 
-  ChatScreen({Key key, this.channel, this.thread}) : super(key:key);
+  ChatScreen({Key key, this.controller, this.thread}) : super(key:key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -59,14 +60,19 @@ class _ChatScreenState extends State<ChatScreen> {
   
   void _sendMessage() {
     
-    print(widget.channel.protocol);
+    // print(widget.channel.protocol);
     var data = jsonEncode({
       'message':_chatController.text,
       'from':curUser,
       'to':otherUser,
     });
     if (_chatController.text.isNotEmpty) {
-      widget.channel.sink.add(data);
+      if(widget.controller.isActive){
+      widget.controller.sendToChannel(data);
+      }
+      else{
+        print("not connected");
+      }
     }
   }
   

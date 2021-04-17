@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:testproj/chat/socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'chat/listscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,10 +9,13 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart' as pathProvider;
 import 'models.dart';
 import 'dart:convert';
+import 'dart:async';
 // import 'package:http/http.dart' as http;
 // import 'package:firebase_messaging/firebase_messaging.dart';
 // import 'package:firebase_core/firebase_core.dart';
 // import 'models.g.dart';
+
+
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   Directory directory = await pathProvider.getApplicationDocumentsDirectory();
@@ -31,7 +35,8 @@ class MyApp extends StatelessWidget {
 
 
   //Only one subscriber is allowed for a stream at a time. So it is initialized here.
-  final WebSocketChannel channel = IOWebSocketChannel.connect("ws://10.0.2.2:8000/ws/test_room/");
+ 
+  var controller = NotificationController();
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +44,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: title,
-      home: Renderer(channel:channel)
+      home: Renderer(controller:controller)
     );
   }
 }
 
 class Renderer extends StatefulWidget {
-  final WebSocketChannel channel;
+  final NotificationController controller;
 
-  Renderer({Key key,this.channel}) : super(key:key);
+
+  Renderer({Key key,this.controller}) : super(key:key);
 
   @override
   _RendererState createState() => _RendererState();
@@ -68,7 +74,7 @@ class _RendererState extends State<Renderer> {
     super.initState();
     _setPrefs();
     
-    stream = widget.channel.stream.asBroadcastStream();
+   
   }
 
   //Initializing shared_preference instance and setting the user name for current user.
@@ -185,7 +191,7 @@ _chicaneryForMe(threadName,thread,data,) async{
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: stream,
+      stream: widget.controller.streamController.stream,
       builder: (context,snapshot){
       if(snapshot.hasData){
         print(snapshot.data);
@@ -201,12 +207,12 @@ _chicaneryForMe(threadName,thread,data,) async{
               });
                 }
               else if(data['message']['from']==prefs.getString('user')){
-                
+               
                 threads = _createThreadForMe(data);
 
               }
               return ChatListScreen(
-                  channel:widget.channel,
+                  controller: widget.controller,
                   threads:threads
                 );
         
@@ -214,7 +220,7 @@ _chicaneryForMe(threadName,thread,data,) async{
         }
       }
       return ChatListScreen(
-           channel:widget.channel,
+            controller: widget.controller,
             threads:threadList
           );
     });

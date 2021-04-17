@@ -43,22 +43,32 @@ class ChatCloud extends StatelessWidget {
               )
             ]
           ),
-          child:Container(
-            padding:EdgeInsets.all(14),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .7),
-            child: Text(this.text,
-                        textAlign:TextAlign.start,
-                        
-                        style:TextStyle(
-                          fontSize: 14,
-                          color:(this.self==true)?Colors.white:Colors.black.withOpacity(.7),
-                          letterSpacing: 1.1,
-                        
+          child:Stack(
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Text(this.text),
+              ),
+              Positioned(
+                bottom: 0.0,
+                right: 0.0,
+                child: Row(
+                  children: <Widget>[
+                    Text('01:30PM',
+                        style: TextStyle(
+                          color: Colors.black38,
+                          fontSize: 10.0,
                         )),
-          )
-          
-        ),
+                    SizedBox(width: 3.0),
+                    Icon(
+                      Icons.done,
+                      size: 12.0,
+                      color: Colors.black38,
+                    )
+                  ],
+                ),
+              )
       ],
-    );
+    ))]);
   }
 }

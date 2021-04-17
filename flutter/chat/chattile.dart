@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:testproj/chat/socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'chatscreen.dart';
 import 'package:testproj/models.dart';
@@ -9,13 +10,13 @@ import 'package:hive_listener/hive_listener.dart';
 
 class ChatTile extends StatelessWidget {
   
-  final WebSocketChannel channel;
+  final NotificationController controller;
   final Thread thread;
   
-  ChatTile({this.channel,this.thread});
+  ChatTile({this.controller,this.thread});
 
 
- String getDate(DateTime date) =>DateFormat("dd-MM-yyyy").format(date);
+ String getDate(DateTime date) =>DateFormat("dd/MM/yyyy").format(date);
 
 
   @override
@@ -24,20 +25,44 @@ class ChatTile extends StatelessWidget {
       decoration: BoxDecoration(
         color:Colors.transparent,
       ),
+      padding: EdgeInsets.symmetric(vertical:13),
       width:MediaQuery.of(context).size.width,
       child:ListTile(
-        trailing: Text(getDate(thread.lastAccessed)),
+        trailing: Padding(
+          padding: EdgeInsets.only(top: 10),
+          child: Column(
+            children:[
+              Text(
+                getDate(thread.lastAccessed),
+                style:TextStyle(fontSize: 11,color:Colors.grey.shade600,fontWeight: FontWeight.w500))],
+            mainAxisAlignment: MainAxisAlignment.start,),
+        ),
         onTap:(){
         Navigator.push(context, MaterialPageRoute(
           builder : (context) => ChatScreen(
-            channel:this.channel,
+            controller:this.controller,
             thread:this.thread
             )));
               },
         leading:CircleAvatar(
-                child:Text(this.thread.second.name),
+          radius: 35,
+                child:Text(this.thread.second.name[0].toUpperCase()),
               ),
-        title:Text(thread.chatList.last.message)),
+        title:Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(this.thread.second.name,style:TextStyle(
+              color: Color.fromRGBO(60, 82, 111, 1),
+              fontWeight: FontWeight.w400,
+              fontSize: 18),),
+            SizedBox(height: 8,),
+            Text(thread.chatList.last.message, style: TextStyle(
+              color:Color.fromRGBO(100,115,142,1),
+              fontWeight: FontWeight.w200,
+              fontSize: 15,
+            ),),
+          ],
+        )),
     );
   }
 }
