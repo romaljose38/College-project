@@ -102,7 +102,7 @@ class _RendererState extends State<Renderer> {
     thread.save();
   }
 
-  _createThread(data){
+  Future _createThread(data) async{
 
     if(data=="None"){
       return null;
@@ -119,7 +119,7 @@ class _RendererState extends State<Renderer> {
     //Checking if thread already exists in box, if exists, the new chat messaeg if added else new thread is created and saved to box.
     if(!threadBox.containsKey(threadName)){
       print("new_thread");
-      _chicanery(threadName,thread,data);
+      await _chicanery(threadName,thread,data);
     }
     else{
       print("existing thread");
@@ -154,7 +154,7 @@ _chicaneryForMe(threadName,thread,data,) async{
 
 
 
-  List _createThreadForMe(data){
+  Future _createThreadForMe(data) async{
      if(data=="None"){
       return null;
     }
@@ -170,7 +170,7 @@ _chicaneryForMe(threadName,thread,data,) async{
     //Checking if thread already exists in box, if exists, the new chat messaeg if added else new thread is created and saved to box.
     if(!threadBox.containsKey(threadName)){
       print("new_thread");
-      _chicaneryForMe(threadName,thread,data);
+      await _chicaneryForMe(threadName,thread,data);
     }
     else{
       print("existing thread");
@@ -197,27 +197,48 @@ _chicaneryForMe(threadName,thread,data,) async{
         print(snapshot.data);
         if(snapshot.connectionState==ConnectionState.active){
         var data = jsonDecode(snapshot.data);
-            List threads;
+            FutureOr threads;
               if(data['message']['to']==prefs.getString('user')){
                
                 
               threads = _createThread(data);
-              threads.sort((a,b){
-                return a.lastAccessed.compareTo(b.lastAccessed);
-              });
+              // threads.sort((a,b){
+              //   return a.lastAccessed.compareTo(b.lastAccessed);
+              // });
                 }
               else if(data['message']['from']==prefs.getString('user')){
                
                 threads = _createThreadForMe(data);
 
               }
-              return ChatListScreen(
-                  controller: widget.controller,
-                  threads:threads
-                );
+              return FutureBuilder(
+                future: threads,
+                builder: (context, snapshot) {
+                  if(snapshot.connectionState==ConnectionState.done){
+                      List threadList = snapshot.data;
+                      print(threadList);
+                      threadList.sort((a,b){
+                                  return b.lastAccessed.compareTo(a.lastAccessed);
+                                });
+                    return ChatListScreen(
+                        controller: widget.controller,
+                        threads:threadList
+                      );
+                  }
+                  return ChatListScreen(
+                     controller: widget.controller,
+                    threads:threadList
+                  );
+                }
+              );
         
       
         }
+      }
+      if(threadList.length>0){
+        threadList.sort((a,b){
+          return b.lastAccessed.compareTo(a.lastAccessed);
+        });
       }
       return ChatListScreen(
             controller: widget.controller,

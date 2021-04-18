@@ -73,6 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
       else{
         print("not connected");
       }
+      _chatController.text="";
     }
   }
   

@@ -43,32 +43,40 @@ class ChatCloud extends StatelessWidget {
               )
             ]
           ),
-          child:Stack(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(10.0),
-                child: Text(this.text),
-              ),
-              Positioned(
-                bottom: 0.0,
-                right: 0.0,
-                child: Row(
-                  children: <Widget>[
-                    Text('01:30PM',
-                        style: TextStyle(
-                          color: Colors.black38,
-                          fontSize: 10.0,
-                        )),
-                    SizedBox(width: 3.0),
-                    Icon(
-                      Icons.done,
-                      size: 12.0,
-                      color: Colors.black38,
-                    )
-                  ],
+          child:Container(
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .7,minWidth: 70),
+            child: Stack(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
+                  child: Text(this.text
+                                ,style:TextStyle(color: this.self==true?Colors.white:Colors.black,),
+                                textDirection: TextDirection.ltr,
+                                textAlign: TextAlign.left,),
                 ),
-              )
+                Positioned(
+                  bottom: 0.0,
+                  right: 10.0,
+                  child: Row(
+                    children: <Widget>[
+                      Text('01:30PM',
+                          textAlign: TextAlign.right,
+                          textDirection: TextDirection.rtl,
+                          style: TextStyle(
+                            color:this.self==true?Colors.white:Colors.black,
+                            fontSize: 10.0,
+                          )),
+                      SizedBox(width: 3.0),
+                      Icon(
+                        Icons.done,
+                        size: 12.0,
+                        color: Colors.black38,
+                      )
+                    ],
+                  ),
+                )
       ],
-    ))]);
+    ),
+          ))]);
   }
 }
