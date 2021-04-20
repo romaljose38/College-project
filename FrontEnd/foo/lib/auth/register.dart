@@ -110,6 +110,10 @@ class _RegisterFormState extends State<RegisterForm> {
       //var jsonResponse = convert.jsonDecode(response.body);
       print("Error in some field. Check again!");
     }
+    else if(response.statusCode == 200){
+      var data = convert.jsonDecode(response.body);
+      print(data);
+    }
     print(response);
   }
 

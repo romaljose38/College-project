@@ -32,10 +32,17 @@ dependencies:
   password: ^1.0.0
   http: ^0.13.1
   data_connection_checker: ^0.3.4
+  hive:
+  hive_flutter:
+  path_provider:
+  hive_listener: ^0.1.0
+  shared_preferences:
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  hive_generator:
+  build_runner:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
