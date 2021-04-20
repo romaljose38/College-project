@@ -121,6 +121,7 @@ _chicaneryForMe(threadName,thread,data,) async{
       message:data['message']['message'],
       senderName:me,
       id:data['message']['id'],
+      isMe:true,
       time:DateTime.now())
       );
     thread.save();
@@ -142,7 +143,7 @@ _chicaneryForMe(threadName,thread,data,) async{
     //Thread is named in the format "self_sender" eg:anna_deepika
     var threadName = me + '_' + data['message']['to'];
 
-    //Checking if thread already exists in box, if exists, the new chat messaeg if added else new thread is created and saved to box.
+    //Checking if thread already exists in box, if exists, the new chat messaeg if added; else new thread is created and saved to box.
     if(!threadBox.containsKey(threadName)){
       print("new_thread");
       await _chicaneryForMe(threadName,thread,data);
@@ -154,6 +155,7 @@ _chicaneryForMe(threadName,thread,data,) async{
         ChatMessage(message:data['message']['message'],
         senderName:me,
         id:data['message']['id'],
+        isMe:true,
         time:DateTime.now())
         );  
       existingThread.save();

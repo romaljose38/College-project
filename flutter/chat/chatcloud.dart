@@ -4,15 +4,17 @@ import 'package:testproj/models.dart';
 
 class ChatCloud extends StatelessWidget {
   final ChatMessage msgObj;
-  final bool self;
+  // final bool self;
 
-  ChatCloud({this.msgObj,this.self});
+  ChatCloud({this.msgObj,
+  // this.self
+  });
 
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment:(self==true)?MainAxisAlignment.end:MainAxisAlignment.start,
+      mainAxisAlignment:(this.msgObj.isMe==true)?MainAxisAlignment.end:MainAxisAlignment.start,
       children: [
         Container(
           margin:EdgeInsets.all(5),
@@ -20,7 +22,7 @@ class ChatCloud extends StatelessWidget {
           
           padding:EdgeInsets.all(5),
           decoration: BoxDecoration(
-            gradient:(this.self==true)?
+            gradient:(this.msgObj.isMe==true)?
             LinearGradient(
                           begin:Alignment.topRight,
                           end:Alignment.bottomLeft,
@@ -40,7 +42,7 @@ class ChatCloud extends StatelessWidget {
                 blurRadius: 6,
                 spreadRadius: .5,
                 offset:Offset(1,5),
-                color:(this.self==true)?Color.fromRGBO(248, 198, 220, 1):Color.fromRGBO(218, 228, 237, 1)
+                color:(this.msgObj.isMe==true)?Color.fromRGBO(248, 198, 220, 1):Color.fromRGBO(218, 228, 237, 1)
               )
             ]
           ),
@@ -51,7 +53,7 @@ class ChatCloud extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
                   child: Text(this.msgObj.message
-                                ,style:TextStyle(color: this.self==true?Colors.white:Colors.black,),
+                                ,style:TextStyle(color: this.msgObj.isMe==true?Colors.white:Colors.black,),
                                 textDirection: TextDirection.ltr,
                                 textAlign: TextAlign.left,),
                 ),
@@ -64,7 +66,7 @@ class ChatCloud extends StatelessWidget {
                           textAlign: TextAlign.right,
                           textDirection: TextDirection.rtl,
                           style: TextStyle(
-                            color:this.self==true?Colors.white:Colors.black,
+                            color:this.msgObj.isMe==true?Colors.white:Colors.black,
                             fontSize: 10.0,
                           )),
                       SizedBox(width: 3.0),

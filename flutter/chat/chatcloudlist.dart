@@ -6,8 +6,9 @@ class ChatCloudList extends StatefulWidget {
 
   List chatList;
   bool needScroll;
+  String curUser;
 
-  ChatCloudList({Key key,this.chatList,this.needScroll});
+  ChatCloudList({Key key,this.chatList,this.needScroll,this.curUser});
 
   @override
   _ChatCloudListState createState() => _ChatCloudListState();
@@ -15,18 +16,18 @@ class ChatCloudList extends StatefulWidget {
 
 class _ChatCloudListState extends State<ChatCloudList> {
 ScrollController _scrollController = ScrollController();
-  String curUser;
+  // String curUser;
 
   @override
   void initState(){
     super.initState();
-    _setname();
+    // _setname();
   }
 
-  void _setname() async{
-    SharedPreferences _prefs = await SharedPreferences.getInstance();
-    curUser= _prefs.getString('user');
-  }
+  // void _setname() async{
+  //   SharedPreferences _prefs = await SharedPreferences.getInstance();
+  //   curUser= _prefs.getString('user');
+  // }
 
   
 
@@ -55,14 +56,15 @@ ScrollController _scrollController = ScrollController();
         itemCount: widget.chatList.length??0,
         itemBuilder: (context,index){
           final reversedIndex = widget.chatList.length -1-index;
-          if(widget.chatList[reversedIndex].senderName == curUser){
-            print('me');
-            return ChatCloud(msgObj:widget.chatList[reversedIndex],self:true);
-          }
-          else{
+           return ChatCloud(msgObj:widget.chatList[reversedIndex]);
+          // if(widget.chatList[reversedIndex].senderName == widget.curUser){
+          //   print('me');
+          //   return ChatCloud(msgObj:widget.chatList[reversedIndex],self:true);
+          // }
+          // else{
             
-            return ChatCloud(msgObj:widget.chatList[reversedIndex],self:false);
-          }
+          //   return ChatCloud(msgObj:widget.chatList[reversedIndex],self:false);
+          // }
         }
         );
   }

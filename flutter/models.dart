@@ -34,7 +34,10 @@ class ChatMessage extends HiveObject{
   @HiveField(5)
   int id;
 
-  ChatMessage({this.thread,this.message,this.time,this.id,this.senderName});
+  @HiveField(6)
+  bool isMe = false;
+
+  ChatMessage({this.thread, this.message, this.time, this.id, this.senderName, this.isMe});
 }
 
 

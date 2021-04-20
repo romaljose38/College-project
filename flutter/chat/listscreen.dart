@@ -26,6 +26,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
     super.initState();
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(

@@ -166,7 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         
                                         List __chatList = thread.chatList ?? [];
 
-                                        return ChatCloudList(chatList: __chatList,needScroll: true,);
+                                        return ChatCloudList(chatList: __chatList,needScroll: true,curUser:curUser);
                                         },
                                        
                   )
