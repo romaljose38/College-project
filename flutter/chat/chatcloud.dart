@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:testproj/models.dart';
 
 
 class ChatCloud extends StatelessWidget {
-  final String text;
+  final ChatMessage msgObj;
   final bool self;
 
-  ChatCloud({this.text,this.self});
+  ChatCloud({this.msgObj,this.self});
 
 
   @override
@@ -49,7 +50,7 @@ class ChatCloud extends StatelessWidget {
               children: <Widget>[
                 Padding(
                   padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
-                  child: Text(this.text
+                  child: Text(this.msgObj.message
                                 ,style:TextStyle(color: this.self==true?Colors.white:Colors.black,),
                                 textDirection: TextDirection.ltr,
                                 textAlign: TextAlign.left,),
@@ -68,7 +69,7 @@ class ChatCloud extends StatelessWidget {
                           )),
                       SizedBox(width: 3.0),
                       Icon(
-                        Icons.done,
+                        this.msgObj.haveReceived?Icons.done_all:Icons.done,
                         size: 12.0,
                         color: Colors.black38,
                       )

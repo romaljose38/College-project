@@ -10,10 +10,12 @@ import 'package:hive_listener/hive_listener.dart';
 
 class ChatTile extends StatelessWidget {
   
-  final NotificationController controller;
+  // final NotificationController controller;
   final Thread thread;
   
-  ChatTile({this.controller,this.thread});
+  ChatTile({
+    // this.controller,
+    this.thread});
 
 
  String getDate(DateTime date) =>DateFormat("dd/MM/yyyy").format(date);
@@ -40,7 +42,7 @@ class ChatTile extends StatelessWidget {
         onTap:(){
         Navigator.push(context, MaterialPageRoute(
           builder : (context) => ChatScreen(
-            controller:this.controller,
+            // controller:this.controller,
             thread:this.thread
             )));
               },
@@ -56,7 +58,7 @@ class ChatTile extends StatelessWidget {
               fontWeight: FontWeight.w400,
               fontSize: 18),),
             SizedBox(height: 8,),
-            Text(thread.chatList.last.message, style: TextStyle(
+            Text(thread.chatList.last.message,overflow: TextOverflow.ellipsis, style: TextStyle(
               color:Color.fromRGBO(100,115,142,1),
               fontWeight: FontWeight.w200,
               fontSize: 15,

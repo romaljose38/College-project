@@ -8,10 +8,12 @@ import 'socket.dart';
 
 class ChatListScreen extends StatefulWidget {
 
-  final NotificationController controller;
+  // final NotificationController controller;
   List threads = [];
 
-  ChatListScreen({Key key, @required this.controller, this.threads}) : super(key:key);
+  ChatListScreen({Key key,
+  //  @required this.controller, 
+   this.threads}) : super(key:key);
 
   @override
   _ChatListScreenState createState() => _ChatListScreenState();
@@ -51,7 +53,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
             delegate: SliverChildBuilderDelegate(
               
                 (context,index){
-                return ChatTile(controller:widget.controller,thread:widget.threads[index]);
+                return ChatTile(
+                  // controller:widget.controller,
+                  thread:widget.threads[index]);
                },
                childCount:widget.threads==null?0:widget.threads.length,
             ),

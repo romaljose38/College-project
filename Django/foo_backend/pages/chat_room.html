@@ -84,10 +84,11 @@
 
 <script>
 
-var socket = new WebSocket('ws://127.0.0.1:8000/ws/chat_room/');
+var socket = new WebSocket('ws://127.0.0.1:8000/ws/chat_room/{{user}}/');
 
     socket.onmessage = function(e){
-        var data = JSON.parse(e.data);
+        console.log(e);
+        var data = JSON.parse(e.data).message;
         console.log(data);
         var message = data.message;
         var senderName = data.from;

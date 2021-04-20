@@ -5,12 +5,12 @@ class NotificationController {
 
   static final NotificationController _singleton = new NotificationController._internal();
 
-  StreamController streamController = new StreamController.broadcast(sync: true);
+  static StreamController streamController = new StreamController.broadcast(sync: true);
 
-  String wsUrl = 'ws://10.0.2.2:8000/ws/test_room/';
+  String wsUrl = 'ws://10.0.2.2:8000/ws/chat_room/romal/';
 
-  WebSocket channel;
-  bool isActive;
+  static WebSocket channel;
+  static bool isActive = false;
 
   factory NotificationController() {
     return _singleton;
@@ -22,30 +22,32 @@ class NotificationController {
 
   initWebSocketConnection() async {
     print("conecting...");
-    this.channel = await connectWs();
-    this.isActive= true;
+    if(NotificationController.isActive==false){
+    channel = await connectWs();
+    NotificationController.isActive= true;
     print("socket connection initializied");
-    this.channel.done.then((dynamic _) => _onDisconnected());
+    channel.done.then((dynamic _) => _onDisconnected());
     broadcastNotifications();
+    }
   }
 
   broadcastNotifications() {
-    this.channel.listen((streamData) {
+    channel.listen((streamData) {
       streamController.add(streamData);
     }, onDone: () {
-      this.isActive = false;
+      NotificationController.isActive = false;
       print("conecting aborted");
        initWebSocketConnection();
     }, onError: (e) {
-      this.isActive=false;
+     NotificationController.isActive=false;
       print('Server error: $e');
       initWebSocketConnection();
     });
   }
 
-  sendToChannel(data){
-    if(this.isActive){
-    this.channel.add(data);
+  static sendToChannel(data){
+    if(NotificationController.isActive==true){
+    channel.add(data);
     }
     else{
       return false;
@@ -56,7 +58,7 @@ class NotificationController {
     try {
       return await WebSocket.connect(wsUrl);
     } catch  (e) {
-      this.isActive=false;
+      NotificationController.isActive=false;
       print("Error! can not connect WS connectWs " + e.toString());
       await Future.delayed(Duration(milliseconds: 10000));
       return await connectWs();
@@ -65,7 +67,7 @@ class NotificationController {
   }
 
   void _onDisconnected() {
-    this.isActive = false;
+    NotificationController.isActive = false;
     initWebSocketConnection();
   }
 }

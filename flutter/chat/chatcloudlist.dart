@@ -56,12 +56,12 @@ ScrollController _scrollController = ScrollController();
         itemBuilder: (context,index){
           final reversedIndex = widget.chatList.length -1-index;
           if(widget.chatList[reversedIndex].senderName == curUser){
-            
-            return ChatCloud(text:widget.chatList[reversedIndex].message,self:true);
+            print('me');
+            return ChatCloud(msgObj:widget.chatList[reversedIndex],self:true);
           }
           else{
             
-            return ChatCloud(text:widget.chatList[reversedIndex].message,self:false);
+            return ChatCloud(msgObj:widget.chatList[reversedIndex],self:false);
           }
         }
         );

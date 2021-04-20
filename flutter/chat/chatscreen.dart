@@ -15,10 +15,12 @@ import 'package:hive/hive.dart';
 
 
 class ChatScreen extends StatefulWidget {
-  final NotificationController controller;
+  // final NotificationController controller;
   final Thread thread;
 
-  ChatScreen({Key key, this.controller, this.thread}) : super(key:key);
+  ChatScreen({Key key, 
+  // this.controller,
+   this.thread}) : super(key:key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -67,8 +69,8 @@ class _ChatScreenState extends State<ChatScreen> {
       'to':otherUser,
     });
     if (_chatController.text.isNotEmpty) {
-      if(widget.controller.isActive){
-      widget.controller.sendToChannel(data);
+      if(NotificationController.isActive){
+      NotificationController.sendToChannel(data);
       }
       else{
         print("not connected");

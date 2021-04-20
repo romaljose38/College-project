@@ -79,33 +79,47 @@ class ChatConsumer(AsyncWebsocketConsumer):
     room_group_name = 'common_room'
 
     async def connect(self):        
-        self.user = self.scope['user']
-        await self.update_user_online(self.user)
 
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        username = self.scope['url_route']['kwargs']['username']
 
-        await self.accept()
+        self.user = await self.get_user_from_username(username)
 
-        pending_messages = await self.get_pending_messages()
+        status = await self.update_user_online(self.user)
 
-        if len(pending_messages)!=0:
-            for msg in pending_messages:
-                text,snd_user,chat_id = await self.get_chat_details(msg)
-                
-                msg_obj = json.dumps({
-                    'message':text,
-                    'from':snd_user,
-                    'id':chat_id
-                })
+        if status:
+        
+            
 
-                await self.send(text_data=msg_obj)
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name
+            )
+
+            await self.accept()
+
+            pending_messages = await self.get_pending_messages()
+
+            if len(pending_messages)!=0:
+                for msg in pending_messages:
+                    text,snd_user,chat_id = await self.get_chat_details(msg)
+                    
+                    msg_obj = json.dumps({
+                        'message':{
+                        'message':text,
+                        'from':snd_user,
+                        'id':chat_id,
+                        'to':self.user.username
+                    }})
+
+                    await self.send(text_data=msg_obj)
 
     @database_sync_to_async
     def update_user_online(self, user):
-        Profile.objects.filter(user=user).update(online=True)
+        if self.user.profile.online:
+            return False
+        else: 
+            Profile.objects.filter(user=user).update(online=True)
+            return True
 
     @database_sync_to_async
     def get_pending_messages(self):
@@ -139,7 +153,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         print(text_data_json)
         if 'received' in text_data_json['message']:
             msg_id = int(text_data_json['message']['received'])
-            await self.add_user_to_recipients(msg_id)
+            should_inform, chat_id ,chat_user = await self.add_user_to_recipients(msg_id)
+            if should_inform:
+                await self.channel_layer.group_send(
+                                                    self.room_group_name,
+                                                    {
+                                                        'type':'chat_message',
+                                                        'message':{
+                                                            'to':chat_user.username,
+                                                            'received':chat_id,
+                                                            'from':self.user.username,
+                                                        }
+                                                    }
+                                                )
 
         else:
             to = text_data_json['to']           # This is the username of the user to which the message is to be sent
@@ -168,6 +194,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_msg = ChatMessage.objects.get(id=msg_id)
         chat_msg.recipients.add(self.user)
         chat_msg.save()
+        if self.user != chat_msg.user:
+            return True, chat_msg.id ,chat_msg.user
+        else: 
+            return False, chat_msg.id, None
+
 
     @database_sync_to_async
     def create_chat_message(self, message, to):
@@ -179,22 +210,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     async def chat_message(self,event):
 
-        to_username = event['message']['to']
-        from_username = event['message']['from']
+        if 'received' in event['message']:
+            print(event)
+            to_user_obj = await self.get_user_from_username(event['message']['to'])
+            if self.user == to_user_obj:
 
-        to_user_obj = await self.get_user_from_username(to_username)
-        from_user_obj = await self.get_user_from_username(from_username)
+                json_data = json.dumps({'received':event['message']['received'],'name':event['message']['from']})
+                await self.send(text_data=json_data)
 
-        if self.user == to_user_obj or self.user == from_user_obj:
-            json_data = json.dumps(event['message'])
-            await self.send(text_data=json_data)
+        else:
+            to_username = event['message']['to']
+            from_username = event['message']['from']
+
+            to_user_obj = await self.get_user_from_username(to_username)
+            from_user_obj = await self.get_user_from_username(from_username)
+
+            if self.user == to_user_obj or self.user == from_user_obj:
+                json_data = json.dumps(event)
+                await self.send(text_data=json_data)
 
 
     @database_sync_to_async
     def get_user_from_username(self, username):
         return User.objects.get(username=username)
 
-    
     async def disconnect(self, close_code):
         await self.update_user_offline(self.user)
 

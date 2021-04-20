@@ -158,3 +158,9 @@ class ChatMessage(models.Model):
         if self.recipients.all().count() == 2:
             return True
         return False
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, related_name="to", on_delete=models.CASCADE)
+    chat_id = models.IntegerField()
+    chat_from = models.CharField(max_length=30)
+

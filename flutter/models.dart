@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 
 part 'models.g.dart';
 
-@HiveType(typeId: 0)
+@HiveType(typeId:0)
 class User extends HiveObject{
 
   @HiveField(0)
@@ -13,7 +13,7 @@ class User extends HiveObject{
   User({this.name});
 }
 
-@HiveType(typeId: 1)
+@HiveType(typeId:1)
 class ChatMessage extends HiveObject{
 
   @HiveField(0)
@@ -28,7 +28,13 @@ class ChatMessage extends HiveObject{
   @HiveField(3)
   String senderName;
 
-  ChatMessage({this.thread,this.message,this.time,this.senderName});
+  @HiveField(4)
+  bool haveReceived=false;
+
+  @HiveField(5)
+  int id;
+
+  ChatMessage({this.thread,this.message,this.time,this.id,this.senderName});
 }
 
 
@@ -56,6 +62,17 @@ class Thread extends HiveObject{
 
   List<ChatMessage> getChatList(){
     return chatList;
+  }
+
+bool updateChatStatus(id){
+    for(int i=0;i<chatList.length;i++){
+      if(chatList[chatList.length-1-i].id==id){
+        chatList[chatList.length-1-i].haveReceived = true;
+        return true;
+      }
+  
+  }
+  return false;
   }
 
 }
