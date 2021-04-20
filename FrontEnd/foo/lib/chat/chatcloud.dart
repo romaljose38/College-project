@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:testproj/models.dart';
+import 'package:foo/models.dart';
 
 
 class ChatCloud extends StatelessWidget {

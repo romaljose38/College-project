@@ -9,29 +9,20 @@ import 'dart:convert';
 import 'listscreen.dart';
 
 
-class JustForTest extends StatelessWidget {
 
-  // final NotificationController controller = NotificationController();
 
-  @override
-  Widget build(BuildContext context) {
-    return Renderer();
+
+class ChatRenderer extends StatefulWidget {
   
-}
-}
 
 
-class Renderer extends StatefulWidget {
-
-
-
-  Renderer({Key key}) : super(key:key);
+  ChatRenderer({Key key}) : super(key:key);
 
   @override
-  _RendererState createState() => _RendererState();
+  _ChatRendererState createState() => _ChatRendererState();
 }
 
-class _RendererState extends State<Renderer> {
+class _ChatRendererState extends State<ChatRenderer> {
    
   SharedPreferences prefs;
 
@@ -53,8 +44,7 @@ class _RendererState extends State<Renderer> {
   //To access the username throughout the project.
   void _setPrefs() async{
     prefs = await SharedPreferences.getInstance();
-    prefs.setString('user', 'romal');
-    print(prefs.getString('user'));
+    print(prefs.getString('username'));
    
   }
 
@@ -67,7 +57,7 @@ class _RendererState extends State<Renderer> {
       message:data['message']['message'],
       senderName:data['message']['from'],
       time:DateTime.now(),
-      isMe:true,
+      isMe:false,
       id:data['message']['id'],
       ));
     thread.save();
@@ -102,7 +92,7 @@ class _RendererState extends State<Renderer> {
         ChatMessage(message:data['message']['message'],
         senderName:data['message']['from'],
         time:DateTime.now(),
-        isMe:true,
+        isMe:false,
         id:data['message']['id'],
         ));  
       existingThread.save();

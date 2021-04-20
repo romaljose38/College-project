@@ -6,6 +6,11 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Renderer extends StatefulWidget {
+
+  SharedPreferences prefs;
+
+  Renderer({Key key,this.prefs});
+
   @override
   _RendererState createState() => _RendererState();
 }
@@ -46,7 +51,7 @@ class _RendererState extends State<Renderer> {
 
   @override
   Widget build(BuildContext context) {
-    return prefs.containesKey("loggedIn") ? RegisterView() : LandingPage();
+    return widget.prefs.containsKey("loggedIn") ? LandingPageProxy(): RegisterView() ;
   }
 }
 

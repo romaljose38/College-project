@@ -1,5 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:foo/chat/render.dart';
+import 'package:foo/chat/socket.dart';
 import 'package:foo/colour_palette.dart';
+import 'package:foo/main.dart';
+
+
+
+class LandingPageProxy extends StatelessWidget {
+
+  NotificationController controller = NotificationController();
+
+  @override
+  Widget build(BuildContext context) {
+    return LandingPage();
+  }
+}
+
+
 
 class LandingPage extends StatefulWidget {
   @override
@@ -11,7 +28,7 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Palette.lavender,
-      body: Center(child: Text("hello"),),
+      body:ChatRenderer(),
     );
   }
 }

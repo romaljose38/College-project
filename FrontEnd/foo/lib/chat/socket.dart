@@ -1,13 +1,17 @@
 import 'dart:io';
 import 'dart:async';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class NotificationController {
 
   static final NotificationController _singleton = new NotificationController._internal();
 
   static StreamController streamController = new StreamController.broadcast(sync: true);
 
-  String wsUrl = 'ws://10.0.2.2:8000/ws/chat_room/romal/';
+  String wsUrl = 'ws://10.0.2.2:8000/ws/chat_room/';
+
+  String username;
 
   static WebSocket channel;
   static bool isActive = false;
@@ -17,7 +21,13 @@ class NotificationController {
   }
 
   NotificationController._internal() {
+    getUserName();
     initWebSocketConnection();
+  }
+
+  getUserName() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+      this.username = prefs.getString('username')+'/';
   }
 
   initWebSocketConnection() async {
@@ -56,7 +66,7 @@ class NotificationController {
 
   connectWs() async{
     try {
-      return await WebSocket.connect(wsUrl);
+      return await WebSocket.connect(wsUrl+this.username);
     } catch  (e) {
       NotificationController.isActive=false;
       print("Error! can not connect WS connectWs " + e.toString());

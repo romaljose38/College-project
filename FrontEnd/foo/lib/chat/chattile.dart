@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:testproj/chat/socket.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import 'chatscreen.dart';
-import 'package:testproj/models.dart';
+import 'package:foo/models.dart';
 import 'package:intl/intl.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_listener/hive_listener.dart';
 
 
 class ChatTile extends StatelessWidget {

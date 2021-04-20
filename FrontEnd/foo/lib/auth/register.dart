@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'elevatedgradientbutton.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
-
 import 'registertextformfield.dart';
+
+import 'package:foo/test_cred.dart';
+
 //import 'registerinputdecoration.dart';
 
 class RegisterView extends StatelessWidget {
@@ -97,7 +100,7 @@ class _RegisterFormState extends State<RegisterForm> {
 
   //This function handles the http post request to the server
   Future<void> httpPostRegisterData() async {
-    var url = Uri.http("192.168.1.38:8000", "/api/register");
+    var url = Uri.http(localhost, "api/register");
     var response = await http.post(
       url,
       headers: <String, String>{
@@ -107,12 +110,23 @@ class _RegisterFormState extends State<RegisterForm> {
     );
 
     if (response.statusCode == 400) {
-      //var jsonResponse = convert.jsonDecode(response.body);
-      print("Error in some field. Check again!");
+      var jsonResponse = convert.jsonDecode(response.body);
+      print(jsonResponse);
     }
     else if(response.statusCode == 200){
       var data = convert.jsonDecode(response.body);
       print(data);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      data.forEach((key,value){
+        if(key=="uprn"){
+          prefs.setInt(key, value);
+        }
+        else{
+        prefs.setString(key, value);
+        }
+      });
+      prefs.setBool('loggedIn', true);
+      Navigator.pushNamed(context, '/landingPage');
     }
     print(response);
   }
@@ -142,11 +156,11 @@ class _RegisterFormState extends State<RegisterForm> {
     return Form(
       key: _formKey,
       child: Container(
-        padding: EdgeInsets.fromLTRB(30, 40, 30, 20),
+        margin:EdgeInsets.fromLTRB(30, 40, 30, 20), 
         child: SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * .85),
+                maxHeight: MediaQuery.of(context).size.height),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(

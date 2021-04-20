@@ -1,15 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:testproj/chat/chatcloudlist.dart';
-import 'package:testproj/chat/socket.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'chatcloud.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:flutter/material.dart';
+import 'chatcloudlist.dart';
+import 'socket.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:testproj/models.dart';
+import 'package:foo/models.dart';
 import 'package:hive_listener/hive_listener.dart';
 import 'package:hive/hive.dart';
 
@@ -27,18 +21,11 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  List _chatList = [];
   String curUser;
   String otherUser;
   String threadName;
   TextEditingController _chatController = TextEditingController();
-  ScrollController _scrollController = ScrollController();
   Thread thread;
-  // Stream stream;
-  // _updateList(data){
-  //   print(data);
-  //   _chatList.add(ChatCloud("Hello",self:true));
-  // }
 
   @override
   void initState(){
@@ -46,7 +33,6 @@ class _ChatScreenState extends State<ChatScreen> {
     otherUser = widget.thread.second.name;
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
-    _chatList = widget.thread.chatList;
     thread = Hive.box('threads').get(threadName);
     // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     //Gets the username of the logged in user.
