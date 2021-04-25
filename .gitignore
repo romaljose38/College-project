@@ -2,3 +2,5 @@ FrontEnd/foo/build/
 db.sqlite3
 *.pyc
 .vscode
+*.png
+*.jpg
