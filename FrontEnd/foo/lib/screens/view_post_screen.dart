@@ -118,7 +118,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                         width: double.infinity,
                         height: 471.0,
                         decoration: BoxDecoration(
-                          color: Colors.transparent,
+                          color: Colors.black.withOpacity(.3),
                           borderRadius: BorderRadius.circular(25.0),
                         ),
                         child: Column(
@@ -132,7 +132,10 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                         MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       IconButton(
-                                        icon: Icon(Icons.arrow_back),
+                                        icon: Icon(
+                                          Icons.arrow_back,
+                                          color: Colors.white,
+                                        ),
                                         iconSize: 20.0,
                                         color: Colors.black,
                                         onPressed: () => Navigator.pop(context),
@@ -164,7 +167,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                       ),
                                       IconButton(
                                         icon: Icon(Feed.colon),
-                                        color: Colors.black,
+                                        color: Colors.white,
                                         onPressed: () => print('More'),
                                       ),
                                     ],
@@ -174,6 +177,10 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                     child: Container(
                                       height: 330,
                                       width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(.3),
+                                        borderRadius: BorderRadius.circular(25),
+                                      ),
                                       margin:
                                           EdgeInsets.fromLTRB(18, 10, 18, 5),
                                       child: AspectRatio(
@@ -192,7 +199,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                             image: DecorationImage(
                                               image: AssetImage(
                                                   widget.post.imageUrl),
-                                              fit: BoxFit.fitWidth,
+                                              fit: BoxFit.contain,
                                             ),
                                           ),
                                         ),
@@ -212,7 +219,9 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                               children: <Widget>[
                                                 IconButton(
                                                   icon: Icon(
-                                                      Ionicons.heart_outline),
+                                                    Ionicons.heart_outline,
+                                                    color: Colors.white,
+                                                  ),
                                                   iconSize: 25.0,
                                                   onPressed: () =>
                                                       print('Like post'),
@@ -222,6 +231,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                                   style: TextStyle(
                                                     fontSize: 12.0,
                                                     fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
                                                   ),
                                                 ),
                                               ],
@@ -231,7 +241,8 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                               children: <Widget>[
                                                 IconButton(
                                                   icon: Icon(
-                                                      Ionicons.chatbox_outline),
+                                                      Ionicons.chatbox_outline,
+                                                      color: Colors.white),
                                                   iconSize: 25.0,
                                                   onPressed: () {
                                                     print('Chat');
@@ -240,17 +251,20 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                                 Text(
                                                   '350',
                                                   style: TextStyle(
-                                                    fontSize: 12.0,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.white),
                                                 ),
                                               ],
                                             ),
                                           ],
                                         ),
                                         IconButton(
-                                          icon:
-                                              Icon(Ionicons.bookmarks_outline),
+                                          icon: Icon(
+                                            Ionicons.bookmarks_outline,
+                                            color: Colors.white,
+                                          ),
                                           iconSize: 25.0,
                                           onPressed: () => print('Save post'),
                                         ),

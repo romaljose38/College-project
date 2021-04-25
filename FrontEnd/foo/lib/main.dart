@@ -40,6 +40,9 @@ class MyApp extends StatelessWidget {
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
       home: Renderer(prefs: prefs),
+
     );
   }
 }
+
+
