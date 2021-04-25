@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foo/upload_screen.dart';
 import 'initialscreen.dart';
 import 'router.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,8 +9,8 @@ import 'dart:io';
 import 'package:hive/hive.dart';
 import 'package:foo/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-Future<void> main() async {
 
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   Directory directory = await pathProvider.getApplicationDocumentsDirectory();
@@ -23,11 +24,10 @@ Future<void> main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
   await Firebase.initializeApp();
-  runApp(MyApp(prefs:prefs));
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatelessWidget {
-
   SharedPreferences prefs;
 
   MyApp({this.prefs});
@@ -37,10 +37,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Foo Register',
-      theme: ThemeData.dark(),
+      // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
-      home:Renderer(prefs:prefs),
+      home: Renderer(prefs: prefs),
     );
   }
 }
-
