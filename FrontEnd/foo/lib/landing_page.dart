@@ -30,17 +30,15 @@ class _LandingPageState extends State<LandingPage>
     with TickerProviderStateMixin {
   AnimationController animationController;
   Animation animation;
+  OverlayEntry overlayEntry;
 
   @override
   void initState() {
     super.initState();
     animationController = AnimationController(
       vsync: this,
-      duration: Duration(microseconds: 500),
+      duration: Duration(microseconds: 200),
     );
-    animationController.addListener(() {
-      setState(() {});
-    });
     animation =
         Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
   }
@@ -49,88 +47,107 @@ class _LandingPageState extends State<LandingPage>
 
   showOverlay(BuildContext context) {
     OverlayState overlayState = Overlay.of(context);
-    OverlayEntry overlayEntry = OverlayEntry(
+    overlayEntry = OverlayEntry(
       builder: (context) => Scaffold(
         backgroundColor: Colors.black.withOpacity(.3),
         body: FadeTransition(
-            opacity: animation,
-                  child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Column(
+          opacity: animation,
+          child: GestureDetector(
+            onTap: () {
+              animationController
+                  .reverse()
+                  .whenComplete(() => {overlayEntry.remove()});
+            },
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: Colors.transparent,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
-                      icon: Icon(
-                        Ionicons.image_outline,
-                        color: Colors.white,
-                        size: 30,
+                    InkWell(
+                      onTap: () {},
+                      child: Column(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Ionicons.image_outline,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: () {},
+                          ),
+                          Text(
+                            "Image",
+                            style: GoogleFonts.raleway(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 25,
+                            ),
+                          ),
+                        ],
                       ),
-                      onPressed: () {},
                     ),
-                    Text(
-                      "Image",
-                      style: GoogleFonts.raleway(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 25,
+                    InkWell(
+                      onTap: () {},
+                      child: Column(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Ionicons.videocam_outline,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: () {},
+                          ),
+                          Text(
+                            "Video",
+                            style: GoogleFonts.raleway(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 25,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {},
+                      child: Column(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Ionicons.camera_outline,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: () {},
+                          ),
+                          Text(
+                            "Camera",
+                            style: GoogleFonts.raleway(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 25,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                Column(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Ionicons.videocam_outline,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                      onPressed: () {},
-                    ),
-                    Text(
-                      "Video",
-                      style: GoogleFonts.raleway(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 25,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Ionicons.camera_outline,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                      onPressed: () {},
-                    ),
-                    Text(
-                      "Camera",
-                      style: GoogleFonts.raleway(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 25,
-                      ),
-                    ),
-                  ],
-                ),
-                
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
     animationController.addListener(() {
-      overlayState.setState((){});
+      overlayState.setState(() {});
     });
     animationController.forward();
     overlayState.insert(overlayEntry);
-  
   }
 
   @override
@@ -170,7 +187,6 @@ class _LandingPageState extends State<LandingPage>
           ),
         ),
       ),
-
       bottomNavigationBar: BottomAppBar(
           color: Colors.white,
           shape: CircularNotchedRectangle(),
@@ -208,8 +224,6 @@ class _LandingPageState extends State<LandingPage>
               ],
             ),
           )),
-      
     );
   }
 }
-
