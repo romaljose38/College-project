@@ -168,17 +168,48 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                                 )
 
         else:
-            to = text_data_json['to']           # This is the username of the user to which the message is to be sent
-            msg = text_data_json['message']
+            to = text_data_json['to']
+            if(text_data_json['type']=='msg'):           # This is the username of the user to which the message is to be sent
+                msg = text_data_json['message']
 
-            chat_msg_id = await self.create_chat_message(message=msg,to=to)
+                chat_msg_id = await self.create_chat_message(message=msg,to=to)
             
-            message = {
-                'message':msg,
-                'to':to,
-                'id':chat_msg_id,
-                'from':self.user.username  # This line is not needed in production; only for debugging
-            }
+                message = {
+                    'message':msg,
+                    'to':to,
+                    'id':chat_msg_id,
+                    'from':self.user.username  # This line is not needed in production; only for debugging
+                }
+
+
+            elif(text_data_json['type']=='aud'):
+                aud = text_data_json['audio']
+                extension = text_data_json['ext']
+
+                chat_msg_id = await self.create_chat_audio(aud_string=aud,to=to,ext=extension)
+                
+                message = {
+                    'aud':img,
+                    'ext':extension,
+                    'to':to,
+                    'id':chat_msg_id,
+                    'from':self.user.username  # This line is not needed in production; only for debugging
+                }
+
+
+            elif(text_data_json['type']=='img'):
+                img = text_data_json['image']
+                extension = text_data_json['ext']
+
+                chat_msg_id = await self.create_chat_image(img_string=img,to=to,ext=extension)
+           
+                message = {
+                    'img':img,
+                    'ext':extension,
+                    'to':to,
+                    'id':chat_msg_id,
+                    'from':self.user.username  # This line is not needed in production; only for debugging
+                }
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -203,7 +234,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def create_chat_message(self, message, to):
         thread = Thread.objects.get_or_new(self.user,to)
-        cur_message = ChatMessage.objects.create(user=self.user, message=message, thread=thread)
+        cur_message = ChatMessage.objects.create(user=self.user, message=message, thread=thread, msg_type="msg")
+        cur_message.save()
+        return cur_message.id
+
+
+    @database_sync_to_async
+    def create_chat_audio(self, aud_string, to, ext):
+        thread = Thread.objects.get_or_new(self.user,to)
+        cur_message = ChatMessage.objects.create(user=self.user, base64string=aud_string, thread=thread, msg_type="aud", extension=ext)
+        cur_message.save()
+        return cur_message.id
+
+
+    @database_sync_to_async
+    def create_chat_image(self, img_string, to, ext):
+        thread = Thread.objects.get_or_new(self.user,to)
+        cur_message = ChatMessage.objects.create(user=self.user, base64string=img_string, thread=thread, msg_type="img", extension=ext)
         cur_message.save()
         return cur_message.id
 
@@ -219,6 +266,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json_data)
 
         else:
+            if 'aud' in event['message']:
+                event['type']='aud'
+            elif 'img' in event['message']:
+                event['type']='img'
+            elif 'message' in event['message']:
+                event['type']='txt'
             to_username = event['message']['to']
             from_username = event['message']['from']
 

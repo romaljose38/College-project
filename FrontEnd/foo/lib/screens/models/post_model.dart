@@ -40,7 +40,5 @@ final List<String> stories = [
   'assets/images/user3.png',
   'assets/images/user4.png',
   'assets/images/user0.png',
-  'assets/images/user5.png',
-  'assets/images/user6.jpg',
   'assets/images/user3.png',
 ];

@@ -31,14 +31,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 child: child,
               );
             }));
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (_) => ViewPostScreen(
-        //       post: posts[index],
-        //     ),
-        //   ),
-        // );
+
       },
       child: Container(
           height: 280,
@@ -341,27 +334,6 @@ class _FeedScreenState extends State<FeedScreen> {
           _buildPost(2),
         ],
       ),
-      // bottomNavigationBar: BottomNavigationBar(
-      //   showSelectedLabels: false,
-      //   showUnselectedLabels: false,
-      //   items: [
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon: Icon(Ionicons.home_outline, size: 25, color: Colors.black)),
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon:
-      //             Icon(Ionicons.search_outline, size: 25, color: Colors.black)),
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon:
-      //             Icon(Ionicons.person_outline, size: 25, color: Colors.black)),
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon: Icon(Ionicons.settings_outline,
-      //             size: 25, color: Colors.black)),
-      //   ],
-      // ),
     );
   }
 }

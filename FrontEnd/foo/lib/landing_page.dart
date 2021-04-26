@@ -1,13 +1,15 @@
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/chat/render.dart';
 import 'package:foo/chat/socket.dart';
 import 'package:foo/colour_palette.dart';
-import 'package:foo/main.dart';
 import 'package:foo/profile/profile.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/upload_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 
 class LandingPageProxy extends StatelessWidget {
@@ -24,8 +26,112 @@ class LandingPage extends StatefulWidget {
   _LandingPageState createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> {
+class _LandingPageState extends State<LandingPage>
+    with TickerProviderStateMixin {
+  AnimationController animationController;
+  Animation animation;
+
+  @override
+  void initState() {
+    super.initState();
+    animationController = AnimationController(
+      vsync: this,
+      duration: Duration(microseconds: 500),
+    );
+    animationController.addListener(() {
+      setState(() {});
+    });
+    animation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
+  }
+
   int _page = 0;
+
+  showOverlay(BuildContext context) {
+    OverlayState overlayState = Overlay.of(context);
+    OverlayEntry overlayEntry = OverlayEntry(
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.black.withOpacity(.3),
+        body: FadeTransition(
+            opacity: animation,
+                  child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Ionicons.image_outline,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                      onPressed: () {},
+                    ),
+                    Text(
+                      "Image",
+                      style: GoogleFonts.raleway(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 25,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Ionicons.videocam_outline,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                      onPressed: () {},
+                    ),
+                    Text(
+                      "Video",
+                      style: GoogleFonts.raleway(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 25,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Ionicons.camera_outline,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                      onPressed: () {},
+                    ),
+                    Text(
+                      "Camera",
+                      style: GoogleFonts.raleway(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 25,
+                      ),
+                    ),
+                  ],
+                ),
+                
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    animationController.addListener(() {
+      overlayState.setState((){});
+    });
+    animationController.forward();
+    overlayState.insert(overlayEntry);
+  
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +158,13 @@ class _LandingPageState extends State<LandingPage> {
             child: IconButton(
               icon: Icon(Ionicons.add, color: Colors.black, size: 20),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => UploadScreen(),
-                  ),
-                );
+                showOverlay(context);
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (_) => UploadScreen(),
+                //   ),
+                // );
               },
             ),
           ),
@@ -101,31 +208,8 @@ class _LandingPageState extends State<LandingPage> {
               ],
             ),
           )),
-      // bottomNavigationBar: BottomNavigationBar(
-      //   showSelectedLabels: false,
-      //   showUnselectedLabels: false,
-      //   items: [
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon: Icon(Ionicons.home_outline, size: 25, color: Colors.black)),
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon:Icon(Ionicons.search_outline, size: 25, color: Colors.black)),
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon:Icon(Ionicons.person_outline, size: 25, color: Colors.black)),
-      //     BottomNavigationBarItem(
-      //         label: "",
-      //         icon: Icon(Ionicons.settings_outline,
-      //             size: 25, color: Colors.black)),
-      //   ],
-      //  onTap: (index) {
-      //       setState(() {
-      //         _page = index;
-      //       });
-      //     },
-      // ),
+      
     );
   }
 }
-// ChatRenderer()
+

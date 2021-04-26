@@ -148,11 +148,17 @@ class Thread(models.Model):
 
 
 class ChatMessage(models.Model):
+
+    MSG_TYPES = (('msg','msg'),('img','img'),('aud','aud'))
+
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     user   = models.ForeignKey(User, related_name="sender", on_delete=models.CASCADE)
-    message = models.TextField()
+    message = models.TextField(null=True,blank=True)
     time_created = models.DateTimeField(auto_now_add=True)
     recipients = models.ManyToManyField(User)
+    msg_type = models.CharField(max_length=3,null=True,blank=True,choices=MSG_TYPES)
+    base64string = models.TextField(null=True,blank=True)
+    extension = models.CharField(max_length=10,null=True,blank=True)
 
     def received(self):
         if self.recipients.all().count() == 2:
