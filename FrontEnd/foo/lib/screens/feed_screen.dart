@@ -19,19 +19,10 @@ class _FeedScreenState extends State<FeedScreen> {
     return InkWell(
       onDoubleTap: () => print('Like post'),
       onTap: () {
-        Navigator.of(context).push(PageRouteBuilder(
-            pageBuilder: (context, animation, anotherAnimation) {
-              return ViewPostScreen(post: posts[index]);
-            },
-            transitionDuration: Duration(milliseconds: 100),
-            transitionsBuilder: (context, animation, anotherAnimation, child) {
-              return SlideTransition(
-                position: Tween(begin: Offset(1.0, 0.0), end: Offset(0.0, 0.0))
-                    .animate(animation),
-                child: child,
-              );
-            }));
-
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => ViewPostScreen(post: posts[index],index:index)));
       },
       child: Container(
           height: 280,
@@ -65,22 +56,25 @@ class _FeedScreenState extends State<FeedScreen> {
                 // margin: EdgeInsets.all(10),
                 child: AspectRatio(
                   aspectRatio: 4 / 5,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black45,
-                          offset: Offset(0, 5),
-                          blurRadius: 8.0,
+                  child: Hero(
+                    tag:'profile_$index',
+                                      child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black45,
+                            offset: Offset(0, 5),
+                            blurRadius: 8.0,
+                          ),
+                        ],
+                        image: DecorationImage(
+                          image: AssetImage(posts[index].imageUrl),
+                          fit: BoxFit.fitWidth,
                         ),
-                      ],
-                      image: DecorationImage(
-                        image: AssetImage(posts[index].imageUrl),
-                        fit: BoxFit.fitWidth,
                       ),
+                      // child:BackdropFilter(filter: ImageFilter.blur(sigmaX:10,sigmaY:10),)
                     ),
-                    // child:BackdropFilter(filter: ImageFilter.blur(sigmaX:10,sigmaY:10),)
                   ),
                 ),
               ),
@@ -154,18 +148,19 @@ class _FeedScreenState extends State<FeedScreen> {
                     ),
                   ),
                   Container(
-                    height:300,
-                    child: CarouselSlider(
-                      items: [_img(0), _img(1), _img(2)],
-                      options: CarouselOptions(
-                        height: 300,
-                        autoPlay: false,
-                        enlargeCenterPage: true,
-                        viewportFraction: 0.9,
-                        aspectRatio:5/4,
-                        initialPage: 2,
-                      ),
-                    ),
+                    height: 300,
+                    child:_img(index),
+                    // child: CarouselSlider(
+                    //   items: [_img(0), _img(1), _img(2)],
+                    //   options: CarouselOptions(
+                    //     height: 300,
+                    //     autoPlay: false,
+                    //     enlargeCenterPage: true,
+                    //     viewportFraction: 0.9,
+                    //     aspectRatio: 5 / 4,
+                    //     initialPage: 2,
+                    //   ),
+                    // ),
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.0),

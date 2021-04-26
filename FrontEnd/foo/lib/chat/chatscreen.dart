@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'chatcloudlist.dart';
 import 'socket.dart';
@@ -82,23 +85,30 @@ class _ChatScreenState extends State<ChatScreen> {
       _chatController.text="";
     }
   }
-  void _sendImage() {
-    
-    // print(widget.channel.protocol);
+  void _sendImage() async{
+    FilePickerResult result = await  FilePicker.platform.pickFiles(); 
+    File file = File(result.files.single.path);
+    String _extension = file.path.split('.').last;
+    var bytes =await file.readAsBytes();
+    String imgString = base64Encode(bytes);
+    print(imgString);
+
     var data = jsonEncode({
-      'message':_chatController.text,
+      'type':'aud',
+      'ext':_extension,
+      'audio':imgString,
       'from':curUser,
       'to':otherUser,
     });
-    if (_chatController.text.isNotEmpty) {
-      if(NotificationController.isActive){
-      NotificationController.sendToChannel(data);
-      }
-      else{
-        print("not connected");
-      }
-      _chatController.text="";
-    }
+    // if (_chatController.text.isNotEmpty) {
+    //   if(NotificationController.isActive){
+    //   NotificationController.sendToChannel(data);
+    //   }
+    //   else{
+    //     print("not connected");
+    //   }
+    //   _chatController.text="";
+    // }
   }
   
 
@@ -219,7 +229,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                       IconButton(icon: Icon(Icons.image_outlined), 
-                      onPressed:_sendMessage,
+                      onPressed:_sendImage,
                       splashColor: Colors.pinkAccent,
                       splashRadius: 16,
                       padding:EdgeInsets.fromLTRB(0, 0, 0, 16),),

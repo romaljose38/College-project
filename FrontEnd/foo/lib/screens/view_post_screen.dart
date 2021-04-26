@@ -10,8 +10,9 @@ import 'feed_icons.dart';
 
 class ViewPostScreen extends StatefulWidget {
   final Post post;
+  final int index;
 
-  ViewPostScreen({@required this.post});
+  ViewPostScreen({@required this.post,this.index});
 
   @override
   _ViewPostScreenState createState() => _ViewPostScreenState();
@@ -185,21 +186,24 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                           EdgeInsets.fromLTRB(18, 10, 18, 5),
                                       child: AspectRatio(
                                         aspectRatio: 4 / 5,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(25.0),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black45,
-                                                offset: Offset(0, 3),
-                                                blurRadius: 8.0,
+                                        child: Hero(
+                                        tag:"profile_${widget.index}",
+                                                                                  child: Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(25.0),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black45,
+                                                  offset: Offset(0, 3),
+                                                  blurRadius: 8.0,
+                                                ),
+                                              ],
+                                              image: DecorationImage(
+                                                image: AssetImage(
+                                                    widget.post.imageUrl),
+                                                fit: BoxFit.contain,
                                               ),
-                                            ],
-                                            image: DecorationImage(
-                                              image: AssetImage(
-                                                  widget.post.imageUrl),
-                                              fit: BoxFit.contain,
                                             ),
                                           ),
                                         ),
