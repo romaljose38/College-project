@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'chatcloud.dart';
 import 'dart:async';
 
+import 'mediacloud.dart';
+
 
 class ChatCloudList extends StatefulWidget {
 
@@ -57,18 +59,13 @@ ScrollController _scrollController = ScrollController();
         itemCount: widget.chatList.length??0,
         itemBuilder: (context,index){
           final reversedIndex = widget.chatList.length -1-index;
-          // print(widget.chatList[reversedIndex].senderName);
-          print(widget.chatList[reversedIndex].isMe);
+
+          if(widget.chatList[reversedIndex].msgType=="txt"){
             return ChatCloud(msgObj: widget.chatList[reversedIndex]);
-          // print(curUser);
-          // if(widget.chatList[reversedIndex].senderName == curUser){
-          //   // print('me');
-          //   return ChatCloud(msgObj:widget.chatList[reversedIndex],self:true);
-          // }
-          // else{
-            
-          //   return ChatCloud(msgObj:widget.chatList[reversedIndex],self:false);
-          // }
+          }
+          else{
+             return MediaCloud(msgObj: widget.chatList[reversedIndex]);
+          }
         }
         );
   }

@@ -46,7 +46,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _getUserName() async{
     SharedPreferences _prefs = await SharedPreferences.getInstance();
-      curUser= _prefs.getString('user');
+      curUser= _prefs.getString('username');
+      print(_prefs.getString('username'));
+      print(_prefs.getString('user'));
+
   }
   
   void _sendMessage() {
@@ -88,7 +91,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendImage() async{
     FilePickerResult result = await  FilePicker.platform.pickFiles(); 
     File file = File(result.files.single.path);
-    String _extension = file.path.split('.').last;
+    
+    String _extension = result.files.single.extension;
     var bytes =await file.readAsBytes();
     String imgString = base64Encode(bytes);
     print(imgString);
@@ -100,10 +104,12 @@ class _ChatScreenState extends State<ChatScreen> {
       'from':curUser,
       'to':otherUser,
     });
+    print(data);
+    if(NotificationController.isActive){
+      NotificationController.sendToChannel(data);
+      }
     // if (_chatController.text.isNotEmpty) {
-    //   if(NotificationController.isActive){
-    //   NotificationController.sendToChannel(data);
-    //   }
+    //   
     //   else{
     //     print("not connected");
     //   }

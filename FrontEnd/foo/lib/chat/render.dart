@@ -37,7 +37,7 @@ class _ChatRendererState extends State<ChatRenderer> {
   _chicanery(threadName,thread,data) async {
     var box = Hive.box("Threads");
     await box.put(threadName, thread);
-    if(data['type']=='txt'){
+    if(data['msg_type']=='txt'){
     thread.addChat(ChatMessage(
       message: data['message']['message'],
       senderName: data['message']['from'],
@@ -47,7 +47,7 @@ class _ChatRendererState extends State<ChatRenderer> {
       id: data['message']['id'],
     ));
     }
-    else if(data['type']=='img'){
+    else if(data['msg_type']=='img'){
     thread.addChat(ChatMessage(
       base64string: data['message']['img'],
       senderName: data['message']['from'],
@@ -57,7 +57,7 @@ class _ChatRendererState extends State<ChatRenderer> {
       id: data['message']['id'],
     ));
     } 
-    else if(data['type']=='aud'){
+    else if(data['msg_type']=='aud'){
     thread.addChat(ChatMessage(
       base64string: data['message']['aud'],
       senderName: data['message']['from'],
@@ -75,7 +75,7 @@ class _ChatRendererState extends State<ChatRenderer> {
       return null;
     }
     var threadBox = Hive.box('Threads');
-    var me = prefs.getString('user');
+    var me = prefs.getString('username');
 
     //Creating thread with the given data
     var thread = Thread(
@@ -94,7 +94,7 @@ class _ChatRendererState extends State<ChatRenderer> {
       print("existing thread");
       print(data['message']['id']);
       var existingThread = threadBox.get(threadName);
-      if (data['type'] == 'txt') {
+      if (data['msg_type'] == 'txt') {
 
         existingThread.addChat(ChatMessage(
           message: data['message']['message'],
@@ -107,7 +107,7 @@ class _ChatRendererState extends State<ChatRenderer> {
         ));
 
       }
-      else if(data['type'] == 'aud'){
+      else if(data['msg_type'] == 'aud'){
         existingThread.addChat(ChatMessage(
           base64string: data['message']['aud'],
           senderName: data['message']['from'],
@@ -118,7 +118,7 @@ class _ChatRendererState extends State<ChatRenderer> {
           id: data['message']['id'],
         ));
       }
-      else if(data['type'] == 'img'){
+      else if(data['msg_type'] == 'img'){
         existingThread.addChat(ChatMessage(
           base64string: data['message']['img'],
           senderName: data['message']['from'],
@@ -136,21 +136,46 @@ class _ChatRendererState extends State<ChatRenderer> {
     return list;
   }
 
-  _chicaneryForMe(
-    threadName,
-    thread,
-    data,
-  ) async {
-    var me = prefs.getString('user');
+  _chicaneryForMe(threadName,thread,data) async {
+    var me = prefs.getString('username');
     var box = Hive.box("Threads");
     await box.put(threadName, thread);
+    if(data['msg_type']=="txt"){
+
     thread.addChat(ChatMessage(
         message: data['message']['message'],
         senderName: me,
         id: data['message']['id'],
         isMe: true,
+        msgType: "txt",
+        time: DateTime.now(),));
+   
+
+    }
+    else if(data['msg_type']=="aud"){
+
+    thread.addChat(ChatMessage(
+        base64string: data['message']['aud'],
+        senderName: me,
+        id: data['message']['id'],
+        isMe: true,
+        ext: data['message']['ext'],
+        msgType: "aud",
         time: DateTime.now()));
-    thread.save();
+    }
+    else if(data['msg_type']=="img"){
+
+    thread.addChat(ChatMessage(
+        base64string: data['message']['img'],
+        senderName: me,
+        id: data['message']['id'],
+        isMe: true,
+        ext: data['message']['ext'],
+        msgType: "aud",
+        time: DateTime.now()));
+    
+  }
+   thread.save();
   }
 
   Future _createThreadForMe(data) async {
@@ -158,7 +183,7 @@ class _ChatRendererState extends State<ChatRenderer> {
       return null;
     }
     var threadBox = Hive.box('Threads');
-    var me = prefs.getString('user');
+    var me = prefs.getString('username');
 
     //Creating thread with the given data
     var thread = Thread(
@@ -174,13 +199,42 @@ class _ChatRendererState extends State<ChatRenderer> {
     } else {
       print("existing thread");
       var existingThread = threadBox.get(threadName);
+      if(data['msg_type']=='txt'){
+
       existingThread.addChat(ChatMessage(
           message: data['message']['message'],
           senderName: me,
           id: data['message']['id'],
+          msgType: "txt",
           isMe: true,
           time: DateTime.now()));
-      existingThread.save();
+      
+    }
+    else if(data['msg_type']=='aud'){
+
+      existingThread.addChat(ChatMessage(
+          base64string: data['message']['aud'],
+          senderName: me,
+          time: DateTime.now(),
+          ext:data['message']['ext'],
+          msgType:"aud",
+          isMe: true,
+          id: data['message']['id'],
+        ));
+    }
+    else if(data['msg_type']=='img'){
+      
+      existingThread.addChat(ChatMessage(
+          base64string: data['message']['img'],
+          senderName: data['message']['from'],
+          time: DateTime.now(),
+          ext:data['message']['ext'],
+          msgType:"img",
+          isMe: true,
+          id: data['message']['id'],
+        ));
+    }
+    existingThread.save();
     }
 
     List list = threadBox.values.toList();
@@ -188,7 +242,7 @@ class _ChatRendererState extends State<ChatRenderer> {
   }
 
   void _updateChatStatus(int id, String name) {
-    String me = prefs.getString('user');
+    String me = prefs.getString('username');
     String threadName = me + '_' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
@@ -210,13 +264,18 @@ class _ChatRendererState extends State<ChatRenderer> {
                 print(data);
                 _updateChatStatus(data['received'], data['name']);
                 return ChatListScreen(threads: threadList);
-              } else if (data['message']['to'] == prefs.getString('user')) {
+              } 
+              else if ((prefs.containsKey('lastMsgId') & (prefs.getInt('lastMsgId')!=data['message']['id'])) | !prefs.containsKey('lastMsgId')){
+                prefs.setInt("lastMsgId",data['message']['id']);
+                if(data['message']['to'] == prefs.getString('username')) {
+
                 print(data['message']['id']);
+                
                 threads = _createThread(data);
-                NotificationController.sendToChannel(jsonEncode({
-                  'message': {'received': data['message']['id']}
-                }));
-              } else if (data['message']['from'] == prefs.getString('user')) {
+                // NotificationController.sendToChannel(jsonEncode({
+                //   'message': {'received': data['message']['id']}
+                // }));
+              } else if (data['message']['from'] == prefs.getString('username')) {
                 threads = _createThreadForMe(data);
               }
               return FutureBuilder(
@@ -225,9 +284,11 @@ class _ChatRendererState extends State<ChatRenderer> {
                     if (snapshot.connectionState == ConnectionState.done) {
                       List threadList = snapshot.data;
                       print(threadList);
-                      threadList.sort((a, b) {
-                        return b.lastAccessed.compareTo(a.lastAccessed);
-                      });
+                       if (threadList.length > 1) {
+                            threadList.sort((a, b) {
+                              return b.lastAccessed.compareTo(a.lastAccessed);
+                            });
+                          }
                       return ChatListScreen(
                           // controller: widget.controller,
                           threads: threadList);
@@ -236,9 +297,12 @@ class _ChatRendererState extends State<ChatRenderer> {
                         //  controller: widget.controller,
                         threads: threadList);
                   });
+              }
             }
           }
-          if (threadList.length > 0) {
+          print("im outside");
+          print(threadList.length);
+          if (threadList.length > 1) {
             threadList.sort((a, b) {
               return b.lastAccessed.compareTo(a.lastAccessed);
             });

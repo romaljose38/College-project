@@ -83,7 +83,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         username = self.scope['url_route']['kwargs']['username']
 
         self.user = await self.get_user_from_username(username)
-
+        print(self.user.username)
         status = await self.update_user_online(self.user)
 
         if status:
@@ -97,21 +97,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             await self.accept()
 
-            pending_messages = await self.get_pending_messages()
+            # pending_messages = await self.get
+            # pending_messages = await self.get_pending_messages()
 
-            if len(pending_messages)!=0:
-                for msg in pending_messages:
-                    text,snd_user,chat_id = await self.get_chat_details(msg)
+            # if len(pending_messages)!=0:
+            #     for msg in pending_messages:
+            #         text,snd_user,chat_id = await self.get_chat_details(msg)
                     
-                    msg_obj = json.dumps({
-                        'message':{
-                        'message':text,
-                        'from':snd_user,
-                        'id':chat_id,
-                        'to':self.user.username
-                    }})
+            #         msg_obj = json.dumps({
+            #             'message':{
+            #             'message':text,
+            #             'from':snd_user,
+            #             'id':chat_id,
+            #             'to':self.user.username
+            #         }})
 
-                    await self.send(text_data=msg_obj)
+            #         await self.send(text_data=msg_obj)
 
     @database_sync_to_async
     def update_user_online(self, user):
@@ -150,22 +151,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
 
         text_data_json = json.loads(text_data)
-        print(text_data_json)
-        if 'received' in text_data_json['message']:
-            msg_id = int(text_data_json['message']['received'])
-            should_inform, chat_id ,chat_user = await self.add_user_to_recipients(msg_id)
-            if should_inform:
-                await self.channel_layer.group_send(
-                                                    self.room_group_name,
-                                                    {
-                                                        'type':'chat_message',
-                                                        'message':{
-                                                            'to':chat_user.username,
-                                                            'received':chat_id,
-                                                            'from':self.user.username,
-                                                        }
-                                                    }
-                                                )
+        if 'received' in text_data_json:
+            print(text_data_json)
+            pass
+            # msg_id = int(text_data_json['received'])
+            # should_inform, chat_id ,chat_user = await self.add_user_to_recipients(msg_id)
+            # if should_inform:
+            #     await self.channel_layer.group_send(
+            #                                         self.room_group_name,
+            #                                         {
+            #                                             'type':'chat_message',
+            #                                             'message':{
+            #                                                 'to':chat_user.username,
+            #                                                 'received':chat_id,
+            #                                                 'from':self.user.username,
+            #                                             }
+            #                                         }
+            #                                     )
 
         else:
             to = text_data_json['to']
@@ -181,6 +183,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'from':self.user.username  # This line is not needed in production; only for debugging
                 }
 
+                await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type':'chat_message',
+                    'message': message
+                }
+                )
 
             elif(text_data_json['type']=='aud'):
                 aud = text_data_json['audio']
@@ -189,13 +198,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 chat_msg_id = await self.create_chat_audio(aud_string=aud,to=to,ext=extension)
                 
                 message = {
-                    'aud':img,
+                    'aud':aud,
                     'ext':extension,
                     'to':to,
                     'id':chat_msg_id,
                     'from':self.user.username  # This line is not needed in production; only for debugging
                 }
 
+                await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type':'chat_message',
+                    'message': message
+                }
+                )
 
             elif(text_data_json['type']=='img'):
                 img = text_data_json['image']
@@ -211,13 +227,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'from':self.user.username  # This line is not needed in production; only for debugging
                 }
 
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type':'chat_message',
-                    'message': message
-                }
-            )
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type':'chat_message',
+                        'message': message
+                    }
+                )
 
 
     @database_sync_to_async
@@ -256,7 +272,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     
     async def chat_message(self,event):
-
+  
         if 'received' in event['message']:
             print(event)
             to_user_obj = await self.get_user_from_username(event['message']['to'])
@@ -267,18 +283,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         else:
             if 'aud' in event['message']:
-                event['type']='aud'
+                event['msg_type']='aud'
             elif 'img' in event['message']:
-                event['type']='img'
+                event['msg_type']='img'
             elif 'message' in event['message']:
-                event['type']='txt'
+                event['msg_type']='txt'
             to_username = event['message']['to']
             from_username = event['message']['from']
 
             to_user_obj = await self.get_user_from_username(to_username)
             from_user_obj = await self.get_user_from_username(from_username)
 
+            print(event)
+            
             if self.user == to_user_obj or self.user == from_user_obj:
+                print(to_user_obj.username,from_user_obj.username)
                 json_data = json.dumps(event)
                 await self.send(text_data=json_data)
 

@@ -95,9 +95,9 @@ var socket = new WebSocket('ws://127.0.0.1:8000/ws/chat_room/{{user}}/');
         var chatContainer = document.querySelector('#chats');
         chatContainer.innerHTML += `<div class="chat_message"><b>${senderName} :</b> ${message}</div>`;
         socket.send(JSON.stringify({
-                'message': {
+                
                     'received':data.id
-                }
+                
             }));
     }
 
@@ -120,6 +120,7 @@ var socket = new WebSocket('ws://127.0.0.1:8000/ws/chat_room/{{user}}/');
             socket.send(JSON.stringify({
                 'message': message,
                 'to':receiverName.value,
+                'type':'msg',
             }));
             messageInputDom.value = '';
         };

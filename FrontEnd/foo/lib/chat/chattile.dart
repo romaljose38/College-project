@@ -54,7 +54,7 @@ class ChatTile extends StatelessWidget {
               fontWeight: FontWeight.w400,
               fontSize: 18),),
             SizedBox(height: 8,),
-            Text(thread.chatList.last.message,overflow: TextOverflow.ellipsis, style: TextStyle(
+            Text((thread.chatList.last.msgType=="txt")?thread.chatList.last.message:"media",overflow: TextOverflow.ellipsis, style: TextStyle(
               color:Color.fromRGBO(100,115,142,1),
               fontWeight: FontWeight.w200,
               fontSize: 15,
