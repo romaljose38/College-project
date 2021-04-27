@@ -22,7 +22,8 @@ class _FeedScreenState extends State<FeedScreen> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => ViewPostScreen(post: posts[index],index:index)));
+                builder: (_) =>
+                    ViewPostScreen(post: posts[index], index: index)));
       },
       child: Container(
           height: 280,
@@ -57,8 +58,8 @@ class _FeedScreenState extends State<FeedScreen> {
                 child: AspectRatio(
                   aspectRatio: 4 / 5,
                   child: Hero(
-                    tag:'profile_$index',
-                                      child: Container(
+                    tag: 'profile_$index',
+                    child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(25.0),
                         boxShadow: [
@@ -149,7 +150,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   ),
                   Container(
                     height: 300,
-                    child:_img(index),
+                    child: _img(index),
                     // child: CarouselSlider(
                     //   items: [_img(0), _img(1), _img(2)],
                     //   options: CarouselOptions(
