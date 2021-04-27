@@ -3,14 +3,17 @@ import 'dart:ui';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:foo/chat/render.dart';
 import 'package:foo/chat/socket.dart';
 import 'package:foo/colour_palette.dart';
 import 'package:foo/profile/profile.dart';
 import 'package:foo/screens/feed_screen.dart';
-import 'package:foo/upload_screen.dart';
+import 'package:foo/upload_screens/image_upload_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:foo/upload_screens/video_upload_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
 class LandingPageProxy extends StatelessWidget {
   NotificationController controller = NotificationController();
@@ -43,9 +46,106 @@ class _LandingPageState extends State<LandingPage>
         Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
   }
 
+  // function that picks an image from the gallery
+  Future<void> _getImage() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+    if (result != null) {
+      File _image = File(result.files.single.path);
+
+      animationController.reverse().whenComplete(() {
+        overlayVisible = false;
+        overlayEntry.remove();
+      });
+
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ImageUploadScreen(
+                    mediaInserted: _image,
+                  )));
+    }
+  }
+  //
+
+  //Function that picks up a video from the gallery
+
+  Future<void> _getVideo() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      type: FileType.video,
+    );
+    if (result != null) {
+      File _video = File(result.files.single.path);
+
+      animationController.reverse().whenComplete(() {
+        overlayVisible = false;
+        overlayEntry.remove();
+      });
+
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => VideoUploadScreen(
+                    mediaInserted: _video,
+                  )));
+    }
+  }
+
+  //
+
+  // Function that takes an image using the camera
+
+  Future<void> _takePic() async {
+    File _image;
+
+    _image = await ImagePicker.pickImage(source: ImageSource.camera);
+
+    if (_image != null) {
+      animationController.reverse().whenComplete(() {
+        overlayVisible = false;
+        overlayEntry.remove();
+      });
+
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ImageUploadScreen(
+                    mediaInserted: _image,
+                  )));
+    }
+  }
+
+  //
+
+  // To exit the overlay on back press
+
+  bool overlayVisible = false;
+
+  Future<bool> onBackPress() async {
+    if (overlayVisible == true) {
+      animationController.reverse().whenComplete(() {
+        overlayVisible = false;
+        overlayEntry.remove();
+      });
+    } else if (_page == 0) {
+      //0th _page is home(feed)
+      SystemNavigator.pop(); //Exits the app
+    } else {
+      setState(() {
+        _page = 0;
+      });
+    }
+
+    return Future.value(false);
+  }
+
+  //
+
   int _page = 0;
 
   showOverlay(BuildContext context) {
+    overlayVisible = true;
     OverlayState overlayState = Overlay.of(context);
     overlayEntry = OverlayEntry(
       builder: (context) => Scaffold(
@@ -67,16 +167,13 @@ class _LandingPageState extends State<LandingPage>
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     InkWell(
-                      onTap: () {},
+                      onTap: _getImage,
                       child: Column(
                         children: [
-                          IconButton(
-                            icon: Icon(
-                              Ionicons.image_outline,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                            onPressed: () {},
+                          Icon(
+                            Ionicons.image_outline,
+                            color: Colors.white,
+                            size: 30,
                           ),
                           Text(
                             "Image",
@@ -90,16 +187,14 @@ class _LandingPageState extends State<LandingPage>
                       ),
                     ),
                     InkWell(
-                      onTap: () {},
+                      onTap: _getVideo,
+                      splashFactory: InkRipple.splashFactory,
                       child: Column(
                         children: [
-                          IconButton(
-                            icon: Icon(
-                              Ionicons.videocam_outline,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                            onPressed: () {},
+                          Icon(
+                            Ionicons.videocam_outline,
+                            color: Colors.white,
+                            size: 30,
                           ),
                           Text(
                             "Video",
@@ -113,16 +208,13 @@ class _LandingPageState extends State<LandingPage>
                       ),
                     ),
                     InkWell(
-                      onTap: () {},
+                      onTap: _takePic,
                       child: Column(
                         children: [
-                          IconButton(
-                            icon: Icon(
-                              Ionicons.camera_outline,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                            onPressed: () {},
+                          Icon(
+                            Ionicons.camera_outline,
+                            color: Colors.white,
+                            size: 30,
                           ),
                           Text(
                             "Camera",
@@ -160,7 +252,10 @@ class _LandingPageState extends State<LandingPage>
     ];
     return Scaffold(
       backgroundColor: Palette.lavender,
-      body: pages[_page],
+      body: WillPopScope(
+        onWillPop: onBackPress,
+        child: pages[_page],
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: ClipOval(
         clipBehavior: Clip.antiAlias,

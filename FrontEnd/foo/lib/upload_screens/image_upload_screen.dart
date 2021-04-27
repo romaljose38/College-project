@@ -5,8 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:foo/screens/feed_icons.dart';
 import 'package:foo/screens/models/post_model.dart';
 import 'package:ionicons/ionicons.dart';
+import 'dart:io';
 
-class UploadScreen extends StatelessWidget {
+class ImageUploadScreen extends StatelessWidget {
+  final File mediaInserted;
+  //mediaInserted is for uploaded image(Video)
+  ImageUploadScreen({this.mediaInserted});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,7 +36,8 @@ class UploadScreen extends StatelessWidget {
                               color: Colors.white,
                               // borderRadius: BorderRadius.only(bottomLeft: Radius.circular(25),bottomRight: Radius.circular(25)),
                               image: DecorationImage(
-                                image: AssetImage(posts[0].imageUrl),
+                                //image: AssetImage(posts[0].imageUrl),
+                                image: FileImage(mediaInserted),
                                 fit: BoxFit.cover,
                               )),
                         ),
@@ -117,7 +123,8 @@ class UploadScreen extends StatelessWidget {
                                             ),
                                           ],
                                           image: DecorationImage(
-                                            image: AssetImage(posts[0].imageUrl),
+                                            image: FileImage(mediaInserted),
+                                            //AssetImage(posts[0].imageUrl),
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -138,20 +145,23 @@ class UploadScreen extends StatelessWidget {
                 height: 20,
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                 child: Container(
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black26, width: 1),
-                        borderRadius: BorderRadius.circular(10),),
-                    child: TextField(
-                      maxLength: 30,
-                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                      decoration: InputDecoration(
-                                              hintText: "Caption",
-                        contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
-                        border:InputBorder.none,
-                      ),
-                    ),),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black26, width: 1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: TextField(
+                    maxLength: 30,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                    decoration: InputDecoration(
+                      hintText: "Caption",
+                      contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
               )
             ],
           ),
@@ -160,7 +170,3 @@ class UploadScreen extends StatelessWidget {
     );
   }
 }
-
-
-
-
