@@ -5,10 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:foo/screens/feed_icons.dart';
 import 'package:foo/screens/models/post_model.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:foo/upload_screens/httpupload.dart';
 import 'dart:io';
 
 class ImageUploadScreen extends StatelessWidget {
   final File mediaInserted;
+  final TextEditingController captionController = TextEditingController();
   //mediaInserted is for uploaded image(Video)
   ImageUploadScreen({this.mediaInserted});
 
@@ -162,7 +164,12 @@ class ImageUploadScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              )
+              ),
+              UploadToServerButton(
+                type: 'video',
+                file: this.mediaInserted,
+                caption: captionController.text,
+              ),
             ],
           ),
         ),

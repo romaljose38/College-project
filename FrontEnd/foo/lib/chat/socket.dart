@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:foo/test_cred.dart';
 
 class NotificationController {
   static final NotificationController _singleton =
@@ -12,7 +13,7 @@ class NotificationController {
   static StreamController streamController =
       new StreamController.broadcast(sync: true);
 
-  String wsUrl = 'ws://10.0.2.2:8000/ws/chat_room/';
+  String wsUrl = 'ws://$localhost/ws/chat_room/';
 
   String username;
 

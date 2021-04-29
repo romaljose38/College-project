@@ -9,6 +9,8 @@ import 'package:foo/screens/models/post_model.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:video_player/video_player.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:foo/upload_screens/httpupload.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   File mediaInserted;
@@ -20,6 +22,8 @@ class VideoUploadScreen extends StatefulWidget {
 }
 
 class _VideoUploadScreenState extends State<VideoUploadScreen> {
+  final TextEditingController captionController = TextEditingController();
+  SharedPreferences prefs;
   VideoPlayerController _controller1;
   VideoPlayerController _controller2;
 
@@ -198,6 +202,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextField(
+                    controller: captionController,
                     maxLength: 30,
                     maxLengthEnforcement: MaxLengthEnforcement.enforced,
                     decoration: InputDecoration(
@@ -207,7 +212,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                     ),
                   ),
                 ),
-              )
+              ),
+              UploadToServerButton(
+                type: 'video',
+                file: widget.mediaInserted,
+                caption: captionController.text,
+              ),
             ],
           ),
         ),
