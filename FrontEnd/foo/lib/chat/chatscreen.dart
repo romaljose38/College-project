@@ -10,14 +10,15 @@ import 'package:foo/models.dart';
 import 'package:hive_listener/hive_listener.dart';
 import 'package:hive/hive.dart';
 
-
 class ChatScreen extends StatefulWidget {
   // final NotificationController controller;
   final Thread thread;
 
-  ChatScreen({Key key, 
-  // this.controller,
-   this.thread}) : super(key:key);
+  ChatScreen(
+      {Key key,
+      // this.controller,
+      this.thread})
+      : super(key: key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -31,7 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Thread thread;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     otherUser = widget.thread.second.name;
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
@@ -39,240 +40,233 @@ class _ChatScreenState extends State<ChatScreen> {
     thread = Hive.box('threads').get(threadName);
     // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     //Gets the username of the logged in user.
-    //We need the current username to distinguish between the sender and receiver. So that the chatclouds can be aligned 
+    //We need the current username to distinguish between the sender and receiver. So that the chatclouds can be aligned
     //on their respective sides.
     _getUserName();
   }
 
-  void _getUserName() async{
+  void _getUserName() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
-      curUser= _prefs.getString('username');
-      print(_prefs.getString('username'));
-      print(_prefs.getString('user'));
-
+    curUser = _prefs.getString('username');
+    print(_prefs.getString('username'));
+    print(_prefs.getString('user'));
   }
-  
+
   void _sendMessage() {
     var _id = DateTime.now().microsecondsSinceEpoch;
     var curTime = DateTime.now();
     // print(widget.channel.protocol);
     var data = jsonEncode({
-      'message':_chatController.text,
-      'id':_id,
-      'time':curTime.toString(),
-      'from':curUser,
-      'to':otherUser,
-      'type':'msg',
+      'message': _chatController.text,
+      'id': _id,
+      'time': curTime.toString(),
+      'from': curUser,
+      'to': otherUser,
+      'type': 'msg',
     });
     if (_chatController.text.isNotEmpty) {
-
       var threadBox = Hive.box('Threads');
-      
+
       Thread currentThread = threadBox.get(threadName);
-      currentThread.addChat(
-          ChatMessage(
-            message: _chatController.text,
-            id: _id,
-            time:curTime,
-            senderName: curUser,
-            msgType: "txt",
-            isMe:true,
-          )
-        );
+      currentThread.addChat(ChatMessage(
+        message: _chatController.text,
+        id: _id,
+        time: curTime,
+        senderName: curUser,
+        msgType: "txt",
+        isMe: true,
+      ));
       currentThread.save();
 
-      if(NotificationController.isActive){
-      NotificationController.sendToChannel(data);
-      }
-      else{
+      if (NotificationController.isActive) {
+        NotificationController.sendToChannel(data);
+      } else {
         print("not connected");
       }
-      _chatController.text="";
+      _chatController.text = "";
     }
   }
+
   void _sendAudio() {
-    
     // print(widget.channel.protocol);
     var data = jsonEncode({
-      'message':_chatController.text,
-      'from':curUser,
-      'to':otherUser,
+      'message': _chatController.text,
+      'from': curUser,
+      'to': otherUser,
     });
     if (_chatController.text.isNotEmpty) {
-        
-      if(NotificationController.isActive){
-      NotificationController.sendToChannel(data);
-      }
-      else{
+      if (NotificationController.isActive) {
+        NotificationController.sendToChannel(data);
+      } else {
         print("not connected");
       }
-      _chatController.text="";
+      _chatController.text = "";
     }
   }
-  void _sendImage() async{
-    FilePickerResult result = await  FilePicker.platform.pickFiles(); 
+
+  void _sendImage() async {
+    var _id = DateTime.now().microsecondsSinceEpoch;
+    var curTime = DateTime.now();
+    FilePickerResult result = await FilePicker.platform.pickFiles();
     File file = File(result.files.single.path);
-    
+
     String _extension = result.files.single.extension;
-    var bytes =await file.readAsBytes();
+    var bytes = await file.readAsBytes();
     String imgString = base64Encode(bytes);
     print(imgString);
 
     var data = jsonEncode({
-      'type':'aud',
-      'ext':_extension,
-      'audio':imgString,
-      'from':curUser,
-      'to':otherUser,
+      'type': 'img',
+      'ext': _extension,
+      'image': imgString,
+      'from': curUser,
+      'id': _id,
+      'to': otherUser,
+      'time': curTime.toString(),
     });
     print(data);
-    if(NotificationController.isActive){
+    if (NotificationController.isActive) {
+      var threadBox = Hive.box('Threads');
+
+      Thread currentThread = threadBox.get(threadName);
+      currentThread.addChat(ChatMessage(
+        filePath: file.path,
+        id: _id,
+        time: curTime,
+        senderName: curUser,
+        msgType: "img",
+        isMe: true,
+      ));
+      currentThread.save();
       NotificationController.sendToChannel(data);
-      }
-    // if (_chatController.text.isNotEmpty) {
-    //   
-    //   else{
-    //     print("not connected");
-    //   }
-    //   _chatController.text="";
-    // }
+    }
   }
-  
 
   @override
   Widget build(BuildContext context) {
-
-    
     return Scaffold(
       backgroundColor: Color.fromRGBO(240, 247, 255, 1),
-        appBar:PreferredSize(
-        preferredSize: Size(double.infinity,100),
-        child:SafeArea(
-                  child: Container(
-                      height:100,
-                      decoration: BoxDecoration(
-                        
-                        gradient:LinearGradient(
-                          begin:Alignment.topLeft,
-                          end:Alignment.bottomRight,
-                          stops:[.3,1],
-                          colors:[Color.fromRGBO(248, 251, 255, 1), Color.fromRGBO(240, 247, 255, 1)]
-                        ),
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                        boxShadow: [
-                          BoxShadow(
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset:Offset(0,3),
-                            color: Color.fromRGBO(226, 235, 243, 1),
-                          )
-                        ]
-
-                      ),
-                      child:Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children:
-                          [ 
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal:20),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                      Text("Active", 
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              color:Color.fromRGBO(180, 190, 255, 1)
-                                            ),
-                                            ),
-                                      SizedBox(height:7),
-                                      Text(widget.thread.second.name, 
-                                          style:TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color:Color.fromRGBO(59, 79, 108, 1))
-                                          )                              
-                                    ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
-                                child: CircleAvatar(
-                                  radius:35,
-                                  child:Text(widget.thread.second.name),
-                                ),
-                              ) 
-                              
-                          ]
-                        ),
+      appBar: PreferredSize(
+          preferredSize: Size(double.infinity, 100),
+          child: SafeArea(
+            child: Container(
+                height: 100,
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        stops: [
+                          .3,
+                          1
+                        ],
+                        colors: [
+                          Color.fromRGBO(248, 251, 255, 1),
+                          Color.fromRGBO(240, 247, 255, 1)
+                        ]),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    boxShadow: [
+                      BoxShadow(
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 3),
+                        color: Color.fromRGBO(226, 235, 243, 1),
                       )
-                       ),
-        )
-        ),
-          body: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
-            child: Column(
-            children:<Widget>[
-                Expanded(
-                  child: HiveListener(
-                                      box:Hive.box("Threads"),
-                                      keys:[threadName],
-                                      builder: (box){
-                                      
-                                        var thread = box.get(threadName);
-                                        
-                                        List __chatList = thread.chatList ?? [];
+                    ]),
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Active",
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    color: Color.fromRGBO(180, 190, 255, 1)),
+                              ),
+                              SizedBox(height: 7),
+                              Text(widget.thread.second.name,
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color.fromRGBO(59, 79, 108, 1)))
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: CircleAvatar(
+                            radius: 35,
+                            child: Text(widget.thread.second.name),
+                          ),
+                        )
+                      ]),
+                )),
+          )),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
+        child: Column(children: <Widget>[
+          Expanded(
+              child: HiveListener(
+            box: Hive.box("Threads"),
+            keys: [threadName],
+            builder: (box) {
+              var thread = box.get(threadName);
 
-                                        return ChatCloudList(chatList: __chatList,needScroll: true,curUser:curUser);
-                                        },
-                                       
-                  )
-                
-                  ),
-                
-                Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color:Colors.white,
-                    borderRadius: BorderRadius.only(topLeft:Radius.circular(10),topRight:Radius.circular(10)),
-                    
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child:TextField(
-                          controller: _chatController,
-                          decoration: InputDecoration.collapsed(
+              List __chatList = thread.chatList ?? [];
+
+              return ChatCloudList(
+                  chatList: __chatList, needScroll: true, curUser: curUser);
+            },
+          )),
+          Container(
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _chatController,
+                        decoration: InputDecoration.collapsed(
                             hintText: "Send a message",
                             hintStyle: TextStyle(
-                              color:Color.fromRGBO(150, 150, 150, 1),
+                              color: Color.fromRGBO(150, 150, 150, 1),
                             )),
-                        ),
                       ),
-                      IconButton(icon: Icon(Icons.image_outlined), 
-                      onPressed:_sendImage,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.image_outlined),
+                      onPressed: _sendImage,
                       splashColor: Colors.pinkAccent,
                       splashRadius: 16,
-                      padding:EdgeInsets.fromLTRB(0, 0, 0, 16),),
-                      IconButton(icon: Icon(Icons.send), 
-                      onPressed:_sendMessage,
+                      padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.send),
+                      onPressed: _sendMessage,
                       splashColor: Colors.pinkAccent,
                       splashRadius: 16,
-                      padding:EdgeInsets.fromLTRB(0, 0, 0, 16),),
-                    ],
+                      padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+                    ),
+                  ],
                 ),
-                  )),
-              
-              ]
-        ),
-          ),
-      );
-    
+              )),
+        ]),
+      ),
+    );
   }
 }

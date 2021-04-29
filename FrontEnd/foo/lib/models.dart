@@ -1,21 +1,17 @@
 import 'package:hive/hive.dart';
 
-
-
 part 'models.g.dart';
 
-@HiveType(typeId:0)
-class User extends HiveObject{
-
+@HiveType(typeId: 0)
+class User extends HiveObject {
   @HiveField(0)
   String name;
-  
+
   User({this.name});
 }
 
-@HiveType(typeId:1)
-class ChatMessage extends HiveObject{
-
+@HiveType(typeId: 1)
+class ChatMessage extends HiveObject {
   @HiveField(0)
   Thread thread;
 
@@ -29,7 +25,7 @@ class ChatMessage extends HiveObject{
   String senderName;
 
   @HiveField(4)
-  bool haveReceived=false;
+  bool haveReceived = false;
 
   @HiveField(5)
   int id;
@@ -49,14 +45,24 @@ class ChatMessage extends HiveObject{
   @HiveField(10)
   bool haveReachedServer = false;
 
+  @HiveField(11)
+  String filePath;
 
-  ChatMessage({this.thread, this.message, this.time, this.id, this.senderName, this.isMe, this.msgType, this.base64string, this.ext});
+  ChatMessage(
+      {this.thread,
+      this.message,
+      this.time,
+      this.id,
+      this.senderName,
+      this.isMe,
+      this.msgType,
+      this.base64string,
+      this.ext,
+      this.filePath});
 }
 
-
 @HiveType(typeId: 2)
-class Thread extends HiveObject{
-
+class Thread extends HiveObject {
   @HiveField(0)
   User first;
 
@@ -69,63 +75,56 @@ class Thread extends HiveObject{
   @HiveField(3)
   DateTime lastAccessed;
 
-  Thread({this.first,this.second});
+  Thread({this.first, this.second});
 
-  void addChat(chat){
+  void addChat(chat) {
     this.chatList.add(chat);
-    this.lastAccessed=chat.time;
+    this.lastAccessed = chat.time;
   }
 
-  List<ChatMessage> getChatList(){
+  List<ChatMessage> getChatList() {
     return chatList;
   }
 
-bool updateChatStatus(id){
-    for(int i=0;i<chatList.length;i++){
-      if(chatList[chatList.length-1-i].id==id){
-        chatList[chatList.length-1-i].haveReceived = true;
-        return true;
-      }
-  
-  }
-  return false;
-  }
-
-  bool updateChatId({id,newId}){
-    for(int i=0;i<chatList.length;i++){
-      if(chatList[chatList.length-1-i].id==id){
-        chatList[chatList.length-1-i].id=newId;
-        chatList[chatList.length-1-i].haveReachedServer=true;
-        return true;
-      }
-  
-  }
-  }
-  bool needToCheck(){
-    if(this.chatList.last.isMe==true){
-      if(this.chatList.last.haveReachedServer==true){
-        return false;
-      }
-      else{
+  bool updateChatStatus(id) {
+    for (int i = 0; i < chatList.length; i++) {
+      if (chatList[chatList.length - 1 - i].id == id) {
+        chatList[chatList.length - 1 - i].haveReceived = true;
         return true;
       }
     }
     return false;
   }
 
-  List getUnsentMessages(){
-    List msgs=[];
-    for(int i=0;i<chatList.length;i++){
-      if(chatList[chatList.length-1-i].haveReachedServer!=true){
-        msgs.add(chatList[chatList.length-1-i]);
+  bool updateChatId({id, newId}) {
+    for (int i = 0; i < chatList.length; i++) {
+      if (chatList[chatList.length - 1 - i].id == id) {
+        chatList[chatList.length - 1 - i].id = newId;
+        chatList[chatList.length - 1 - i].haveReachedServer = true;
+        return true;
       }
-      else if(chatList[chatList.length-1-i].haveReachedServer==true){
+    }
+  }
+
+  bool needToCheck() {
+    if (this.chatList.last.isMe == true) {
+      if (this.chatList.last.haveReachedServer == true) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  List getUnsentMessages() {
+    List msgs = [];
+    for (int i = 0; i < chatList.length; i++) {
+      if (chatList[chatList.length - 1 - i].haveReachedServer != true) {
+        msgs.add(chatList[chatList.length - 1 - i]);
+      } else if (chatList[chatList.length - 1 - i].haveReachedServer == true) {
         return msgs;
       }
-  
+    }
   }
-
-  }
-
 }
-

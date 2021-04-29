@@ -3,7 +3,8 @@ from .models import (
 	Profile,
 	Thread,
 	ChatMessage,
-    User
+    User,
+    Post
 )
 # from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -51,3 +52,4 @@ class ThreadAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Thread,ThreadAdmin)
+admin.site.register(Post)

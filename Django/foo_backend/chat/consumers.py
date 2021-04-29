@@ -478,6 +478,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'from':self.user.username  # This line is not needed in production; only for debugging
                 }
 
+                await self.send(text_data=json.dumps(
+                    {
+                    "r_s":{
+                        'to':to,
+                        'id':_id,
+                        'n_id':chat_msg_id,
+                    }
+                    }
+                    )
+                )
+
                 await self.channel_layer.group_send(
                     to,
                     {

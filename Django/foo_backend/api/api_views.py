@@ -7,6 +7,12 @@ from rest_framework.parsers import FileUploadParser,MultiPartParser
 from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
 from django.db.models import Q
+from chat.models import Post
+
+
+User = get_user_model()
+
+
 
 @csrf_exempt
 @api_view(['POST'])
@@ -24,16 +30,23 @@ def login(request):
 @csrf_exempt
 @api_view(['POST','PUT'])
 @parser_classes([MultiPartParser])
-def audio_upload_handler(request):
-	# print('files',request.FILES)
-	print('data',request.data)
-	print(request.data['name'])
-	return Response(status=400,data={"status":"success"})
+def video_upload_handler(request):
+	try:
+		file_type = request.data['type']
+		caption  = request.data['caption']
+		file = request.data['file']
+		username = request.data['username']
+		user = User.objects.get(username=username)
+		post = Post.objects.create(post_type=file_type, caption=caption, file=file, user=user)
+		post.save()
+		return Response(status=200,data={"status":"success"})
+	except:
+		return Response(status=400,data={"status":"failure"})
 
 
 @api_view(['GET'])
 def get_user_list(request):
-	User = get_user_model()
+	
 	param = request.query_params['name']
 	print(param)
 	qs = User.objects.filter(Q(username__icontains=param) | Q(f_name__icontains=param))

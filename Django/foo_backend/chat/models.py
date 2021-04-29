@@ -170,3 +170,15 @@ class Notification(models.Model):
     chat_id = models.IntegerField()
     chat_from = models.CharField(max_length=30)
 
+
+def user_directory_path(instance, filename):
+    return 'user_{0}/{1}'.format(instance.user.id, filename)
+  
+
+class Post(models.Model):
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    file = models.FileField(upload_to = user_directory_path)
+    post_type = models.CharField(max_length=5)
+    time_created = models.DateTimeField(auto_now_add=True)
+    caption = models.CharField(max_length=100)

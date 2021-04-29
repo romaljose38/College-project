@@ -168,3 +168,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User model
 AUTH_USER_MODEL = 'chat.User'
+
+MEDIA_ROOT  =   os.path.join(BASE_DIR, 'media')
+MEDIA_URL   =   '/media/'
