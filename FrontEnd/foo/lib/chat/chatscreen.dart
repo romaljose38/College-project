@@ -53,14 +53,34 @@ class _ChatScreenState extends State<ChatScreen> {
   }
   
   void _sendMessage() {
-    
+    var _id = DateTime.now().microsecondsSinceEpoch;
+    var curTime = DateTime.now();
     // print(widget.channel.protocol);
     var data = jsonEncode({
       'message':_chatController.text,
+      'id':_id,
+      'time':curTime.toString(),
       'from':curUser,
       'to':otherUser,
+      'type':'msg',
     });
     if (_chatController.text.isNotEmpty) {
+
+      var threadBox = Hive.box('Threads');
+      
+      Thread currentThread = threadBox.get(threadName);
+      currentThread.addChat(
+          ChatMessage(
+            message: _chatController.text,
+            id: _id,
+            time:curTime,
+            senderName: curUser,
+            msgType: "txt",
+            isMe:true,
+          )
+        );
+      currentThread.save();
+
       if(NotificationController.isActive){
       NotificationController.sendToChannel(data);
       }
@@ -79,6 +99,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'to':otherUser,
     });
     if (_chatController.text.isNotEmpty) {
+        
       if(NotificationController.isActive){
       NotificationController.sendToChannel(data);
       }

@@ -29,3 +29,4 @@ class UserSerializer(serializers.ModelSerializer):
         user.token = validated_data['token']
         user.save()
         return user
+

@@ -60,13 +60,15 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       msgType: fields[7] as String,
       base64string: fields[8] as String,
       ext: fields[9] as String,
-    )..haveReceived = fields[4] as bool;
+    )
+      ..haveReceived = fields[4] as bool
+      ..haveReachedServer = fields[10] as bool;
   }
 
   @override
   void write(BinaryWriter writer, ChatMessage obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.thread)
       ..writeByte(1)
@@ -86,7 +88,9 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       ..writeByte(8)
       ..write(obj.base64string)
       ..writeByte(9)
-      ..write(obj.ext);
+      ..write(obj.ext)
+      ..writeByte(10)
+      ..write(obj.haveReachedServer);
   }
 
   @override

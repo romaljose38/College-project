@@ -154,7 +154,7 @@ class ChatMessage(models.Model):
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     user   = models.ForeignKey(User, related_name="sender", on_delete=models.CASCADE)
     message = models.TextField(null=True,blank=True)
-    time_created = models.DateTimeField(auto_now_add=True)
+    time_created = models.CharField(max_length=30,null=True)
     recipients = models.ManyToManyField(User)
     msg_type = models.CharField(max_length=3,null=True,blank=True,choices=MSG_TYPES)
     base64string = models.TextField(null=True,blank=True)

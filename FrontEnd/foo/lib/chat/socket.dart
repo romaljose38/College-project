@@ -66,7 +66,9 @@ class NotificationController {
 
   connectWs() async{
     try {
+      if(NotificationController.isActive==false){
       return await WebSocket.connect(wsUrl+this.username);
+      }
     } catch  (e) {
       NotificationController.isActive=false;
       print("Error! can not connect WS connectWs " + e.toString());

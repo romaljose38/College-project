@@ -46,6 +46,10 @@ class ChatMessage extends HiveObject{
   @HiveField(9)
   String ext;
 
+  @HiveField(10)
+  bool haveReachedServer = false;
+
+
   ChatMessage({this.thread, this.message, this.time, this.id, this.senderName, this.isMe, this.msgType, this.base64string, this.ext});
 }
 
@@ -85,6 +89,42 @@ bool updateChatStatus(id){
   
   }
   return false;
+  }
+
+  bool updateChatId({id,newId}){
+    for(int i=0;i<chatList.length;i++){
+      if(chatList[chatList.length-1-i].id==id){
+        chatList[chatList.length-1-i].id=newId;
+        chatList[chatList.length-1-i].haveReachedServer=true;
+        return true;
+      }
+  
+  }
+  }
+  bool needToCheck(){
+    if(this.chatList.last.isMe==true){
+      if(this.chatList.last.haveReachedServer==true){
+        return false;
+      }
+      else{
+        return true;
+      }
+    }
+    return false;
+  }
+
+  List getUnsentMessages(){
+    List msgs=[];
+    for(int i=0;i<chatList.length;i++){
+      if(chatList[chatList.length-1-i].haveReachedServer!=true){
+        msgs.add(chatList[chatList.length-1-i]);
+      }
+      else if(chatList[chatList.length-1-i].haveReachedServer==true){
+        return msgs;
+      }
+  
+  }
+
   }
 
 }

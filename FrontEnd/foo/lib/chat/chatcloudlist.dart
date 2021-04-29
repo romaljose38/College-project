@@ -21,6 +21,9 @@ class _ChatCloudListState extends State<ChatCloudList> {
 ScrollController _scrollController = ScrollController();
   String curUser;
 
+  int day;
+
+
   @override
   void initState(){
     super.initState();
@@ -59,13 +62,29 @@ ScrollController _scrollController = ScrollController();
         itemCount: widget.chatList.length??0,
         itemBuilder: (context,index){
           final reversedIndex = widget.chatList.length -1-index;
-
-          if(widget.chatList[reversedIndex].msgType=="txt"){
-            return ChatCloud(msgObj: widget.chatList[reversedIndex]);
+          bool needDay=false;
+          if(day==null){
+            day=widget.chatList[reversedIndex].time.day;
+            needDay=true;
+          }
+          if(reversedIndex>=1){
+          if(widget.chatList[reversedIndex-1].time.day!=widget.chatList[reversedIndex].time.day){
+            print("yep we need it");
+            // day=widget.chatList[reversedIndex].time.day;
+            needDay=true;
+            }
           }
           else{
-             return MediaCloud(msgObj: widget.chatList[reversedIndex]);
+            needDay=false;
           }
+          if(widget.chatList[reversedIndex].msgType=="txt"){
+            return ChatCloud(msgObj: widget.chatList[reversedIndex],needDate: needDay,);
+          }
+          else{
+             return MediaCloud(msgObj: widget.chatList[reversedIndex],needDate:needDay);
+          }
+            
+          
         }
         );
   }

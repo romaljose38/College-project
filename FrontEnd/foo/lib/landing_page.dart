@@ -9,6 +9,7 @@ import 'package:foo/chat/socket.dart';
 import 'package:foo/colour_palette.dart';
 import 'package:foo/profile/profile.dart';
 import 'package:foo/screens/feed_screen.dart';
+import 'package:foo/screens/search_screen.dart';
 import 'package:foo/upload_screens/image_upload_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
@@ -62,9 +63,10 @@ class _LandingPageState extends State<LandingPage>
       Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (_) => ImageUploadScreen(
-                    mediaInserted: _image,
-                  )));
+            builder: (_) => ImageUploadScreen(
+              mediaInserted: _image,
+            ),
+          ));
     }
   }
   //
@@ -246,7 +248,7 @@ class _LandingPageState extends State<LandingPage>
   Widget build(BuildContext context) {
     List pages = [
       PageView(children: [FeedScreen(), ChatRenderer()]),
-      Scaffold(),
+      SearchScreen(),
       Profile(),
       Scaffold()
     ];
@@ -271,13 +273,7 @@ class _LandingPageState extends State<LandingPage>
               icon: Icon(Ionicons.add, color: Colors.black, size: 20),
               onPressed: () {
                 showOverlay(context);
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (_) => UploadScreen(),
-                //   ),
-                // );
-              },
+                },
             ),
           ),
         ),
