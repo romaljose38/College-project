@@ -34,38 +34,36 @@ class _ChatRendererState extends State<ChatRenderer> {
     print(prefs.getString('username'));
   }
 
-  _chicanery(threadName,thread,data) async {
+  _chicanery(threadName, thread, data) async {
     var box = Hive.box("Threads");
     await box.put(threadName, thread);
-    if(data['msg_type']=='txt'){
-    thread.addChat(ChatMessage(
-      message: data['message']['message'],
-      senderName: data['message']['from'],
-      time: DateTime.now(),
-      isMe: false,
-      msgType: 'txt',
-      id: data['message']['id'],
-    ));
-    }
-    else if(data['msg_type']=='img'){
-    thread.addChat(ChatMessage(
-      base64string: data['message']['img'],
-      senderName: data['message']['from'],
-      msgType: 'img',
-      time: DateTime.now(),
-      isMe: false,
-      id: data['message']['id'],
-    ));
-    } 
-    else if(data['msg_type']=='aud'){
-    thread.addChat(ChatMessage(
-      base64string: data['message']['aud'],
-      senderName: data['message']['from'],
-      msgType: 'aud',
-      time: DateTime.now(),
-      isMe: false,
-      id: data['message']['id'],
-    ));
+    if (data['msg_type'] == 'txt') {
+      thread.addChat(ChatMessage(
+        message: data['message']['message'],
+        senderName: data['message']['from'],
+        time: DateTime.now(),
+        isMe: false,
+        msgType: 'txt',
+        id: data['message']['id'],
+      ));
+    } else if (data['msg_type'] == 'img') {
+      thread.addChat(ChatMessage(
+        base64string: data['message']['img'],
+        senderName: data['message']['from'],
+        msgType: 'img',
+        time: DateTime.now(),
+        isMe: false,
+        id: data['message']['id'],
+      ));
+    } else if (data['msg_type'] == 'aud') {
+      thread.addChat(ChatMessage(
+        base64string: data['message']['aud'],
+        senderName: data['message']['from'],
+        msgType: 'aud',
+        time: DateTime.now(),
+        isMe: false,
+        id: data['message']['id'],
+      ));
     }
     thread.save();
   }
@@ -95,36 +93,31 @@ class _ChatRendererState extends State<ChatRenderer> {
       print(data['message']['id']);
       var existingThread = threadBox.get(threadName);
       if (data['msg_type'] == 'txt') {
-
         existingThread.addChat(ChatMessage(
           message: data['message']['message'],
           senderName: data['message']['from'],
-
           time: DateTime.now(),
           isMe: false,
-          msgType:"txt",
+          msgType: "txt",
           id: data['message']['id'],
         ));
-
-      }
-      else if(data['msg_type'] == 'aud'){
+      } else if (data['msg_type'] == 'aud') {
         existingThread.addChat(ChatMessage(
           base64string: data['message']['aud'],
           senderName: data['message']['from'],
           time: DateTime.now(),
-          ext:data['message']['ext'],
-          msgType:"aud",
+          ext: data['message']['ext'],
+          msgType: "aud",
           isMe: false,
           id: data['message']['id'],
         ));
-      }
-      else if(data['msg_type'] == 'img'){
+      } else if (data['msg_type'] == 'img') {
         existingThread.addChat(ChatMessage(
           base64string: data['message']['img'],
           senderName: data['message']['from'],
           time: DateTime.now(),
-          ext:data['message']['ext'],
-          msgType:"img",
+          ext: data['message']['ext'],
+          msgType: "img",
           isMe: false,
           id: data['message']['id'],
         ));
@@ -149,7 +142,6 @@ class _ChatRendererState extends State<ChatRenderer> {
   //       isMe: true,
   //       msgType: "txt",
   //       time: DateTime.now(),));
-   
 
   //   }
   //   else if(data['msg_type']=="aud"){
@@ -173,7 +165,7 @@ class _ChatRendererState extends State<ChatRenderer> {
   //       ext: data['message']['ext'],
   //       msgType: "aud",
   //       time: DateTime.now()));
-    
+
   // }
   //  thread.save();
   // }
@@ -208,7 +200,7 @@ class _ChatRendererState extends State<ChatRenderer> {
   //         msgType: "txt",
   //         isMe: true,
   //         time: DateTime.now()));
-      
+
   //   }
   //   else if(data['msg_type']=='aud'){
 
@@ -223,7 +215,7 @@ class _ChatRendererState extends State<ChatRenderer> {
   //       ));
   //   }
   //   else if(data['msg_type']=='img'){
-      
+
   //     existingThread.addChat(ChatMessage(
   //         base64string: data['message']['img'],
   //         senderName: data['message']['from'],
@@ -241,13 +233,13 @@ class _ChatRendererState extends State<ChatRenderer> {
   //   return list;
   // }
 
-  void _updateReachedServerStatus({id,newId,name}){
-      String me = prefs.getString('username');
-      String threadName = me + '_' + name;
-      var threadBox = Hive.box('Threads');
-      var existingThread = threadBox.get(threadName);
-      existingThread.updateChatId(id:id,newId:newId);
-      existingThread.save();
+  void _updateReachedServerStatus({id, newId, name}) {
+    String me = prefs.getString('username');
+    String threadName = me + '_' + name;
+    var threadBox = Hive.box('Threads');
+    var existingThread = threadBox.get(threadName);
+    existingThread.updateChatId(id: id, newId: newId);
+    existingThread.save();
   }
 
   void _updateChatStatus(int id, String name) {
@@ -259,15 +251,15 @@ class _ChatRendererState extends State<ChatRenderer> {
     existingThread.save();
   }
 
-  void _checkForMessages(){
-    List msgList=[];
+  void _checkForMessages() {
+    List msgList = [];
     var threadlist = Hive.box('Threads').values.toList();
-    threadlist.forEach((e){
-      if(e.needToCheck()){
+    threadlist.forEach((e) {
+      if (e.needToCheck()) {
         msgList.add(e.getUnsentMessages());
       }
     });
-    print("msgList");
+    print("msgList in render");
     print(msgList);
   }
 
@@ -286,43 +278,45 @@ class _ChatRendererState extends State<ChatRenderer> {
                 print(data);
                 _updateChatStatus(data['received'], data['name']);
                 return ChatListScreen(threads: threadList);
-              }
-              else if(data.containsKey("r_s")){
-                _updateReachedServerStatus(id:data['r_s']['id'],newId:data['r_s']['n_id'],name:data['r_s']['to']);
-              }
-              else if ((prefs.containsKey('lastMsgId') & (prefs.getInt('lastMsgId')!=data['message']['id'])) | !prefs.containsKey('lastMsgId')){
-                prefs.setInt("lastMsgId",data['message']['id']);
-                if(data['message']['to'] == prefs.getString('username')) {
+              } else if (data.containsKey("r_s")) {
+                _updateReachedServerStatus(
+                    id: data['r_s']['id'],
+                    newId: data['r_s']['n_id'],
+                    name: data['r_s']['to']);
+              } else if ((prefs.containsKey('lastMsgId') &
+                      (prefs.getInt('lastMsgId') != data['message']['id'])) |
+                  !prefs.containsKey('lastMsgId')) {
+                prefs.setInt("lastMsgId", data['message']['id']);
+                if (data['message']['to'] == prefs.getString('username')) {
+                  print(data['message']['id']);
 
-                print(data['message']['id']);
-                
-                threads = _createThread(data);
-                // NotificationController.sendToChannel(jsonEncode({
-                //   'message': {'received': data['message']['id']}
-                // }));
-              } 
-              // else if (data['message']['from'] == prefs.getString('username')) {
-              //   threads = _createThreadForMe(data);
-              // }
-              return FutureBuilder(
-                  future: threads,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      List threadList = snapshot.data;
-                      print(threadList);
-                       if (threadList.length > 1) {
-                            threadList.sort((a, b) {
-                              return b.lastAccessed.compareTo(a.lastAccessed);
-                            });
-                          }
+                  threads = _createThread(data);
+                  // NotificationController.sendToChannel(jsonEncode({
+                  //   'message': {'received': data['message']['id']}
+                  // }));
+                }
+                // else if (data['message']['from'] == prefs.getString('username')) {
+                //   threads = _createThreadForMe(data);
+                // }
+                return FutureBuilder(
+                    future: threads,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        List threadList = snapshot.data;
+                        print(threadList);
+                        if (threadList.length > 1) {
+                          threadList.sort((a, b) {
+                            return b.lastAccessed.compareTo(a.lastAccessed);
+                          });
+                        }
+                        return ChatListScreen(
+                            // controller: widget.controller,
+                            threads: threadList);
+                      }
                       return ChatListScreen(
-                          // controller: widget.controller,
+                          //  controller: widget.controller,
                           threads: threadList);
-                    }
-                    return ChatListScreen(
-                        //  controller: widget.controller,
-                        threads: threadList);
-                  });
+                    });
               }
             }
           }
