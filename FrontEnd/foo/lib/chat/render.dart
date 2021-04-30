@@ -291,9 +291,9 @@ class _ChatRendererState extends State<ChatRenderer> {
                   print(data['message']['id']);
 
                   threads = _createThread(data);
-                  // NotificationController.sendToChannel(jsonEncode({
-                  //   'message': {'received': data['message']['id']}
-                  // }));
+                  NotificationController.sendToChannel(jsonEncode({
+                    'message': {'received': data['message']['id']}
+                  }));
                 }
                 // else if (data['message']['from'] == prefs.getString('username')) {
                 //   threads = _createThreadForMe(data);

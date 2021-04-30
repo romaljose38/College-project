@@ -6,6 +6,6 @@ from . import api_views
 urlpatterns = [
     path('register', views.register , name="register"),
     path('login', api_views.login, name="login_api"),
-    path('video_upload', api_views.video_upload_handler, name="video_upload"),
+    path('upload', api_views.video_upload_handler, name="video_upload"),
     path('users',api_views.get_user_list, name="user list"),
 ]

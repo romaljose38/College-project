@@ -133,6 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
         filePath: file.path,
         id: _id,
         time: curTime,
+        base64string: imgString,
         senderName: curUser,
         msgType: "img",
         isMe: true,

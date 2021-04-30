@@ -1,19 +1,24 @@
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foo/screens/feed_icons.dart';
+import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/models/post_model.dart';
-import 'package:ionicons/ionicons.dart';
+import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 import 'package:google_fonts/google_fonts.dart';
+<<<<<<< HEAD
 import 'package:foo/upload_screens/httpupload.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+=======
+import 'package:shared_preferences/shared_preferences.dart';
+import '../test_cred.dart';
+>>>>>>> 3e815fff191c0bbb028b2a4864546dd78755d094
 
 class VideoUploadScreen extends StatefulWidget {
-  File mediaInserted;
+  final File mediaInserted;
 
   VideoUploadScreen({Key key, this.mediaInserted}) : super(key: key);
 
@@ -26,6 +31,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   SharedPreferences prefs;
   VideoPlayerController _controller1;
   VideoPlayerController _controller2;
+  bool uploading = false;
 
   @override
   void initState() {
@@ -50,6 +56,26 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     _controller2.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _upload(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String username = prefs.getString('username');
+    var uri =
+        Uri.http(localhost, '/api/upload'); //This web address has to be changed
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['username'] = username
+      ..fields['type'] = 'video'
+      ..fields['caption'] = captionController.text
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        widget.mediaInserted.path,
+      ));
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      print('Uploaded');
+      Navigator.push(context, MaterialPageRoute(builder: (_) => FeedScreen()));
+    }
   }
 
   @override
@@ -213,10 +239,21 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                   ),
                 ),
               ),
-              UploadToServerButton(
-                type: 'video',
-                file: widget.mediaInserted,
-                caption: captionController.text,
+              uploading
+                  ? Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1,
+                      ))
+                  : Container(),
+              ElevatedButton(
+                child: Text("Upload"),
+                onPressed: () {
+                  setState(() {
+                    uploading = true;
+                  });
+                  return _upload(context);
+                },
               ),
             ],
           ),

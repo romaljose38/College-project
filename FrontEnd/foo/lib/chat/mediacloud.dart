@@ -16,7 +16,9 @@ class MediaCloud extends StatelessWidget {
   FutureOr convertEncodedString() async {
     if ((msgObj.isMe == true) & (msgObj.filePath != null)) {
       File file = File(msgObj.filePath);
-      return file;
+      if (file != null) {
+        return file;
+      }
     }
     var ext = msgObj.ext;
     var img64 = msgObj.base64string;
@@ -112,10 +114,13 @@ class MediaCloud extends StatelessWidget {
                         width: 250,
                         height: 260,
                         decoration: _getDecoration(),
-                        child: Image.file(
-                          snapshot.data,
-                          // color:Colors.white.withOpacity(.2),
-                          fit: BoxFit.contain,
+                        child: AspectRatio(
+                          aspectRatio: 4 / 5,
+                          child: Image.file(
+                            snapshot.data,
+                            // color:Colors.white.withOpacity(.2),
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       );
                     }

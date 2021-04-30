@@ -23,7 +23,7 @@ class UploadToServerButton extends StatelessWidget {
     prefs = await SharedPreferences.getInstance();
     username = prefs.getString('username');
     var uri =
-        Uri.parse('$localhost/upload/'); //This web address has to be changed
+        Uri.http(localhost, '/api/upload'); //This web address has to be changed
     var request = http.MultipartRequest('POST', uri)
       ..fields['username'] = username
       ..fields['type'] = type

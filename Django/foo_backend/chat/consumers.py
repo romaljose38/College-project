@@ -393,20 +393,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if 'received' in text_data_json:
             print(text_data_json)
             pass
-            # msg_id = int(text_data_json['received'])
-            # should_inform, chat_id ,chat_user = await self.add_user_to_recipients(msg_id)
-            # if should_inform:
-            #     await self.channel_layer.group_send(
-            #                                         self.room_group_name,
-            #                                         {
-            #                                             'type':'chat_message',
-            #                                             'message':{
-            #                                                 'to':chat_user.username,
-            #                                                 'received':chat_id,
-            #                                                 'from':self.user.username,
-            #                                             }
-            #                                         }
-            #                                     )
+            msg_id = int(text_data_json['received'])
+            should_inform, chat_id ,chat_user = await self.add_user_to_recipients(msg_id)
+            if should_inform:
+                await self.channel_layer.group_send(
+                                                    chat_user.username,
+                                                    {
+                                                        'type':'chat_message',
+                                                        'message':{
+                                                            'to':chat_user.username,
+                                                            'received':chat_id,
+                                                            'from':self.user.username,
+                                                        }
+                                                    }
+                                                )
 
         else:
             to = text_data_json['to']
@@ -538,11 +538,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         print("room group name",self.room_group_name)
         if 'received' in event['message']:
             print(event)
-            to_user_obj = await self.get_user_from_username(event['message']['to'])
-            if self.user == to_user_obj:
+            # to_user_obj = await self.get_user_from_username(event['message']['to'])
+            # if self.user == to_user_obj:
 
-                json_data = json.dumps({'received':event['message']['received'],'name':event['message']['from']})
-                await self.send(text_data=json_data)
+            json_data = json.dumps({'received':event['message']['received'],'name':event['message']['from']})
+            await self.send(text_data=json_data)
 
         else:
             if 'aud' in event['message']:
