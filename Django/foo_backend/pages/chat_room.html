@@ -88,6 +88,7 @@ var socket = new WebSocket('ws://127.0.0.1:8000/ws/chat_room/{{user}}/');
 
     socket.onmessage = function(e){
         console.log(e);
+        console.log(e.data);
         var data = JSON.parse(e.data).message;
         console.log(data);
         var message = data.message;
@@ -121,6 +122,9 @@ var socket = new WebSocket('ws://127.0.0.1:8000/ws/chat_room/{{user}}/');
                 'message': message,
                 'to':receiverName.value,
                 'type':'msg',
+                'id':12345,
+                'time':'hiiyyah'
+
             }));
             messageInputDom.value = '';
         };

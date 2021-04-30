@@ -1,16 +1,47 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foo/screens/feed_icons.dart';
+import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/models/post_model.dart';
-import 'package:ionicons/ionicons.dart';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import '../test_cred.dart';
 
-class ImageUploadScreen extends StatelessWidget {
+class ImageUploadScreen extends StatefulWidget {
   final File mediaInserted;
-  //mediaInserted is for uploaded image(Video)
+
   ImageUploadScreen({this.mediaInserted});
+
+  @override
+  _ImageUploadScreenState createState() => _ImageUploadScreenState();
+}
+
+class _ImageUploadScreenState extends State<ImageUploadScreen> {
+  final TextEditingController captionController = TextEditingController();
+  bool uploading = false;
+
+  Future<void> _upload(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String username = prefs.getString('username');
+    var uri =
+        Uri.http(localhost, '/api/upload'); //This web address has to be changed
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['username'] = username
+      ..fields['type'] = 'image'
+      ..fields['caption'] = captionController.text
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        widget.mediaInserted.path,
+      ));
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      print('Uploaded');
+      Navigator.push(context, MaterialPageRoute(builder: (_) => FeedScreen()));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +68,7 @@ class ImageUploadScreen extends StatelessWidget {
                               // borderRadius: BorderRadius.only(bottomLeft: Radius.circular(25),bottomRight: Radius.circular(25)),
                               image: DecorationImage(
                                 //image: AssetImage(posts[0].imageUrl),
-                                image: FileImage(mediaInserted),
+                                image: FileImage(widget.mediaInserted),
                                 fit: BoxFit.cover,
                               )),
                         ),
@@ -123,7 +154,8 @@ class ImageUploadScreen extends StatelessWidget {
                                             ),
                                           ],
                                           image: DecorationImage(
-                                            image: FileImage(mediaInserted),
+                                            image:
+                                                FileImage(widget.mediaInserted),
                                             //AssetImage(posts[0].imageUrl),
                                             fit: BoxFit.contain,
                                           ),
@@ -153,6 +185,7 @@ class ImageUploadScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextField(
+                    controller: captionController,
                     maxLength: 30,
                     maxLengthEnforcement: MaxLengthEnforcement.enforced,
                     decoration: InputDecoration(
@@ -162,7 +195,23 @@ class ImageUploadScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              )
+              ),
+              uploading
+                  ? Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1,
+                      ))
+                  : Container(),
+              ElevatedButton(
+                child: Text("Upload"),
+                onPressed: () {
+                  setState(() {
+                    uploading = true;
+                  });
+                  return _upload(context);
+                },
+              ),
             ],
           ),
         ),
