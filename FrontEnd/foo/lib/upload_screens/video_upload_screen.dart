@@ -9,13 +9,8 @@ import 'package:foo/screens/models/post_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 import 'package:google_fonts/google_fonts.dart';
-<<<<<<< HEAD
-import 'package:foo/upload_screens/httpupload.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-=======
 import 'package:shared_preferences/shared_preferences.dart';
 import '../test_cred.dart';
->>>>>>> 3e815fff191c0bbb028b2a4864546dd78755d094
 
 class VideoUploadScreen extends StatefulWidget {
   final File mediaInserted;
