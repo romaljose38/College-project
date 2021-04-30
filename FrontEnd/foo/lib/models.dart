@@ -128,3 +128,30 @@ class Thread extends HiveObject {
     }
   }
 }
+
+class Post {
+  String username;
+  String userDpUrl;
+  String postUrl;
+  int likeCount;
+  int commentCount;
+}
+
+class Comment {
+  String username;
+  String userdpUrl;
+  String comment;
+}
+
+class Feed {
+  List<Post> posts = <Post>[];
+
+  void addPost(Post post) {
+    if (this.posts.length == 10) {
+      posts.insert(0, post);
+      posts.removeLast();
+    } else {
+      posts.insert(0, post);
+    }
+  }
+}

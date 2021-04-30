@@ -87,38 +87,19 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _sendAudio() {
-    // print(widget.channel.protocol);
-    var data = jsonEncode({
-      'message': _chatController.text,
-      'from': curUser,
-      'to': otherUser,
-    });
-    if (_chatController.text.isNotEmpty) {
-      if (NotificationController.isActive) {
-        NotificationController.sendToChannel(data);
-      } else {
-        print("not connected");
-      }
-      _chatController.text = "";
-    }
-  }
-
-  void _sendImage() async {
+  void _sendAudio(String path) async {
     var _id = DateTime.now().microsecondsSinceEpoch;
     var curTime = DateTime.now();
-    FilePickerResult result = await FilePicker.platform.pickFiles();
-    File file = File(result.files.single.path);
-
-    String _extension = result.files.single.extension;
+    File file = File(path);
+    String _extension = path.split('.').last;
     var bytes = await file.readAsBytes();
-    String imgString = base64Encode(bytes);
-    print(imgString);
+    String audString = base64Encode(bytes);
+    print(audString);
 
     var data = jsonEncode({
-      'type': 'img',
+      'type': 'aud',
       'ext': _extension,
-      'image': imgString,
+      'image': audString,
       'from': curUser,
       'id': _id,
       'to': otherUser,
@@ -133,14 +114,54 @@ class _ChatScreenState extends State<ChatScreen> {
         filePath: file.path,
         id: _id,
         time: curTime,
-        base64string: imgString,
+        base64string: audString,
         senderName: curUser,
-        msgType: "img",
+        msgType: "aud",
         isMe: true,
       ));
       currentThread.save();
       NotificationController.sendToChannel(data);
     }
+  }
+
+  void _sendImage() async {
+    var _id = DateTime.now().microsecondsSinceEpoch;
+    var curTime = DateTime.now();
+    FilePickerResult result =
+        await FilePicker.platform.pickFiles(withData: true);
+    // File file = File(result.files.single.path);
+    print(result.paths);
+    // String _extension = result.files.single.extension;
+    // var bytes = await file.readAsBytes();
+    // String imgString = base64Encode(bytes);
+    // print(imgString);
+
+    // var data = jsonEncode({
+    //   'type': 'img',
+    //   'ext': _extension,
+    //   'image': imgString,
+    //   'from': curUser,
+    //   'id': _id,
+    //   'to': otherUser,
+    //   'time': curTime.toString(),
+    // });
+    // print(data);
+    // if (NotificationController.isActive) {
+    //   var threadBox = Hive.box('Threads');
+
+    //   Thread currentThread = threadBox.get(threadName);
+    //   currentThread.addChat(ChatMessage(
+    //     filePath: file.path,
+    //     id: _id,
+    //     time: curTime,
+    //     base64string: imgString,
+    //     senderName: curUser,
+    //     msgType: "img",
+    //     isMe: true,
+    //   ));
+    //   currentThread.save();
+    //   NotificationController.sendToChannel(data);
+    // }
   }
 
   @override

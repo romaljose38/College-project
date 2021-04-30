@@ -37,9 +37,9 @@ def video_upload_handler(request):
 		file = request.data['file']
 		username = request.data['username']
 		print(request.data)
-		# user = User.objects.get(username=username)
-		# post = Post.objects.create(post_type=file_type, caption=caption, file=file, user=user)
-		# post.save()
+		user = User.objects.get(username=username)
+		post = Post.objects.create(post_type=file_type, caption=caption, file=file, user=user)
+		post.save()
 		return Response(status=200,data={"status":"success"})
 	except:
 		return Response(status=400,data={"status":"failure"})

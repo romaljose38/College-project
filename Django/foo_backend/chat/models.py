@@ -105,6 +105,7 @@ class Profile(models.Model):
     online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(auto_now=False, auto_now_add=True)
 
+
     def __str__(self):
         return f'{self.user.email}'
 
@@ -182,3 +183,12 @@ class Post(models.Model):
     post_type = models.CharField(max_length=5)
     time_created = models.DateTimeField(auto_now_add=True)
     caption = models.CharField(max_length=100)
+
+    likes = models.ManyToManyField(User,related_name="likes")
+
+class Comment(models.Model):
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=150)
+    time_created = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
