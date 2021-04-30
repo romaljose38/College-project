@@ -3,6 +3,4 @@ Django/env/
 db.sqlite3
 *.pyc
 .vscode
-*.png
-*.jpg
 migrations/
