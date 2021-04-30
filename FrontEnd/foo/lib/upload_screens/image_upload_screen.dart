@@ -11,7 +11,6 @@ import '../test_cred.dart';
 
 class ImageUploadScreen extends StatefulWidget {
   final File mediaInserted;
-
   ImageUploadScreen({this.mediaInserted});
 
   @override

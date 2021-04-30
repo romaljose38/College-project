@@ -11,6 +11,7 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   ScrollController _scrollController = ScrollController();
+
   int itemCount = 3;
   @override
   initState() {

@@ -5,10 +5,13 @@ import 'package:flutter/material.dart';
 import 'chatcloudlist.dart';
 import 'socket.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo/models.dart';
 import 'package:hive_listener/hive_listener.dart';
 import 'package:hive/hive.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ChatScreen extends StatefulWidget {
   // final NotificationController controller;
@@ -52,7 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
     print(_prefs.getString('user'));
   }
 
-  void _sendMessage() {
+  void _sendMessage(TextEditingController _chatController) {
     var _id = DateTime.now().microsecondsSinceEpoch;
     var curTime = DateTime.now();
     // print(widget.channel.protocol);
@@ -129,9 +132,21 @@ class _ChatScreenState extends State<ChatScreen> {
     var curTime = DateTime.now();
     FilePickerResult result =
         await FilePicker.platform.pickFiles(withData: true);
-    // File file = File(result.files.single.path);
-    print(result.paths);
-    // String _extension = result.files.single.extension;
+    File file = File(result.files.single.path);
+    String _extension = result.files.single.extension;
+    var bytes = result.files.single.bytes;
+    print(bytes);
+    Directory appDir = await getApplicationDocumentsDirectory();
+    String path = appDir.path +
+        '/images/sent/' +
+        '${curUser}_${otherUser}_${curTime.toString()}' +
+        '.$_extension';
+    File(path).createSync(recursive: true);
+    File savedFile = await file.copy(path);
+
+    print(savedFile.path);
+
+    // ;
     // var bytes = await file.readAsBytes();
     // String imgString = base64Encode(bytes);
     // print(imgString);
@@ -246,49 +261,266 @@ class _ChatScreenState extends State<ChatScreen> {
                   chatList: __chatList, needScroll: true, curUser: curUser);
             },
           )),
-          Container(
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    topRight: Radius.circular(10)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _chatController,
-                        decoration: InputDecoration.collapsed(
-                            hintText: "Send a message",
-                            hintStyle: TextStyle(
-                              color: Color.fromRGBO(150, 150, 150, 1),
-                            )),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.image_outlined),
-                      onPressed: _sendImage,
-                      splashColor: Colors.pinkAccent,
-                      splashRadius: 16,
-                      padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.send),
-                      onPressed: _sendMessage,
-                      splashColor: Colors.pinkAccent,
-                      splashRadius: 16,
-                      padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
-                    ),
-                  ],
-                ),
-              )),
+          RecordApp(
+            sendMessage: _sendMessage,
+            sendImage: _sendImage,
+            sendAudio: _sendAudio,
+          ),
         ]),
       ),
     );
+  }
+}
+
+class RecordApp extends StatefulWidget {
+  final Function sendMessage;
+  final Function sendImage;
+  final Function sendAudio;
+
+  RecordApp({this.sendMessage, this.sendImage, this.sendAudio});
+
+  @override
+  _RecordAppState createState() => _RecordAppState();
+}
+
+class _RecordAppState extends State<RecordApp>
+    with SingleTickerProviderStateMixin {
+  String path;
+  File file;
+  bool _isRecording = false;
+  bool _hasTyped = false;
+  int _timeRemaining = 60;
+  TextEditingController _chatController = TextEditingController();
+  AnimationController _animationController;
+  Animation _colorTween;
+  Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 800),
+    );
+    _colorTween = ColorTween(begin: Colors.black, end: Colors.red)
+        .animate(_animationController)
+          ..addListener(() {
+            setState(() {
+              // any change that has to be here can be heres
+            });
+          });
+  }
+
+  void animateMicColor() {
+    _animationController.repeat(
+        min: 0, max: 1, reverse: true, period: Duration(milliseconds: 800));
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    const tick = const Duration(seconds: 1);
+    _timeRemaining = 60;
+
+    _timer?.cancel();
+
+    _timer = Timer.periodic(tick, (Timer t) {
+      setState(() {
+        _timeRemaining--;
+        if (_timeRemaining == 0) {
+          _stopRecording();
+          _isRecording = false;
+        }
+      });
+    });
+  }
+
+  String _displayTime() {
+    if (_timeRemaining > 0) {
+      int minutes = _timeRemaining ~/ 60; // ~/ is integer division
+      int seconds = _timeRemaining % 60;
+
+      String minuteString = '$minutes';
+      String secondString = (seconds > 9) ? '$seconds' : '0$seconds';
+
+      return '$minuteString:$secondString';
+    }
+    return "0:00";
+  }
+
+  Future<void> _startRecording() async {
+    _startTimer();
+    animateMicColor();
+    dynamic appDir = await getApplicationDocumentsDirectory();
+    path = appDir.path +
+        '/Audio/' +
+        DateTime.now().millisecondsSinceEpoch.toString() +
+        '.m4a';
+    try {
+      if (await Record.hasPermission()) {
+        await Record.start(path: path);
+
+        _isRecording = await Record.isRecording();
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    await Record.stop();
+
+    file = File(path);
+    print(file.path);
+    widget.sendAudio(file.path);
+  }
+
+  Future<void> _cancelRecording() async {
+    await Record.stop();
+
+    file = File(path);
+    print(file.path);
+    file.delete();
+  }
+
+  Widget myTextBox() {
+    return Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _chatController,
+                  decoration: InputDecoration.collapsed(
+                      hintText: "Send a message",
+                      hintStyle: TextStyle(
+                        color: Color.fromRGBO(150, 150, 150, 1),
+                      )),
+                  onChanged: (typedword) {
+                    if (typedword == '')
+                      setState(() {
+                        _hasTyped = false;
+                      });
+                    else
+                      setState(() {
+                        _hasTyped = true;
+                      });
+                  },
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.image_outlined),
+                onPressed: () {
+                  widget.sendImage();
+                  setState(() {
+                    _hasTyped = false;
+                  });
+                },
+                splashColor: Colors.pinkAccent,
+                splashRadius: 16,
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+              ),
+              (_hasTyped)
+                  ? IconButton(
+                      icon: Icon(Icons.send),
+                      onPressed: () {
+                        widget.sendMessage(_chatController);
+                        setState(() {
+                          _hasTyped = false;
+                        });
+                      },
+                      splashColor: Colors.pinkAccent,
+                      splashRadius: 16,
+                      padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+                    )
+                  : IconButton(
+                      icon: Icon(Icons.mic),
+                      onPressed: () {
+                        setState(() {
+                          _isRecording = true;
+                        });
+                        _startRecording();
+                      },
+                      splashColor: Colors.pinkAccent,
+                      splashRadius: 16,
+                      padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+                    )
+            ],
+          ),
+        ));
+  }
+
+  Widget myAudioBox() {
+    return Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeIn,
+                child: Icon(
+                  Icons.mic,
+                  color: _colorTween.value,
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(_displayTime()),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _cancelRecording();
+                    _isRecording = false;
+                  });
+                },
+                child: Text("Cancel"),
+              ),
+              IconButton(
+                icon: Icon(Icons.send),
+                onPressed: () {
+                  setState(() {
+                    _isRecording = false;
+                  });
+                  _stopRecording();
+                },
+                splashColor: Colors.pinkAccent,
+                splashRadius: 16,
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+              ),
+            ],
+          ),
+        ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _isRecording ? myAudioBox() : myTextBox();
   }
 }

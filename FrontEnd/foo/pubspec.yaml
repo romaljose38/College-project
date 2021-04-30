@@ -45,6 +45,7 @@ dependencies:
   video_player: ^2.1.1
   image_picker: ^0.6.2+3
   flappy_search_bar: ^1.7.2
+  record: ^2.1.1
   
 
 dev_dependencies:

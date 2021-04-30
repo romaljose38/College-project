@@ -1,4 +1,5 @@
 FrontEnd/foo/build/
+Django/env/
 db.sqlite3
 *.pyc
 .vscode
