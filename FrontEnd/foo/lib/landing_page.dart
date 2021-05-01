@@ -35,6 +35,7 @@ class _LandingPageState extends State<LandingPage>
   AnimationController animationController;
   Animation animation;
   OverlayEntry overlayEntry;
+  ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -101,7 +102,8 @@ class _LandingPageState extends State<LandingPage>
   Future<void> _takePic() async {
     File _image;
 
-    _image = await ImagePicker.pickImage(source: ImageSource.camera);
+    final pickedFile = await _picker.getImage(source: ImageSource.camera);
+    _image = File(pickedFile.path);
 
     if (_image != null) {
       animationController.reverse().whenComplete(() {
@@ -273,7 +275,7 @@ class _LandingPageState extends State<LandingPage>
               icon: Icon(Ionicons.add, color: Colors.black, size: 20),
               onPressed: () {
                 showOverlay(context);
-                },
+              },
             ),
           ),
         ),
