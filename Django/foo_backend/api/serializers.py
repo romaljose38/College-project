@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-
+from chat.models import Post
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
@@ -30,3 +30,27 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
+class UserCustomSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['username','f_name','l_name','id']
+
+class PostSerializer(serializers.ModelSerializer):
+    user = UserCustomSerializer()
+
+    class Meta:
+
+        model = Post
+        fields = ["file","user",'id']
+
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        user = self.context['user']
+        if user in instance.likes.all():
+            representation['liked'] = True
+        else:
+            representation['liked'] = False
+        return representation

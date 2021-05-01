@@ -186,6 +186,13 @@ class Post(models.Model):
 
     likes = models.ManyToManyField(User,related_name="likes")
 
+
+    def have_liked(self,user):
+        if user in likes:
+            return True
+        return False
+        
+
 class Comment(models.Model):
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE)

@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
 from django.db.models import Q
 from chat.models import Post
-
+from .serializers import PostSerializer
 
 User = get_user_model()
 
@@ -56,3 +56,12 @@ def get_user_list(request):
 	print(request.query_params)
 	print(data)
 	return Response(status=200,data={"resp":data})
+
+
+
+@api_view(['GET'])
+def get_posts(request):
+	user = User.objects.get(username="deepika")
+	qs = Post.objects.all()
+	serialized = PostSerializer(qs,many=True,context={"user":user})
+	return Response(status=200,data=serialized.data)

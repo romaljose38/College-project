@@ -102,7 +102,7 @@ class _ChatScreenState extends State<ChatScreen> {
     var data = jsonEncode({
       'type': 'aud',
       'ext': _extension,
-      'image': audString,
+      'audio': audString,
       'from': curUser,
       'id': _id,
       'to': otherUser,
