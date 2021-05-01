@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
 from django.db.models import Q
 from chat.models import Post
-from .serializers import PostSerializer
+from .serializers import PostSerializer,UserSerializer
 
 User = get_user_model()
 
@@ -23,7 +23,8 @@ def login(request):
 	user = auth.authenticate(email=email,password=password)
 	if user is not None:
 		auth.login(request,user)
-		return Response(status=200,data={'status':"you are in"})
+		serialized = UserSerializer(user)
+		return Response(status=200,data=serialized.data)
 	
 	return Response(status=400,data={"email":email,"password":password})
 
@@ -60,8 +61,9 @@ def get_user_list(request):
 
 
 @api_view(['GET'])
-def get_posts(request):
-	user = User.objects.get(username="deepika")
-	qs = Post.objects.all()
-	serialized = PostSerializer(qs,many=True,context={"user":user})
+def get_posts(request,username):
+	user = User.objects.get(username=username)
+	qs = Post.objects.order_by("time_created")
+	serialized = PostSerializer(qs, many=True, context={"user":user})
+	print(serialized.data)
 	return Response(status=200,data=serialized.data)
