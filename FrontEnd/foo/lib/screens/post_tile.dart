@@ -40,7 +40,7 @@ class PostTile extends StatelessWidget {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage(post.imageUrl),
+                          image: NetworkImage(post.imageUrl),
                           fit: BoxFit.fitHeight,
                         ),
                       ),
@@ -66,7 +66,7 @@ class PostTile extends StatelessWidget {
                             ),
                           ],
                           image: DecorationImage(
-                            image: AssetImage(post.imageUrl),
+                            image: NetworkImage(post.imageUrl),
                             fit: BoxFit.fitWidth,
                           ),
                         ),

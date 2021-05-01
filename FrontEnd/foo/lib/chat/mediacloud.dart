@@ -19,6 +19,8 @@ class MediaCloud extends StatelessWidget {
       if (file != null) {
         return file;
       }
+    } else if ((msgObj.isMe == true) & (msgObj.filePath == null)) {
+      return "does not exist";
     }
     var ext = msgObj.ext;
     var img64 = msgObj.base64string;
@@ -108,20 +110,25 @@ class MediaCloud extends StatelessWidget {
                     if (snapshot.connectionState == ConnectionState.done) {
                       print('snapshot data is here ');
                       print(snapshot.data);
+                      Widget child;
+                      if (snapshot.data == "does not exist") {
+                        child = Center(
+                            child: Text("File does not exist",
+                                style: TextStyle(color: Colors.white)));
+                      } else {
+                        child = Image.file(
+                          snapshot.data,
+                          // color:Colors.white.withOpacity(.2),
+                          fit: BoxFit.contain,
+                        );
+                      }
                       return Container(
                         padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
                         margin: EdgeInsets.all(5),
                         width: 250,
                         height: 260,
                         decoration: _getDecoration(),
-                        child: AspectRatio(
-                          aspectRatio: 4 / 5,
-                          child: Image.file(
-                            snapshot.data,
-                            // color:Colors.white.withOpacity(.2),
-                            fit: BoxFit.contain,
-                          ),
-                        ),
+                        child: AspectRatio(aspectRatio: 4 / 5, child: child),
                       );
                     }
                     return Container(

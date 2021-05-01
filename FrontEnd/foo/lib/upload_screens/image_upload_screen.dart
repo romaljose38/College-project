@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:foo/landing_page.dart';
 import 'package:foo/screens/feed_icons.dart';
-import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/models/post_model.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,7 +38,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
 
     if (response.statusCode == 200) {
       print('Uploaded');
-      Navigator.push(context, MaterialPageRoute(builder: (_) => FeedScreen()));
+      Navigator.push(context, MaterialPageRoute(builder: (_) => LandingPage()));
     }
   }
 

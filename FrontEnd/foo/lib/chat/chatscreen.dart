@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo/models.dart';
-import 'package:hive_listener/hive_listener.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -146,37 +146,35 @@ class _ChatScreenState extends State<ChatScreen> {
 
     print(savedFile.path);
 
-    // ;
-    // var bytes = await file.readAsBytes();
-    // String imgString = base64Encode(bytes);
-    // print(imgString);
+    String imgString = base64Encode(bytes);
+    print(imgString);
 
-    // var data = jsonEncode({
-    //   'type': 'img',
-    //   'ext': _extension,
-    //   'image': imgString,
-    //   'from': curUser,
-    //   'id': _id,
-    //   'to': otherUser,
-    //   'time': curTime.toString(),
-    // });
-    // print(data);
-    // if (NotificationController.isActive) {
-    //   var threadBox = Hive.box('Threads');
+    var data = jsonEncode({
+      'type': 'img',
+      'ext': _extension,
+      'image': imgString,
+      'from': curUser,
+      'id': _id,
+      'to': otherUser,
+      'time': curTime.toString(),
+    });
+    print(data);
+    if (NotificationController.isActive) {
+      var threadBox = Hive.box('Threads');
 
-    //   Thread currentThread = threadBox.get(threadName);
-    //   currentThread.addChat(ChatMessage(
-    //     filePath: file.path,
-    //     id: _id,
-    //     time: curTime,
-    //     base64string: imgString,
-    //     senderName: curUser,
-    //     msgType: "img",
-    //     isMe: true,
-    //   ));
-    //   currentThread.save();
-    //   NotificationController.sendToChannel(data);
-    // }
+      Thread currentThread = threadBox.get(threadName);
+      currentThread.addChat(ChatMessage(
+        filePath: savedFile.path,
+        id: _id,
+        time: curTime,
+        base64string: imgString,
+        senderName: curUser,
+        msgType: "img",
+        isMe: true,
+      ));
+      currentThread.save();
+      NotificationController.sendToChannel(data);
+    }
   }
 
   @override
@@ -249,10 +247,9 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
         child: Column(children: <Widget>[
           Expanded(
-              child: HiveListener(
-            box: Hive.box("Threads"),
-            keys: [threadName],
-            builder: (box) {
+              child: ValueListenableBuilder(
+            valueListenable: Hive.box("Threads").listenable(),
+            builder: (context, box, widget) {
               var thread = box.get(threadName);
 
               List __chatList = thread.chatList ?? [];
@@ -260,7 +257,20 @@ class _ChatScreenState extends State<ChatScreen> {
               return ChatCloudList(
                   chatList: __chatList, needScroll: true, curUser: curUser);
             },
-          )),
+          )
+              // child: HiveListener(
+              //   box: Hive.box("Threads"),
+              //   keys: [threadName],
+              //   builder: (box) {
+              //     var thread = box.get(threadName);
+
+              //     List __chatList = thread.chatList ?? [];
+
+              //     return ChatCloudList(
+              //         chatList: __chatList, needScroll: true, curUser: curUser);
+              //   },
+              // ),
+              ),
           RecordApp(
             sendMessage: _sendMessage,
             sendImage: _sendImage,
@@ -360,6 +370,7 @@ class _RecordAppState extends State<RecordApp>
         '/Audio/' +
         DateTime.now().millisecondsSinceEpoch.toString() +
         '.m4a';
+    File(path).createSync(recursive: true);
     try {
       if (await Record.hasPermission()) {
         await Record.start(path: path);
