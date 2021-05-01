@@ -112,17 +112,15 @@ class _RegisterFormState extends State<RegisterForm> {
     if (response.statusCode == 400) {
       var jsonResponse = convert.jsonDecode(response.body);
       print(jsonResponse);
-    }
-    else if(response.statusCode == 200){
+    } else if (response.statusCode == 200) {
       var data = convert.jsonDecode(response.body);
       print(data);
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      data.forEach((key,value){
-        if(key=="uprn"){
+      data.forEach((key, value) {
+        if (key == "uprn") {
           prefs.setInt(key, value);
-        }
-        else{
-        prefs.setString(key, value);
+        } else {
+          prefs.setString(key, value);
         }
       });
       prefs.setBool('loggedIn', true);
@@ -156,123 +154,130 @@ class _RegisterFormState extends State<RegisterForm> {
     return Form(
       key: _formKey,
       child: Container(
-        margin:EdgeInsets.fromLTRB(30, 40, 30, 20), 
+        margin: EdgeInsets.fromLTRB(30, 40, 30, 20),
         child: SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height),
+            constraints:
+                BoxConstraints(maxHeight: MediaQuery.of(context).size.height),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                Text(
-                  "Welcome",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(
-                  height: 7,
-                ),
-                Text(
-                  "Register to continue!",
-                  style: TextStyle(
-                    color: Color.fromRGBO(170, 185, 202, 1),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
-                  ),
-                ),
-                SizedBox(height: 60),
-                Row(
-                  children: [
-                    Expanded(
-                      //First Name
-                      child: FormTextField(
-                        focusField: focusFirstName,
-                        nextFocusField: focusLastName,
-                        fieldName: 'f_name',
-                        labeltext: 'First Name',
-                        passwordHidden: false,
-                        whenSaved: _whenSaved,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(
+                      "Welcome",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(width: 15),
-                    Expanded(
-                      //Second Name
-                      child: FormTextField(
-                        focusField: focusLastName,
-                        nextFocusField: focusUsername,
-                        fieldName: 'l_name',
-                        labeltext: 'Last Name',
-                        passwordHidden: false,
-                        whenSaved: _whenSaved,
+                    SizedBox(
+                      height: 7,
+                    ),
+                    Text(
+                      "Register to continue!",
+                      style: TextStyle(
+                        color: Color.fromRGBO(170, 185, 202, 1),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 15),
-                //Username
-                FormTextField(
-                  focusField: focusUsername,
-                  nextFocusField: focusEmail,
-                  fieldName: 'username',
-                  labeltext: 'Username',
-                  passwordHidden: false,
-                  whenSaved: _whenSaved,
-                ),
-                SizedBox(height: 15),
-                //Email
-                FormTextField(
-                  focusField: focusEmail,
-                  nextFocusField: focusUprn,
-                  fieldName: 'email',
-                  labeltext: 'Email ID',
-                  passwordHidden: false,
-                  whenSaved: _whenSaved,
-                ),
-                SizedBox(height: 15),
-                //UPRN
-                FormTextField(
-                  focusField: focusUprn,
-                  nextFocusField: focusPassword,
-                  fieldName: 'uprn',
-                  labeltext: 'UPRN',
-                  passwordHidden: false,
-                  whenSaved: _whenSaved,
-                ),
-                SizedBox(height: 15),
-                //Password
-                FormTextField(
-                  focusField: focusPassword,
-                  nextFocusField: focusSubmit,
-                  fieldName: 'password',
-                  labeltext: 'Password',
-                  passwordHidden: _passwordHidden,
-                  whenSaved: _whenSaved,
-                  isToggledView: _isTogglePassword,
-                ),
-                SizedBox(height: 60),
-                ElevatedGradientButton(
-                  text: "Submit",
-                  onPressed: _submitHandle,
-                  focusNode: focusSubmit,
-                ),
-              ])),
-             Align(child: 
-                                      GestureDetector(
-                                                  child: RichText(
-                                                          text:TextSpan(
-                                                            text:"Already have an account?.",
-                                                          style:TextStyle(color: Colors.black,fontWeight: FontWeight.w500),
-                                                          children:[
-                                                            TextSpan(text:"Log in",style: TextStyle(color: Color.fromRGBO(250, 57, 142, 1),fontWeight: FontWeight.w700))
-                                                            ])),
-                                                onTap:(){ Navigator.pushNamed(context,'/login');}
-                                      ),
+                    SizedBox(height: 60),
+                    Row(
+                      children: [
+                        Expanded(
+                          //First Name
+                          child: FormTextField(
+                            focusField: focusFirstName,
+                            nextFocusField: focusLastName,
+                            fieldName: 'f_name',
+                            labeltext: 'First Name',
+                            passwordHidden: false,
+                            whenSaved: _whenSaved,
+                          ),
+                        ),
+                        SizedBox(width: 15),
+                        Expanded(
+                          //Second Name
+                          child: FormTextField(
+                            focusField: focusLastName,
+                            nextFocusField: focusUsername,
+                            fieldName: 'l_name',
+                            labeltext: 'Last Name',
+                            passwordHidden: false,
+                            whenSaved: _whenSaved,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 15),
+                    //Username
+                    FormTextField(
+                      focusField: focusUsername,
+                      nextFocusField: focusEmail,
+                      fieldName: 'username',
+                      labeltext: 'Username',
+                      passwordHidden: false,
+                      whenSaved: _whenSaved,
+                    ),
+                    SizedBox(height: 15),
+                    //Email
+                    FormTextField(
+                      focusField: focusEmail,
+                      nextFocusField: focusUprn,
+                      fieldName: 'email',
+                      labeltext: 'Email ID',
+                      passwordHidden: false,
+                      whenSaved: _whenSaved,
+                    ),
+                    SizedBox(height: 15),
+                    //UPRN
+                    FormTextField(
+                      focusField: focusUprn,
+                      nextFocusField: focusPassword,
+                      fieldName: 'uprn',
+                      labeltext: 'UPRN',
+                      passwordHidden: false,
+                      whenSaved: _whenSaved,
+                    ),
+                    SizedBox(height: 15),
+                    //Password
+                    FormTextField(
+                      focusField: focusPassword,
+                      nextFocusField: focusSubmit,
+                      fieldName: 'password',
+                      labeltext: 'Password',
+                      passwordHidden: _passwordHidden,
+                      whenSaved: _whenSaved,
+                      isToggledView: _isTogglePassword,
+                    ),
+                    SizedBox(height: 60),
+                    ElevatedGradientButton(
+                      text: "Submit",
+                      onPressed: _submitHandle,
+                      focusNode: focusSubmit,
+                    ),
+                  ])),
+              Align(
+                child: GestureDetector(
+                    child: RichText(
+                        text: TextSpan(
+                            text: "Already have an account?.",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500),
+                            children: [
+                          TextSpan(
+                              text: "Log in",
+                              style: TextStyle(
+                                  color: Color.fromRGBO(250, 57, 142, 1),
+                                  fontWeight: FontWeight.w700))
+                        ])),
+                    onTap: () {
+                      Navigator.pushNamed(context, '/login');
+                    }),
               )
             ]),
           ),

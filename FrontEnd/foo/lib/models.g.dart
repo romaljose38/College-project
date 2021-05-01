@@ -60,6 +60,7 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       msgType: fields[7] as String,
       base64string: fields[8] as String,
       ext: fields[9] as String,
+      filePath: fields[11] as String,
     )
       ..haveReceived = fields[4] as bool
       ..haveReachedServer = fields[10] as bool;
@@ -68,7 +69,7 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
   @override
   void write(BinaryWriter writer, ChatMessage obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.thread)
       ..writeByte(1)
@@ -90,7 +91,9 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       ..writeByte(9)
       ..write(obj.ext)
       ..writeByte(10)
-      ..write(obj.haveReachedServer);
+      ..write(obj.haveReachedServer)
+      ..writeByte(11)
+      ..write(obj.filePath);
   }
 
   @override
@@ -143,6 +146,87 @@ class ThreadAdapter extends TypeAdapter<Thread> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ThreadAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class PostAdapter extends TypeAdapter<Post> {
+  @override
+  final int typeId = 3;
+
+  @override
+  Post read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Post(
+      username: fields[0] as String,
+      userDpUrl: fields[1] as String,
+      postUrl: fields[2] as String,
+      likeCount: fields[3] as int,
+      commentCount: fields[4] as int,
+      postId: fields[5] as int,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, Post obj) {
+    writer
+      ..writeByte(6)
+      ..writeByte(0)
+      ..write(obj.username)
+      ..writeByte(1)
+      ..write(obj.userDpUrl)
+      ..writeByte(2)
+      ..write(obj.postUrl)
+      ..writeByte(3)
+      ..write(obj.likeCount)
+      ..writeByte(4)
+      ..write(obj.commentCount)
+      ..writeByte(5)
+      ..write(obj.postId);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PostAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class FeedAdapter extends TypeAdapter<Feed> {
+  @override
+  final int typeId = 4;
+
+  @override
+  Feed read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Feed()..posts = (fields[0] as List)?.cast<Post>();
+  }
+
+  @override
+  void write(BinaryWriter writer, Feed obj) {
+    writer
+      ..writeByte(1)
+      ..writeByte(0)
+      ..write(obj.posts);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FeedAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

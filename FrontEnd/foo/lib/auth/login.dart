@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../test_cred.dart';
 import 'elevatedgradientbutton.dart';
 import 'logintextfield.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -36,6 +41,31 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text;
     final password = _passwordController.text;
     print(email + password);
+    var url = Uri.http(localhost, "api/login");
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      print(data);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      data.forEach((key, value) {
+        if (key == "uprn") {
+          prefs.setInt(key, value);
+        } else {
+          prefs.setString(key, value);
+        }
+      });
+      prefs.setBool('loggedIn', true);
+      Navigator.pushNamed(context, '/landingPage');
+    }
   }
 
   bool hidePassword = true;

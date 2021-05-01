@@ -39,7 +39,7 @@ class Profile extends StatelessWidget {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: AssetImage(posts[2].imageUrl),
+                            image: AssetImage(stories[2]),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -112,7 +112,7 @@ class Profile extends StatelessWidget {
                                     child: Image(
                                       height: 90.0,
                                       width: 90.0,
-                                      image: AssetImage(posts[2].imageUrl),
+                                      image: AssetImage(stories[2]),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -299,12 +299,12 @@ class Profile extends StatelessWidget {
                     height: 200,
                     decoration: BoxDecoration(
                       boxShadow: [
-                              BoxShadow(
-                                color:Colors.white.withOpacity(.4),
-                                offset:Offset(1,3),
-                                blurRadius: 3,
-                              )
-                            ],
+                        BoxShadow(
+                          color: Colors.white.withOpacity(.4),
+                          offset: Offset(1, 3),
+                          blurRadius: 3,
+                        )
+                      ],
                       borderRadius: BorderRadius.circular(15),
                       color: Colors.white,
                     ),
@@ -312,7 +312,7 @@ class Profile extends StatelessWidget {
                         aspectRatio: 4 / 5,
                         child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),                           
+                            borderRadius: BorderRadius.circular(15),
                             image: DecorationImage(
                                 image: AssetImage(stories[index]),
                                 fit: BoxFit.cover),

@@ -1,11 +1,12 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/screens/view_post_screen.dart';
 import 'package:ionicons/ionicons.dart';
 
-import 'feed_icons.dart';
-import 'models/post_model.dart';
+import 'feed_icons.dart' as icons;
+import 'package:foo/models.dart';
 
 class PostTile extends StatelessWidget {
   final Post post;
@@ -38,12 +39,14 @@ class PostTile extends StatelessWidget {
                       height: 300,
                       // width:250,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(post.imageUrl),
-                          fit: BoxFit.fitHeight,
-                        ),
-                      ),
+                      // decoration: BoxDecoration(
+                      //   image: DecorationImage(
+                      //     image: NetworkImage(post.postUrl),
+                      //     fit: BoxFit.cover,
+                      //   ),
+                      // ),
+                      child: CachedNetworkImage(
+                          imageUrl: post.postUrl, fit: BoxFit.cover),
                     ),
                   ),
                 ),
@@ -56,22 +59,33 @@ class PostTile extends StatelessWidget {
                     child: Hero(
                       tag: 'profile_$index',
                       child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black45,
-                              offset: Offset(0, 5),
-                              blurRadius: 8.0,
-                            ),
-                          ],
-                          image: DecorationImage(
-                            image: NetworkImage(post.imageUrl),
-                            fit: BoxFit.fitWidth,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black45,
+                                offset: Offset(0, 5),
+                                blurRadius: 8.0,
+                              ),
+                            ],
+                            // image: DecorationImage(
+                            //   image: NetworkImage(post.postUrl),
+                            //   fit: BoxFit.contain,
+                            // ),
                           ),
-                        ),
-                        // child:BackdropFilter(filter: ImageFilter.blur(sigmaX:10,sigmaY:10),)
-                      ),
+                          child: CachedNetworkImage(
+                            imageUrl: post.postUrl,
+                            fit: BoxFit.contain,
+                            progressIndicatorBuilder: (ctx, string, progress) {
+                              return Center(
+                                  child: CircularProgressIndicator(
+                                strokeWidth: 1,
+                                value: progress.progress,
+                              ));
+                            },
+                          )
+                          // child:BackdropFilter(filter: ImageFilter.blur(sigmaX:10,sigmaY:10),)
+                          ),
                     ),
                   ),
                 ),
@@ -81,6 +95,7 @@ class PostTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(post.postId);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
       child: Container(
@@ -125,21 +140,20 @@ class PostTile extends StatelessWidget {
                           child: Image(
                             height: 50.0,
                             width: 50.0,
-                            image: AssetImage(post.authorImageUrl),
+                            image: AssetImage(post.userDpUrl),
                             fit: BoxFit.cover,
                           ),
                         ),
                       ),
                     ),
                     title: Text(
-                      this.post.authorName,
+                      this.post.username,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    subtitle: Text(post.timeAgo),
                     trailing: IconButton(
-                      icon: Icon(Feed.colon),
+                      icon: Icon(icons.Feed.colon),
                       color: Colors.black,
                       onPressed: () => print('More'),
                     ),

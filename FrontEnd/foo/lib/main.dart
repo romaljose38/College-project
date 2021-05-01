@@ -1,11 +1,4 @@
-import 'dart:convert';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:foo/upload_screens/image_upload_screen.dart';
-import 'package:foo/landing_page.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:video_player/video_player.dart';
 import 'initialscreen.dart';
 import 'router.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,8 +18,11 @@ Future<void> main() async {
   Hive.registerAdapter(UserAdapter());
   Hive.registerAdapter(ChatMessageAdapter());
   Hive.registerAdapter(ThreadAdapter());
-  await Hive.openBox('Threads');
+  Hive.registerAdapter(FeedAdapter());
+  Hive.registerAdapter(PostAdapter());
 
+  await Hive.openBox('Threads');
+  await Hive.openBox('Feed');
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
   await Firebase.initializeApp();

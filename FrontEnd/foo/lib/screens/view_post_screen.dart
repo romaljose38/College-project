@@ -1,18 +1,17 @@
 import 'dart:ui';
 
 import 'package:foo/screens/models/comment_model.dart';
-import 'package:foo/screens/models/post_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
-
-import 'feed_icons.dart';
+import 'package:foo/models.dart';
+import 'feed_icons.dart' as icon;
 
 class ViewPostScreen extends StatefulWidget {
   final Post post;
   final int index;
 
-  ViewPostScreen({@required this.post,this.index});
+  ViewPostScreen({@required this.post, this.index});
 
   @override
   _ViewPostScreenState createState() => _ViewPostScreenState();
@@ -108,7 +107,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                 color: Colors.white,
                                 // borderRadius: BorderRadius.only(bottomLeft: Radius.circular(25),bottomRight: Radius.circular(25)),
                                 image: DecorationImage(
-                                  image: AssetImage(widget.post.imageUrl),
+                                  image: AssetImage(widget.post.postUrl),
                                   fit: BoxFit.cover,
                                 )),
                           ),
@@ -160,14 +159,14 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                               height: 50.0,
                                               width: 50.0,
                                               image: AssetImage(
-                                                  widget.post.authorImageUrl),
+                                                  widget.post.userDpUrl),
                                               fit: BoxFit.cover,
                                             ),
                                           ),
                                         ),
                                       ),
                                       IconButton(
-                                        icon: Icon(Feed.colon),
+                                        icon: Icon(icon.Feed.colon),
                                         color: Colors.white,
                                         onPressed: () => print('More'),
                                       ),
@@ -187,8 +186,8 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                       child: AspectRatio(
                                         aspectRatio: 4 / 5,
                                         child: Hero(
-                                        tag:"profile_${widget.index}",
-                                                                                  child: Container(
+                                          tag: "profile_${widget.index}",
+                                          child: Container(
                                             decoration: BoxDecoration(
                                               borderRadius:
                                                   BorderRadius.circular(25.0),
@@ -201,7 +200,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                               ],
                                               image: DecorationImage(
                                                 image: AssetImage(
-                                                    widget.post.imageUrl),
+                                                    widget.post.postUrl),
                                                 fit: BoxFit.contain,
                                               ),
                                             ),

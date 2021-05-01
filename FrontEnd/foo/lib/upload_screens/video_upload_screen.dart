@@ -151,8 +151,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                                           child: Image(
                                             height: 50.0,
                                             width: 50.0,
-                                            image: AssetImage(
-                                                posts[0].authorImageUrl),
+                                            image: AssetImage(stories[2]),
                                             fit: BoxFit.cover,
                                           ),
                                         ),

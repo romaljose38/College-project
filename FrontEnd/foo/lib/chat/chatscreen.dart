@@ -244,7 +244,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 )),
           )),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
+        padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
         child: Column(children: <Widget>[
           Expanded(
               child: ValueListenableBuilder(
@@ -257,19 +257,7 @@ class _ChatScreenState extends State<ChatScreen> {
               return ChatCloudList(
                   chatList: __chatList, needScroll: true, curUser: curUser);
             },
-          )
-              // child: HiveListener(
-              //   box: Hive.box("Threads"),
-              //   keys: [threadName],
-              //   builder: (box) {
-              //     var thread = box.get(threadName);
-
-              //     List __chatList = thread.chatList ?? [];
-
-              //     return ChatCloudList(
-              //         chatList: __chatList, needScroll: true, curUser: curUser);
-              //   },
-              // ),
+          ),
               ),
           RecordApp(
             sendMessage: _sendMessage,

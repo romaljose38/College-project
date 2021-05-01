@@ -107,29 +107,31 @@ class MediaCloud extends StatelessWidget {
                 FutureBuilder(
                   future: convertEncodedString(),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      print('snapshot data is here ');
-                      print(snapshot.data);
-                      Widget child;
-                      if (snapshot.data == "does not exist") {
-                        child = Center(
-                            child: Text("File does not exist",
-                                style: TextStyle(color: Colors.white)));
-                      } else {
-                        child = Image.file(
-                          snapshot.data,
-                          // color:Colors.white.withOpacity(.2),
-                          fit: BoxFit.contain,
+                    if (msgObj.msgType == "img") {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        print('snapshot data is here ');
+                        print(snapshot.data);
+                        Widget child;
+                        if (snapshot.data == "does not exist") {
+                          child = Center(
+                              child: Text("File does not exist",
+                                  style: TextStyle(color: Colors.white)));
+                        } else {
+                          child = Image.file(
+                            snapshot.data,
+                            // color:Colors.white.withOpacity(.2),
+                            fit: BoxFit.contain,
+                          );
+                        }
+                        return Container(
+                          padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
+                          margin: EdgeInsets.all(5),
+                          width: 250,
+                          height: 260,
+                          decoration: _getDecoration(),
+                          child: AspectRatio(aspectRatio: 4 / 5, child: child),
                         );
                       }
-                      return Container(
-                        padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
-                        margin: EdgeInsets.all(5),
-                        width: 250,
-                        height: 260,
-                        decoration: _getDecoration(),
-                        child: AspectRatio(aspectRatio: 4 / 5, child: child),
-                      );
                     }
                     return Container(
                       margin: EdgeInsets.all(5),

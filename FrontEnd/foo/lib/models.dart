@@ -129,12 +129,37 @@ class Thread extends HiveObject {
   }
 }
 
+@HiveType(typeId: 3)
 class Post {
+  @HiveField(0)
   String username;
+
+  @HiveField(1)
   String userDpUrl;
+
+  @HiveField(2)
   String postUrl;
+
+  @HiveField(3)
   int likeCount;
+
+  @HiveField(4)
   int commentCount;
+
+  @HiveField(5)
+  int postId;
+
+  @HiveField(6)
+  bool haveLiked;
+
+  Post(
+      {this.username,
+      this.userDpUrl,
+      this.postUrl,
+      this.likeCount,
+      this.commentCount,
+      this.postId,
+      this.haveLiked});
 }
 
 class Comment {
@@ -143,7 +168,9 @@ class Comment {
   String comment;
 }
 
-class Feed {
+@HiveType(typeId: 4)
+class Feed extends HiveObject {
+  @HiveField(0)
   List<Post> posts = <Post>[];
 
   void addPost(Post post) {
@@ -153,5 +180,12 @@ class Feed {
     } else {
       posts.insert(0, post);
     }
+  }
+
+  bool isNew(int id) {
+    if (this.posts.first.postId < id) {
+      return true;
+    }
+    return false;
   }
 }
