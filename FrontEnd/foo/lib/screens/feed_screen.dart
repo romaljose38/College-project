@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:foo/chat/socket.dart';
 import 'package:foo/models.dart';
 import 'package:foo/screens/post_tile.dart';
@@ -22,10 +23,12 @@ class _FeedScreenState extends State<FeedScreen> {
   SharedPreferences prefs;
   String curUser;
   int itemCount = 0;
-  final GlobalKey<AnimatedListState> listKey = GlobalKey<AnimatedListState>();
+  bool isConnected = false;
+  GlobalKey<AnimatedListState> listKey;
 
   @override
   initState() {
+    listKey = GlobalKey<AnimatedListState>();
     setInitialData();
     super.initState();
     // _getNewPosts();
@@ -46,24 +49,34 @@ class _FeedScreenState extends State<FeedScreen> {
       });
   }
 
+  void _checkConnectionStatus() async {
+    bool result = await DataConnectionChecker().hasConnection;
+    print("result");
+    print(result);
+    if (result == true) {
+      setState(() {
+        isConnected = true;
+      });
+    } else {
+      setState(() {
+        isConnected = false;
+      });
+    }
+  }
+
   setInitialData() async {
+    await _checkConnectionStatus();
     prefs = await SharedPreferences.getInstance();
     curUser = prefs.getString("username");
-    if (NotificationController.isActive) {
-      var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
-      var respJson = jsonDecode(response.body);
-      print(respJson);
-      print(respJson.runtimeType);
-    }
-
     var feedBox = Hive.box("Feed");
     Feed feed;
     if (feedBox.containsKey("feed")) {
+      print("old feed");
       feed = feedBox.get("feed");
 
       for (int i = 0; i < feed.posts.length; i++) {
         listKey.currentState.insertItem(1, duration: Duration(seconds: 3));
-        postsList.insert(0, feed.posts[i]);
+        postsList.add(feed.posts[i]);
       }
       setState(() {
         itemCount += postsList.length;
@@ -71,7 +84,37 @@ class _FeedScreenState extends State<FeedScreen> {
       print(feed.posts);
     } else {
       feed = Feed();
+      print("new feed");
       await feedBox.put('feed', feed);
+    }
+
+    if (isConnected) {
+      print("requesting");
+      var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
+      var respJson = jsonDecode(response.body);
+      print(respJson);
+      print(respJson.runtimeType);
+      if (response.statusCode == 200) {
+        respJson.forEach((e) {
+          if (feed.isNew(e['id'])) {
+            print(e);
+            Post post = Post(
+                username: e['user']['username'],
+                postUrl: 'http://' + localhost + e['file'],
+                userDpUrl: 'assets/images/user0.png',
+                postId: e['id'],
+                userId: e['user']['id']);
+            listKey.currentState.insertItem(1);
+            postsList.insert(1, post);
+            feed.addPost(post);
+            setState(() {
+              itemCount += 1;
+              // postsList = postsList;
+            });
+            feed.save();
+          }
+        });
+      }
     }
   }
 
@@ -124,14 +167,20 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Future<List> _getNewPosts() async {
+  Future<void> _getNewPosts() async {
     var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
     var respJson = jsonDecode(response.body);
     print(respJson);
     print(respJson.runtimeType);
 
     var feedBox = Hive.box("Feed");
-    var feed = feedBox.get('feed');
+    var feed;
+    if (feedBox.containsKey("feed")) {
+      feed = feedBox.get('feed');
+    } else {
+      feed = Feed();
+      await feedBox.put("feed", feed);
+    }
 
     respJson.forEach((e) {
       if (feed.isNew(e['id'])) {
@@ -140,19 +189,18 @@ class _FeedScreenState extends State<FeedScreen> {
             username: e['user']['username'],
             postUrl: 'http://' + localhost + e['file'],
             userDpUrl: 'assets/images/user0.png',
-            postId: e['id']);
-        listKey.currentState.insertItem(0);
-        postsList.insert(0, post);
+            postId: e['id'],
+            userId: e['user']['id']);
+        listKey.currentState.insertItem(1);
+        postsList.insert(1, post);
         feed.addPost(post);
         setState(() {
-          itemCount += respJson.length;
+          itemCount += 1;
           // postsList = postsList;
         });
         feed.save();
       }
     });
-
-    return [];
   }
 
   @override
@@ -160,6 +208,7 @@ class _FeedScreenState extends State<FeedScreen> {
     return Scaffold(
       backgroundColor: Color.fromRGBO(218, 228, 237, 1),
       body: RefreshIndicator(
+          triggerMode: RefreshIndicatorTriggerMode.anywhere,
           onRefresh: _getNewPosts,
           child: AnimatedList(
             initialItemCount: 1,

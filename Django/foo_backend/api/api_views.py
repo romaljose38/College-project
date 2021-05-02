@@ -7,8 +7,13 @@ from rest_framework.parsers import FileUploadParser,MultiPartParser
 from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
 from django.db.models import Q
-from chat.models import Post
-from .serializers import PostSerializer,UserSerializer
+from chat.models import Post,Comment
+from .serializers import (
+	PostSerializer,
+	UserSerializer,
+	UserProfileSerializer,
+	PostDetailSerializer,
+	)
 
 User = get_user_model()
 
@@ -67,3 +72,36 @@ def get_posts(request,username):
 	serialized = PostSerializer(qs, many=True, context={"user":user})
 	print(serialized.data)
 	return Response(status=200,data=serialized.data)
+
+
+
+@api_view(['GET'])
+def get_profile_and_posts(request,id):
+	user = User.objects.get(id=id)
+	serialized = UserProfileSerializer(user)
+	print(serialized.data)
+	return Response(status=200,data=serialized.data)
+
+
+
+@api_view(['GET'])
+def get_comments(request,id):
+	post = Post.objects.get(id=id)
+	serialized = PostDetailSerializer(post)
+	return Response(status=200, data=serialized.data)
+
+
+@api_view(['POST'])
+def add_comment(request,username):
+	try:
+		user = User.objects.get(username=username)
+		post = Post.objects.get(id=request.data['post'])
+		comment	= Comment.objects.create(user=user,post=post,comment=request.data['comment'])
+		comment.save()
+		context = {
+		'id':comment.id
+		}
+		print(user,comment)
+		return Response(status=200, data=context)
+	except:
+		return Response(status=400)

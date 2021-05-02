@@ -1,10 +1,15 @@
+import 'dart:convert';
 import 'dart:ui';
 
-import 'package:foo/screens/models/comment_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+// import 'package:foo/screens/models/comment_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:foo/models.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../test_cred.dart';
 import 'feed_icons.dart' as icon;
 
 class ViewPostScreen extends StatefulWidget {
@@ -18,7 +23,65 @@ class ViewPostScreen extends StatefulWidget {
 }
 
 class _ViewPostScreenState extends State<ViewPostScreen> {
-  Widget _buildComment(int index) {
+  TextEditingController _commentController = TextEditingController();
+  bool hasFetched = false;
+  List<Widget> commentsList = <Widget>[];
+  @override
+  void initState() {
+    super.initState();
+    _getComments();
+  }
+
+  Future<void> _getComments() async {
+    var response = await http
+        .get(Uri.http(localhost, '/api/${widget.post.postId}/post_detail'));
+    if (response.statusCode == 200) {
+      var respJson = jsonDecode(response.body);
+      print(respJson);
+
+      respJson['comment_set'].forEach((e) {
+        setState(() {
+          commentsList.insert(
+              0,
+              _buildComment(Comment(
+                  comment: e['comment'],
+                  userdpUrl: widget.post.userDpUrl,
+                  username: e['user'])));
+        });
+      });
+    }
+    setState(() {
+      hasFetched = true;
+    });
+  }
+
+  _addComment() async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    String username = _prefs.getString("username");
+    String comment = _commentController.text;
+    var response =
+        await http.post(Uri.http(localhost, '/api/$username/add_comment'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode({
+              'comment': comment,
+              'post': widget.post.postId,
+            }));
+    _commentController.text = "";
+    if (response.statusCode == 200) {
+      setState(() {
+        commentsList.insert(
+            0,
+            _buildComment(Comment(
+                comment: comment,
+                userdpUrl: widget.post.userDpUrl,
+                username: username)));
+      });
+    }
+  }
+
+  Widget _buildComment(Comment comment) {
     return Padding(
       padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
       child: ListTile(
@@ -45,7 +108,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                 child: Image(
                   height: 35.0,
                   width: 35.0,
-                  image: AssetImage(comments[index].authorImageUrl),
+                  image: AssetImage(comment.userdpUrl),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -53,7 +116,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
           ),
         ),
         title: Text(
-          comments[index].authorName,
+          comment.username,
           style: GoogleFonts.raleway(
               color: Color.fromRGBO(91, 75, 95, 1),
               fontWeight: FontWeight.w400,
@@ -61,7 +124,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
         ),
         subtitle: Padding(
           padding: EdgeInsets.only(top: 5),
-          child: Text(comments[index].text,
+          child: Text(comment.comment,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.raleway(
                   color: Colors.white,
@@ -107,7 +170,8 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                 color: Colors.white,
                                 // borderRadius: BorderRadius.only(bottomLeft: Radius.circular(25),bottomRight: Radius.circular(25)),
                                 image: DecorationImage(
-                                  image: AssetImage(widget.post.postUrl),
+                                  image: CachedNetworkImageProvider(
+                                      widget.post.postUrl),
                                   fit: BoxFit.cover,
                                 )),
                           ),
@@ -199,8 +263,9 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                                 ),
                                               ],
                                               image: DecorationImage(
-                                                image: AssetImage(
-                                                    widget.post.postUrl),
+                                                image:
+                                                    CachedNetworkImageProvider(
+                                                        widget.post.postUrl),
                                                 fit: BoxFit.contain,
                                               ),
                                             ),
@@ -288,15 +353,18 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                     decoration: BoxDecoration(
                       color: Color.fromRGBO(24, 4, 29, 1),
                     ),
-                    child: Column(
-                      children: <Widget>[
-                        _buildComment(0),
-                        _buildComment(1),
-                        _buildComment(2),
-                        _buildComment(3),
-                        _buildComment(4),
-                      ],
-                    ),
+                    child: (hasFetched)
+                        ? Column(
+                            children: (commentsList == [])
+                                ? [Text("waiting")]
+                                : commentsList,
+                          )
+                        : Center(
+                            child: CircularProgressIndicator(
+                              backgroundColor: Colors.white,
+                              strokeWidth: 1,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -306,6 +374,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
               height: 40,
               margin: EdgeInsets.fromLTRB(10, 10, 10, 5),
               decoration: BoxDecoration(
+                // backgroundBlendMode: BlendMode.clear,
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(50),
               ),
@@ -319,7 +388,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                         child: Image(
                           height: 35.0,
                           width: 35.0,
-                          image: AssetImage(comments[0].authorImageUrl),
+                          image: AssetImage(widget.post.userDpUrl),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -327,6 +396,7 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                   ),
                   Expanded(
                     child: TextField(
+                      controller: _commentController,
                       cursorColor: Colors.black,
                       decoration: InputDecoration(
                         hintText: "Add a comment",
@@ -336,20 +406,18 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                       ),
                     ),
                   ),
-                  // Container(
-                  //   padding: EdgeInsets.all(5),
-                  //   decoration: BoxDecoration(
-                  //     color:Colors.white,
-                  //     shape: BoxShape.circle,
-                  //   ),
-                  //   child: CircleAvatar(
-                  //     child:
-                  //      IconButton(
-                  //       icon:Icon(Ionicons.paper_plane),
-                  //       onPressed: (){},
-                  //     )
-                  //   ),
-                  // ),
+                  Container(
+                    padding: EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: CircleAvatar(
+                        child: IconButton(
+                      icon: Icon(Ionicons.paper_plane),
+                      onPressed: _addComment,
+                    )),
+                  ),
                 ],
               )),
         ],

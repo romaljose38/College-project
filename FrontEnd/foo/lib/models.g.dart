@@ -167,13 +167,15 @@ class PostAdapter extends TypeAdapter<Post> {
       likeCount: fields[3] as int,
       commentCount: fields[4] as int,
       postId: fields[5] as int,
+      haveLiked: fields[6] as bool,
+      userId: fields[7] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, Post obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -185,7 +187,11 @@ class PostAdapter extends TypeAdapter<Post> {
       ..writeByte(4)
       ..write(obj.commentCount)
       ..writeByte(5)
-      ..write(obj.postId);
+      ..write(obj.postId)
+      ..writeByte(6)
+      ..write(obj.haveLiked)
+      ..writeByte(7)
+      ..write(obj.userId);
   }
 
   @override

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:foo/profile/profile.dart';
 import 'package:foo/screens/view_post_screen.dart';
 import 'package:ionicons/ionicons.dart';
 
@@ -19,8 +20,17 @@ class PostTile extends StatelessWidget {
         onTap: () {
           Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => ViewPostScreen(post: post, index: index)));
+              PageRouteBuilder(pageBuilder: (context, animation, secAnimation) {
+                return ViewPostScreen(post: post, index: index);
+              }, transitionsBuilder: (context, animation, secAnimation, child) {
+                return SlideTransition(
+                    position: Tween(begin: Offset(1, 0), end: Offset(0, 0))
+                        .animate(animation),
+                    child: child);
+              })
+              // MaterialPageRoute(
+              //     builder: (_) => ViewPostScreen(post: post, index: index))
+              );
         },
         child: Container(
             height: 280,
@@ -96,6 +106,7 @@ class PostTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print(post.postId);
+    print(post.userId);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
       child: Container(
@@ -135,13 +146,23 @@ class PostTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: CircleAvatar(
-                        child: ClipOval(
-                          child: Image(
-                            height: 50.0,
-                            width: 50.0,
-                            image: AssetImage(post.userDpUrl),
-                            fit: BoxFit.cover,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => Profile(post: this.post),
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
+                          child: ClipOval(
+                            child: Image(
+                              height: 50.0,
+                              width: 50.0,
+                              image: AssetImage(post.userDpUrl),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),

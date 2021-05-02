@@ -152,6 +152,9 @@ class Post {
   @HiveField(6)
   bool haveLiked;
 
+  @HiveField(7)
+  int userId;
+
   Post(
       {this.username,
       this.userDpUrl,
@@ -159,13 +162,16 @@ class Post {
       this.likeCount,
       this.commentCount,
       this.postId,
-      this.haveLiked});
+      this.haveLiked,
+      this.userId});
 }
 
 class Comment {
   String username;
   String userdpUrl;
   String comment;
+
+  Comment({this.username, this.userdpUrl, this.comment});
 }
 
 @HiveType(typeId: 4)
@@ -183,9 +189,15 @@ class Feed extends HiveObject {
   }
 
   bool isNew(int id) {
-    if (this.posts.first.postId < id) {
+    if (this.posts != null) {
+      if (this.posts.length > 0) {
+        if (this.posts.first.postId < id) {
+          return true;
+        }
+        return false;
+      }
       return true;
     }
-    return false;
+    return true;
   }
 }

@@ -42,7 +42,7 @@ class _LandingPageState extends State<LandingPage>
     super.initState();
     animationController = AnimationController(
       vsync: this,
-      duration: Duration(microseconds: 200),
+      duration: Duration(milliseconds: 400),
     );
     animation =
         Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
