@@ -75,7 +75,8 @@ class _FeedScreenState extends State<FeedScreen> {
       feed = feedBox.get("feed");
 
       for (int i = 0; i < feed.posts.length; i++) {
-        listKey.currentState.insertItem(1, duration: Duration(seconds: 3));
+        listKey.currentState
+            .insertItem(1, duration: Duration(milliseconds: 300));
         postsList.add(feed.posts[i]);
       }
       setState(() {

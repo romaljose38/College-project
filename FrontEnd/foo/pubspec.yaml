@@ -48,6 +48,7 @@ dependencies:
   cached_network_image: ^3.0.0
   emoji_picker_flutter: ^1.0.4
   flutter_keyboard_visibility: ^5.0.1
+  audioplayers: ^0.18.3
   
 
 dev_dependencies:

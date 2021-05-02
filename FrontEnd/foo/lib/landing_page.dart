@@ -36,6 +36,8 @@ class _LandingPageState extends State<LandingPage>
   Animation animation;
   OverlayEntry overlayEntry;
   ImagePicker _picker = ImagePicker();
+  int curpgviewIndex;
+  PageController _pageController = PageController(initialPage: 0);
 
   @override
   void initState() {
@@ -249,7 +251,22 @@ class _LandingPageState extends State<LandingPage>
   @override
   Widget build(BuildContext context) {
     List pages = [
-      PageView(children: [FeedScreen(), ChatRenderer()]),
+      WillPopScope(
+        onWillPop: () async {
+          print(_pageController.page);
+          return false;
+        },
+        child: PageView(
+          controller: _pageController,
+          children: [FeedScreen(), ChatRenderer()],
+          onPageChanged: (index) {
+            print("current page is " + index.toString());
+            setState(() {
+              curpgviewIndex = index;
+            });
+          },
+        ),
+      ),
       SearchScreen(),
       Profile(),
       Scaffold()

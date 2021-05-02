@@ -1,4 +1,6 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'initialscreen.dart';
 import 'router.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -42,6 +44,7 @@ class MyApp extends StatelessWidget {
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
       home: Renderer(prefs: prefs),
+      // home: AudioPlayerP(),
     );
   }
 }

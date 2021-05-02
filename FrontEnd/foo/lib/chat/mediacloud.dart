@@ -19,34 +19,33 @@ class MediaCloud extends StatelessWidget {
       if (file != null) {
         return file;
       }
-    } else if ((msgObj.isMe == true) & (msgObj.filePath == null)) {
-      return "does not exist";
-    }
-    var ext = msgObj.ext;
-    var img64 = msgObj.base64string;
-    Directory appDir = await getApplicationDocumentsDirectory();
-    String path = appDir.path + '/images/' + msgObj.id.toString() + '.$ext';
-    bool isPresent = await File(path).exists();
-    if (!isPresent) {
-      if (ext == null) {
-        return;
+    } else {
+      var ext = msgObj.ext;
+      var img64 = msgObj.base64string;
+      Directory appDir = await getApplicationDocumentsDirectory();
+      String path = appDir.path + '/images/' + msgObj.id.toString() + '.$ext';
+      bool isPresent = await File(path).exists();
+      if (!isPresent) {
+        if (ext == null) {
+          return;
+        }
+
+        print(ext);
+        var bytes = base64Decode(img64);
+        print(bytes);
+
+        File(appDir.path + '/images/' + msgObj.id.toString() + '.$ext')
+            .createSync(recursive: true);
+        print(appDir.path + '/images/' + msgObj.id.toString() + '.$ext');
+
+        File fle = File(path);
+        await fle.writeAsBytes(bytes);
+        print("writing done successfully to " + fle.path);
+        return fle;
       }
-
-      print(ext);
-      var bytes = base64Decode(img64);
-      print(bytes);
-
-      File(appDir.path + '/images/' + msgObj.id.toString() + '.$ext')
-          .createSync(recursive: true);
-      print(appDir.path + '/images/' + msgObj.id.toString() + '.$ext');
-
-      File fle = File(path);
-      await fle.writeAsBytes(bytes);
-      print("writing done successfully to " + fle.path);
-      return fle;
+      print("already exists");
+      return File(path);
     }
-    print("already exists");
-    return File(path);
   }
 
   String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
