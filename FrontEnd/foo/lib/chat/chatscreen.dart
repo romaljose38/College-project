@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'chatcloudlist.dart';
 import 'socket.dart';
 import 'dart:convert';
@@ -12,6 +14,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 
 class ChatScreen extends StatefulWidget {
   // final NotificationController controller;
@@ -247,18 +251,18 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
         child: Column(children: <Widget>[
           Expanded(
-              child: ValueListenableBuilder(
-            valueListenable: Hive.box("Threads").listenable(),
-            builder: (context, box, widget) {
-              var thread = box.get(threadName);
+            child: ValueListenableBuilder(
+              valueListenable: Hive.box("Threads").listenable(),
+              builder: (context, box, widget) {
+                var thread = box.get(threadName);
 
-              List __chatList = thread.chatList ?? [];
+                List __chatList = thread.chatList ?? [];
 
-              return ChatCloudList(
-                  chatList: __chatList, needScroll: true, curUser: curUser);
-            },
+                return ChatCloudList(
+                    chatList: __chatList, needScroll: true, curUser: curUser);
+              },
+            ),
           ),
-              ),
           RecordApp(
             sendMessage: _sendMessage,
             sendImage: _sendImage,
@@ -287,11 +291,16 @@ class _RecordAppState extends State<RecordApp>
   File file;
   bool _isRecording = false;
   bool _hasTyped = false;
+  bool _emojiVisible = false;
+  bool _keyboardVisible = false;
+  bool _isDarkMode = false;
   int _timeRemaining = 60;
   TextEditingController _chatController = TextEditingController();
+  KeyboardVisibilityController _keyboardVisibilityController;
   AnimationController _animationController;
   Animation _colorTween;
   Timer _timer;
+  FocusNode _chatFocus;
 
   @override
   void initState() {
@@ -307,6 +316,26 @@ class _RecordAppState extends State<RecordApp>
               // any change that has to be here can be heres
             });
           });
+    _chatFocus = FocusNode();
+    // ..addListener(() {
+    //   if (!_chatFocus.hasFocus) {
+    //     setState(() {
+    //       _emojiVisible = false;
+    //     });
+    //   }
+    // });
+    _keyboardVisibilityController = KeyboardVisibilityController()
+      ..onChange.listen((bool _keyboardVisible) {
+        setState(() {
+          this._keyboardVisible = _keyboardVisible;
+        });
+
+        if (_keyboardVisible && _emojiVisible) {
+          setState(() {
+            _emojiVisible = false;
+          });
+        }
+      });
   }
 
   void animateMicColor() {
@@ -317,6 +346,7 @@ class _RecordAppState extends State<RecordApp>
   @override
   void dispose() {
     _timer?.cancel();
+    _chatFocus.dispose();
     super.dispose();
   }
 
@@ -400,6 +430,15 @@ class _RecordAppState extends State<RecordApp>
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              IconButton(
+                icon: _emojiVisible
+                    ? Icon(Icons.keyboard)
+                    : Icon(Icons.emoji_emotions_outlined),
+                onPressed: onClickedEmoji, //_toggleEmoji
+                splashColor: Colors.pinkAccent,
+                splashRadius: 16,
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+              ),
               Expanded(
                 child: TextField(
                   controller: _chatController,
@@ -518,8 +557,78 @@ class _RecordAppState extends State<RecordApp>
         ));
   }
 
+  Widget myEmojiKeyBoard() => EmojiPicker(
+        onEmojiSelected: (category, emoji) {
+          _chatController.text += emoji.emoji;
+          setState(() {
+            _hasTyped = true;
+          });
+        },
+        config: Config(
+            columns: 7,
+            emojiSizeMax: 32.0,
+            verticalSpacing: 0,
+            horizontalSpacing: 0,
+            initCategory: Category.RECENT,
+            bgColor: _isDarkMode
+                ? Color.fromARGB(255, 16, 28, 37)
+                : Color.fromARGB(255, 234, 238, 242),
+            indicatorColor: Colors.blue,
+            iconColor: Colors.grey,
+            iconColorSelected: Colors.blue,
+            progressIndicatorColor: Colors.blue,
+            showRecentsTab: true,
+            recentsLimit: 28,
+            noRecentsText: "No Recents",
+            noRecentsStyle: _isDarkMode
+                ? const TextStyle(fontSize: 20, color: Colors.white24)
+                : const TextStyle(fontSize: 20, color: Colors.black26),
+            categoryIcons: const CategoryIcons(),
+            buttonMode: ButtonMode.MATERIAL),
+      );
+
+  onClickedEmoji() async {
+    setState(() {
+      _emojiVisible = !_emojiVisible;
+    });
+    if (_emojiVisible) {
+      await SystemChannels.textInput.invokeMethod('TextInput.hide');
+      await Future.delayed(Duration(milliseconds: 100));
+    } else {
+      await SystemChannels.textInput.invokeMethod('TextInput.show');
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _isRecording ? myAudioBox() : myTextBox();
+    var brightness = SchedulerBinding.instance.window.platformBrightness;
+    setState(() {
+      _isDarkMode = brightness == Brightness.dark;
+    });
+    return WillPopScope(
+      onWillPop: () async {
+        if (_emojiVisible)
+          setState(() {
+            _emojiVisible = false;
+          });
+        else
+          Navigator.pop(context);
+
+        return false;
+      },
+      child: Column(
+        children: [
+          _isRecording ? myAudioBox() : myTextBox(),
+          (_emojiVisible)
+              ? Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height * 0.35,
+                  child: myEmojiKeyBoard(),
+                )
+              : Container(),
+        ],
+      ),
+    );
   }
 }
