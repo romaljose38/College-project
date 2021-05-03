@@ -168,8 +168,7 @@ class _ViewPostScreenState extends State<ViewPostScreen>
   Animation animation;
   OverlayEntry overlayEntry;
   AnimationController animationController;
-  String ultimateString = '';
-  String penultimateString = '';
+  int start = 0, end = 0;
 
   Future<List<UserTest>> search(String search) async {
     print(search);
@@ -224,10 +223,9 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                           onItemFound: (UserTest user, int index) {
                             return GestureDetector(
                               onTap: () {
+                                print("$start, $end");
                                 _commentController.text = insertAtChangedPoint(
-                                    ultimateString,
-                                    penultimateString,
-                                    '@${user.name}');
+                                    '@${user.name}', start, end);
                                 print(user.name);
                               },
                               child: ListTile(
@@ -253,27 +251,24 @@ class _ViewPostScreenState extends State<ViewPostScreen>
     overlayState.insert(overlayEntry);
   }
 
-  int getPointOfInsertion(String ultimateString, String penultimateString) {
-    for (int i = 0; i < ultimateString.length; i++) {
-      String newString =
-          ultimateString.substring(0, i) + ultimateString.substring(i + 1);
-      if (newString == penultimateString) {
-        return i;
-      }
-    }
-    return -1;
-  }
+  // String insertAtChangedPoint(String word) {
+  //   String text = _commentController.text;
+  //   TextSelection cursor = _commentController.selection;
+  //   String newText = text.replaceRange(cursor.start, cursor.end, word);
+  //   final wordLength = word.length;
+  //   _commentController.selection = cursor.copyWith(
+  //     baseOffset: cursor.start + wordLength,
+  //     extentOffset: cursor.start + wordLength,
+  //   );
+  //   return newText;
+  // }
 
-  String insertAtChangedPoint(
-      String ultimateString, String penultimateString, String word) {
-    int position = getPointOfInsertion(ultimateString, penultimateString);
-    String newString = ultimateString.substring(0, position).trimRight() +
-        ' $word ' +
-        ultimateString.substring(position).trimLeft();
-    return newString;
+  String insertAtChangedPoint(String word, int start, int end) {
+    String text = _commentController.text;
+    String newText = text.replaceRange(start, end, word);
+    print(newText);
+    return newText;
   }
-
-  //
 
   @override
   Widget build(BuildContext context) {
@@ -528,26 +523,26 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                   ),
                   Expanded(
                     child: TextField(
-                        controller: _commentController,
-                        cursorColor: Colors.black,
-                        decoration: InputDecoration(
-                          hintText: "Add a comment",
-                          hintStyle: GoogleFonts.raleway(fontSize: 12),
-                          contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
-                          focusedBorder: InputBorder.none,
-                          suffix: InkWell(
-                            child: Text("@",
-                                style: TextStyle(
-                                    color: Colors.black, fontSize: 30)),
-                            onTap: () {
-                              showOverlay(context);
-                            },
-                          ),
+                      controller: _commentController,
+                      cursorColor: Colors.black,
+                      decoration: InputDecoration(
+                        hintText: "Add a comment",
+                        hintStyle: GoogleFonts.raleway(fontSize: 12),
+                        contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
+                        focusedBorder: InputBorder.none,
+                        suffix: InkWell(
+                          child: Text("@",
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 30)),
+                          onTap: () {
+                            var cursor = _commentController.selection;
+                            start = cursor.start;
+                            end = cursor.end;
+                            showOverlay(context);
+                          },
                         ),
-                        onChanged: (value) {
-                          penultimateString = ultimateString;
-                          ultimateString = value;
-                        }),
+                      ),
+                    ),
                   ),
                   Container(
                     padding: EdgeInsets.all(5),
