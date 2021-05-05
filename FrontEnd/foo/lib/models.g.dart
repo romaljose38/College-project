@@ -6,6 +6,45 @@ part of 'models.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
+class NotificationTypeAdapter extends TypeAdapter<NotificationType> {
+  @override
+  final int typeId = 5;
+
+  @override
+  NotificationType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return NotificationType.mention;
+      case 1:
+        return NotificationType.friendRequest;
+      default:
+        return NotificationType.mention;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, NotificationType obj) {
+    switch (obj) {
+      case NotificationType.mention:
+        writer.writeByte(0);
+        break;
+      case NotificationType.friendRequest:
+        writer.writeByte(1);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NotificationTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
 class UserAdapter extends TypeAdapter<User> {
   @override
   final int typeId = 0;
@@ -233,6 +272,51 @@ class FeedAdapter extends TypeAdapter<Feed> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is FeedAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class NotificationsAdapter extends TypeAdapter<Notifications> {
+  @override
+  final int typeId = 6;
+
+  @override
+  Notifications read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Notifications(
+      type: fields[0] as NotificationType,
+      userName: fields[1] as String,
+      userId: fields[2] as int,
+      timeCreated: fields[3] as DateTime,
+    )..hasAccepted = fields[4] as bool;
+  }
+
+  @override
+  void write(BinaryWriter writer, Notifications obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.type)
+      ..writeByte(1)
+      ..write(obj.userName)
+      ..writeByte(2)
+      ..write(obj.userId)
+      ..writeByte(3)
+      ..write(obj.timeCreated)
+      ..writeByte(4)
+      ..write(obj.hasAccepted);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NotificationsAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

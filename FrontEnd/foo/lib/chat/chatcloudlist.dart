@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:foo/chat/socket.dart';
 import 'audiocloud.dart';
 import 'chatcloud.dart';
 import 'dart:async';
@@ -9,8 +12,10 @@ class ChatCloudList extends StatefulWidget {
   List chatList;
   bool needScroll;
   String curUser;
+  String otherUser;
 
-  ChatCloudList({Key key, this.chatList, this.needScroll, this.curUser});
+  ChatCloudList(
+      {Key key, this.chatList, this.needScroll, this.curUser, this.otherUser});
 
   @override
   _ChatCloudListState createState() => _ChatCloudListState();
@@ -18,7 +23,6 @@ class ChatCloudList extends StatefulWidget {
 
 class _ChatCloudListState extends State<ChatCloudList> {
   ScrollController _scrollController = ScrollController();
-  String curUser;
 
   int day;
 
@@ -28,8 +32,17 @@ class _ChatCloudListState extends State<ChatCloudList> {
     // _setname();
   }
 
-  void _setname() {
-    curUser = widget.curUser;
+  void sendReadTicket() {
+    if (widget.chatList.last.isMe == false) {
+      var data = {
+        "type": "seen_ticker",
+        "from": widget.curUser,
+        "to": widget.otherUser,
+        "id": widget.chatList.last.id,
+      };
+      print(data);
+      NotificationController.sendToChannel(jsonEncode(data));
+    }
   }
 
   void _scrollToEnd() async {
@@ -44,7 +57,7 @@ class _ChatCloudListState extends State<ChatCloudList> {
           (_) => Timer(Duration(milliseconds: 100), () => {_scrollToEnd()}));
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _setname());
+    sendReadTicket();
 
     return ListView.builder(
         reverse: true,
@@ -82,5 +95,11 @@ class _ChatCloudListState extends State<ChatCloudList> {
                 msgObj: widget.chatList[reversedIndex], needDate: needDay);
           }
         });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }

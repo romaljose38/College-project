@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
-// import 'package:foo/screens/models/comment_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:foo/models.dart';
 import 'package:http/http.dart' as http;
@@ -26,10 +25,24 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
   TextEditingController _commentController = TextEditingController();
   bool hasFetched = false;
   List<Widget> commentsList = <Widget>[];
+  bool hasLiked = false;
+  int likeCount = 0;
+  int postId;
+  String userName;
+
   @override
   void initState() {
     super.initState();
+    setUserName();
     _getComments();
+    likeCount = widget.post.likeCount ?? 0;
+    hasLiked = widget.post.haveLiked ?? false;
+    postId = widget.post.postId ?? 0;
+  }
+
+  Future<void> setUserName() async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    userName = _prefs.getString("username");
   }
 
   Future<void> _getComments() async {
@@ -53,6 +66,46 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
     setState(() {
       hasFetched = true;
     });
+  }
+
+  likePost() async {
+    print(hasLiked);
+    print(likeCount);
+    print(postId);
+    if (hasLiked) {
+      var response = await http.get(Uri.http(localhost, 'api/remove_like', {
+        'username': userName,
+        'id': postId.toString(),
+      }));
+      if (response.statusCode == 200) {
+        setState(() {
+          hasLiked = false;
+          likeCount -= 1;
+        });
+      }
+      updatePostInHive(postId, false);
+    } else {
+      var response = await http.get(Uri.http(localhost, '/api/add_like', {
+        'username': userName,
+        'id': postId.toString(),
+      }));
+      if (response.statusCode == 200) {
+        setState(() {
+          hasLiked = true;
+          likeCount += 1;
+        });
+      }
+      updatePostInHive(postId, true);
+    }
+  }
+
+  updatePostInHive(int id, bool status) {
+    var feedBox = Hive.box("Feed");
+    Feed feed = feedBox.get('feed');
+    if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
+      feed.updatePostStatus(id, status);
+      feed.save();
+    }
   }
 
   _addComment() async {
@@ -168,7 +221,9 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                             height: 465.0,
                             decoration: BoxDecoration(
                                 color: Colors.white,
-                                // borderRadius: BorderRadius.only(bottomLeft: Radius.circular(25),bottomRight: Radius.circular(25)),
+                                // borderRadius: BorderRadius.only(
+                                //     bottomLeft: Radius.circular(25),
+                                //     bottomRight: Radius.circular(25)),
                                 image: DecorationImage(
                                   image: CachedNetworkImageProvider(
                                       widget.post.postUrl),
@@ -287,15 +342,17 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                                               children: <Widget>[
                                                 IconButton(
                                                   icon: Icon(
-                                                    Ionicons.heart_outline,
+                                                    hasLiked
+                                                        ? Ionicons.heart
+                                                        : Ionicons
+                                                            .heart_outline,
                                                     color: Colors.white,
                                                   ),
                                                   iconSize: 25.0,
-                                                  onPressed: () =>
-                                                      print('Like post'),
+                                                  onPressed: likePost,
                                                 ),
                                                 Text(
-                                                  '2,515',
+                                                  likeCount.toString(),
                                                   style: TextStyle(
                                                     fontSize: 12.0,
                                                     fontWeight: FontWeight.w600,

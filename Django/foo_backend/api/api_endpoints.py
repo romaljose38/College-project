@@ -12,5 +12,10 @@ urlpatterns = [
     path('<int:id>/profile',api_views.get_profile_and_posts, name="profile details"),
     path('<int:id>/post_detail',api_views.get_comments, name="post details"),
     path('<str:username>/add_comment',api_views.add_comment, name="add comment"),
+    path('add_like',api_views.like_post, name="like post"),
+    path('remove_like',api_views.dislike_post, name="dislike post"),
+    path('add_friend',api_views.send_friend_request, name="add friend"),
+    path('handle_request',api_views.handle_friend_request, name="handle_request"),
+
 
 ]

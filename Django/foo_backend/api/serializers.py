@@ -54,9 +54,10 @@ class PostSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         user = self.context['user']
         if user in instance.likes.all():
-            representation['liked'] = True
+            representation['hasLiked'] = True
         else:
-            representation['liked'] = False
+            representation['hasLiked'] = False
+        representation['likeCount'] = instance.likes.count()
         return representation
 
 
@@ -83,7 +84,24 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def to_representation(self,instance):
         representation = super().to_representation(instance)
-        print(representation)
+        request = self.context['request']
+        cur_user = self.context['cur_user']
+        if instance==cur_user:
+            representation['isMe'] = True
+        else:
+            representation['isMe'] = False
+        print(request.count())
+        if (request.count() == 1):
+            if request.first().status == "accepted":
+                representation['requestStatus'] = "accepted"
+            elif request.first().status == "pending":
+                representation['requestStatus'] = "pending"
+            elif request.first().status == "rejected":
+                representation['requestStatus'] = "rejected"
+        else:
+            representation['requestStatus'] = "open"
+
+
         return representation
 
 

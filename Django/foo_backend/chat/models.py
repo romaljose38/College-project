@@ -106,6 +106,8 @@ class Profile(models.Model):
     last_seen = models.DateTimeField(auto_now=False, auto_now_add=True)
 
 
+    friends = models.ManyToManyField(User, related_name="friends")
+
     def __str__(self):
         return f'{self.user.email}'
 
@@ -167,10 +169,13 @@ class ChatMessage(models.Model):
         return False
 
 class Notification(models.Model):
-    user = models.ForeignKey(User, related_name="to", on_delete=models.CASCADE)
-    chat_id = models.IntegerField()
-    chat_from = models.CharField(max_length=30)
 
+    NOTIF_TYPES = (('seen','seen'),('received','received'))
+
+    chatmsg_id = models.IntegerField()
+    notif_from = models.ForeignKey(User, related_name="from_user_chat", on_delete=models.CASCADE)
+    notif_to = models.ForeignKey(User, related_name="to_user_chat", on_delete=models.CASCADE)
+    notif_type = models.CharField(max_length=10,choices=NOTIF_TYPES)
 
 def user_directory_path(instance, filename):
     return 'user_{0}/{1}'.format(instance.user.id, filename)
@@ -199,3 +204,18 @@ class Comment(models.Model):
     comment = models.CharField(max_length=150)
     time_created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+
+
+class FriendRequest(models.Model):
+
+    STATES = (('pending','pending'),('accepted','accepted'),('rejected','rejected'))
+
+
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="from_user")
+    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="to_user")
+    status = models.CharField(max_length=10, choices=STATES)
+    has_received = models.BooleanField(default=False)
+
+# class FriendRequestNotifica

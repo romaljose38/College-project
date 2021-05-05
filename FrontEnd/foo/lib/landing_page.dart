@@ -4,9 +4,10 @@ import 'dart:ui';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:foo/chat/render.dart';
+import 'package:foo/chat/listscreen.dart';
 import 'package:foo/chat/socket.dart';
 import 'package:foo/colour_palette.dart';
+import 'package:foo/notifications/notification_screen.dart';
 import 'package:foo/profile/profile.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/search_screen.dart';
@@ -42,6 +43,9 @@ class _LandingPageState extends State<LandingPage>
   @override
   void initState() {
     super.initState();
+    NotificationController.streamController.onListen = () {
+      print("here in controller");
+    };
     animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 400),
@@ -258,7 +262,7 @@ class _LandingPageState extends State<LandingPage>
         },
         child: PageView(
           controller: _pageController,
-          children: [FeedScreen(), ChatRenderer()],
+          children: [FeedScreen(), ChatListScreen()],
           onPageChanged: (index) {
             print("current page is " + index.toString());
             setState(() {
@@ -269,7 +273,7 @@ class _LandingPageState extends State<LandingPage>
       ),
       SearchScreen(),
       Profile(),
-      Scaffold()
+      NotificationScreen(),
     ];
     return Scaffold(
       backgroundColor: Palette.lavender,
@@ -330,7 +334,7 @@ class _LandingPageState extends State<LandingPage>
                     icon: Icon(Ionicons.settings_outline,
                         size: 25, color: Colors.black),
                     disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 2)),
+                    onPressed: () => setState(() => _page = 3)),
               ],
             ),
           )),

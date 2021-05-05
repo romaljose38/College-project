@@ -1,5 +1,5 @@
-from django.db.models.signals import post_save,m2m_changed
-from .models import Profile,ChatMessage
+from django.db.models.signals import post_save, m2m_changed
+from .models import Profile, ChatMessage, FriendRequest
 from django.conf import settings
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
@@ -11,12 +11,25 @@ from channels.db import database_sync_to_async
 User = get_user_model()
 
 # Signal to create a profile when a user object is created
-@receiver(post_save,sender=User)
+
+
+@receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:
         profile = Profile.objects.create(user=instance)
         profile.save()
 
+
+@receiver(post_save, sender=FriendRequest)
+def send_request(sender, instance, created, **kwargs):
+    if instance.status == "pending":
+        channel_layer = get_channel_layer()
+        print(channel_layer)
+        if instance.to_user.profile.online:
+            print("hes online")
+            # send_notif(instance.to_user.username)
+            async_to_sync(channel_layer.group_send)(instance.to_user.username, {
+                "type": "notification", "username": instance.from_user.username, 'user_id': instance.from_user.id, 'id': instance.id})
 
 
 # @database_sync_to_async
@@ -25,25 +38,22 @@ def create_profile(sender, instance, created, **kwargs):
 
 # @database_sync_to_async
 # def get_user_from_id(id):
-#     return 
+#     return
 
 
-# async def send_notif(user,id,from_username):
-#     channel_layer = get_channel_layer()
-    
-#     status = await get_user_status(user)
-#     if status:
-#         message = { 
-#                     'to':user.username,
-#                     'message':{'received':id },
-#                     'from':from_username,
-#                 }
+async def send_notif(from_username):
 
-#         await channel_layer.group_send(
-#             'common_room',
-#             {"type": "chat_message", "message": message},
-#         )
-#         print("in here")
+    message = {
+        # 'to':user.username,
+        'message': "request",
+        # 'from':from_username,
+    }
+
+    await channel_layer.group_send(
+        from_username,
+        {"type": "chat_message", "message": message},
+    )
+    print("in here")
 
 
 # def inform_user(sender, instance, pk_set, **kwargs):

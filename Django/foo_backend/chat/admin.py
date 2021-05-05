@@ -5,7 +5,9 @@ from .models import (
 	ChatMessage,
     User,
     Post,
-    Comment
+    Comment,
+    FriendRequest,
+    Notification
 )
 # from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -61,3 +63,5 @@ class PostInline(admin.ModelAdmin):
     inlines = [CommentInline]
 
 admin.site.register(Post,PostInline)
+admin.site.register(FriendRequest)
+admin.site.register(Notification)

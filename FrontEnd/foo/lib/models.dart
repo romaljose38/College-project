@@ -141,7 +141,7 @@ class Post {
   String postUrl;
 
   @HiveField(3)
-  int likeCount;
+  int likeCount = 0;
 
   @HiveField(4)
   int commentCount;
@@ -200,4 +200,56 @@ class Feed extends HiveObject {
     }
     return true;
   }
+
+  updatePostStatus(int id, bool status) {
+    this.posts.forEach((element) {
+      if (element.postId == id) {
+        if ((status == true) & (element.haveLiked == true)) {
+          return;
+        }
+        if ((status == false) & (element.haveLiked == false)) {
+          return;
+        }
+        element.haveLiked = status;
+        if (status == true) {
+          if (element.likeCount == null) {
+            element.likeCount = 1;
+          } else {
+            element.likeCount += 1;
+          }
+        } else {
+          element.likeCount -= 1;
+        }
+      }
+    });
+  }
+}
+
+@HiveType(typeId: 5)
+enum NotificationType {
+  @HiveField(0)
+  mention,
+
+  @HiveField(1)
+  friendRequest
+}
+
+@HiveType(typeId: 6)
+class Notifications extends HiveObject {
+  @HiveField(0)
+  NotificationType type;
+
+  @HiveField(1)
+  String userName;
+
+  @HiveField(2)
+  int userId;
+
+  @HiveField(3)
+  DateTime timeCreated;
+
+  @HiveField(4)
+  bool hasAccepted;
+
+  Notifications({this.type, this.userName, this.userId, this.timeCreated});
 }

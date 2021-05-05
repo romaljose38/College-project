@@ -259,7 +259,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 List __chatList = thread.chatList ?? [];
 
                 return ChatCloudList(
-                    chatList: __chatList, needScroll: true, curUser: curUser);
+                    chatList: __chatList,
+                    needScroll: true,
+                    curUser: curUser,
+                    otherUser: otherUser);
               },
             ),
           ),
@@ -310,12 +313,12 @@ class _RecordAppState extends State<RecordApp>
       duration: Duration(milliseconds: 800),
     );
     _colorTween = ColorTween(begin: Colors.black, end: Colors.red)
-        .animate(_animationController)
-          ..addListener(() {
-            setState(() {
-              // any change that has to be here can be heres
-            });
-          });
+        .animate(_animationController);
+    // ..addListener(() {
+    //   setState(() {
+    //     // any change that has to be here can be heres
+    //   });
+    // });
     _chatFocus = FocusNode();
     // ..addListener(() {
     //   if (!_chatFocus.hasFocus) {
@@ -347,6 +350,9 @@ class _RecordAppState extends State<RecordApp>
   void dispose() {
     _timer?.cancel();
     _chatFocus.dispose();
+    _animationController.dispose();
+    _chatController.dispose();
+    // _keyboardVisibilityController.dispose()
     super.dispose();
   }
 

@@ -22,9 +22,12 @@ Future<void> main() async {
   Hive.registerAdapter(ThreadAdapter());
   Hive.registerAdapter(FeedAdapter());
   Hive.registerAdapter(PostAdapter());
+  Hive.registerAdapter(NotificationTypeAdapter());
+  Hive.registerAdapter(NotificationsAdapter());
 
   await Hive.openBox('Threads');
   await Hive.openBox('Feed');
+  await Hive.openBox('Notifications');
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
   await Firebase.initializeApp();

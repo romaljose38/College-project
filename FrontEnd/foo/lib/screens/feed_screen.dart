@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:foo/chat/socket.dart';
@@ -8,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../test_cred.dart';
-
+import 'package:path_provider/path_provider.dart' as pathProvider;
 import 'package:http/http.dart' as http;
 
 import 'models/post_model.dart' as pst;
@@ -65,6 +66,7 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   setInitialData() async {
+    print("this is the path");
     await _checkConnectionStatus();
     prefs = await SharedPreferences.getInstance();
     curUser = prefs.getString("username");
@@ -76,7 +78,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
       for (int i = 0; i < feed.posts.length; i++) {
         listKey.currentState
-            .insertItem(1, duration: Duration(milliseconds: 300));
+            .insertItem(0, duration: Duration(milliseconds: 200));
         postsList.add(feed.posts[i]);
       }
       setState(() {
@@ -104,9 +106,11 @@ class _FeedScreenState extends State<FeedScreen> {
                 postUrl: 'http://' + localhost + e['file'],
                 userDpUrl: 'assets/images/user0.png',
                 postId: e['id'],
-                userId: e['user']['id']);
-            listKey.currentState.insertItem(1);
-            postsList.insert(1, post);
+                userId: e['user']['id'],
+                likeCount: e['likeCount'],
+                haveLiked: e['hasLiked']);
+            listKey.currentState.insertItem(0);
+            postsList.insert(0, post);
             feed.addPost(post);
             setState(() {
               itemCount += 1;
@@ -191,7 +195,9 @@ class _FeedScreenState extends State<FeedScreen> {
             postUrl: 'http://' + localhost + e['file'],
             userDpUrl: 'assets/images/user0.png',
             postId: e['id'],
-            userId: e['user']['id']);
+            userId: e['user']['id'],
+            likeCount: e['likeCount'],
+            haveLiked: e['hasLiked']);
         listKey.currentState.insertItem(1);
         postsList.insert(1, post);
         feed.addPost(post);
@@ -207,7 +213,8 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(218, 228, 237, 1),
+      // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
           triggerMode: RefreshIndicatorTriggerMode.anywhere,
           onRefresh: _getNewPosts,
