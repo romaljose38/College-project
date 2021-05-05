@@ -565,7 +565,21 @@ class _RecordAppState extends State<RecordApp>
 
   Widget myEmojiKeyBoard() => EmojiPicker(
         onEmojiSelected: (category, emoji) {
-          _chatController.text += emoji.emoji;
+          String text = _chatController.text;
+          TextSelection textSelection = _chatController.selection;
+          if (textSelection.extentOffset == -1) {
+            //Before first selection
+            _chatController.text += emoji.emoji;
+          } else {
+            String newText = text.replaceRange(
+                textSelection.start, textSelection.end, emoji.emoji);
+            final emojiLength = emoji.emoji.length;
+            _chatController.text = newText;
+            _chatController.selection = textSelection.copyWith(
+              baseOffset: textSelection.start + emojiLength,
+              extentOffset: textSelection.start + emojiLength,
+            );
+          }
           setState(() {
             _hasTyped = true;
           });

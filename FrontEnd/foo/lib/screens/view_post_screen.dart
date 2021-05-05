@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
@@ -21,7 +22,8 @@ class ViewPostScreen extends StatefulWidget {
   _ViewPostScreenState createState() => _ViewPostScreenState();
 }
 
-class _ViewPostScreenState extends State<ViewPostScreen> {
+class _ViewPostScreenState extends State<ViewPostScreen>
+    with TickerProviderStateMixin {
   TextEditingController _commentController = TextEditingController();
   bool hasFetched = false;
   List<Widget> commentsList = <Widget>[];
@@ -43,13 +45,30 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
   Future<void> setUserName() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
     userName = _prefs.getString("username");
+
+    //For overlay(mention)
+    animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 400),
+    );
+    animation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
+    //
+  }
+
+  @override
+  void dispose() {
+    animationController?.dispose();
+    _commentController?.dispose();
+    overlayEntry?.dispose();
+    super.dispose();
   }
 
   Future<void> _getComments() async {
     var response = await http
         .get(Uri.http(localhost, '/api/${widget.post.postId}/post_detail'));
     if (response.statusCode == 200) {
-      var respJson = jsonDecode(response.body);
+      var respJson = jsonDecode(utf8.decode(response.bodyBytes));
       print(respJson);
 
       respJson['comment_set'].forEach((e) {
@@ -194,6 +213,114 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
         ),
       ),
     );
+  }
+
+  //For mention
+
+  bool overlayVisible = false;
+  Animation animation;
+  OverlayEntry overlayEntry;
+  AnimationController animationController;
+  int start = 0, end = 0;
+
+  Future<List<UserTest>> search(String search) async {
+    print(search);
+    var resp =
+        await http.get(Uri.http(localhost, '/api/users', {'name': search}));
+    var respJson = jsonDecode(resp.body)['resp'];
+    var list = jsonDecode(respJson);
+    List<UserTest> returList = [];
+    list.forEach((e) {
+      print(e);
+      returList.add(UserTest(name: e["fields"]["username"]));
+    });
+    print(returList);
+    return returList;
+  }
+
+  showOverlay(BuildContext context) {
+    overlayVisible = true;
+    OverlayState overlayState = Overlay.of(context);
+    overlayEntry = OverlayEntry(
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.black.withOpacity(.3),
+        body: FadeTransition(
+          opacity: animation,
+          child: GestureDetector(
+            onTap: () {
+              animationController
+                  .reverse()
+                  .whenComplete(() => {overlayEntry.remove()});
+            },
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: Colors.transparent,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.95,
+                      height: MediaQuery.of(context).size.height * 0.3,
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SearchBar<UserTest>(
+                          minimumChars: 1,
+                          onSearch: search,
+                          onError: (err) {
+                            print(err);
+                            return Container();
+                          },
+                          onItemFound: (UserTest user, int index) {
+                            return GestureDetector(
+                              onTap: () {
+                                print("$start, $end");
+                                _commentController.text = insertAtChangedPoint(
+                                    '@${user.name}', start, end);
+                                print(user.name);
+                              },
+                              child: ListTile(
+                                title: Text(user.name),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    animationController.addListener(() {
+      overlayState.setState(() {});
+    });
+    animationController.forward();
+    overlayState.insert(overlayEntry);
+  }
+
+  // String insertAtChangedPoint(String word) {
+  //   String text = _commentController.text;
+  //   TextSelection cursor = _commentController.selection;
+  //   String newText = text.replaceRange(cursor.start, cursor.end, word);
+  //   final wordLength = word.length;
+  //   _commentController.selection = cursor.copyWith(
+  //     baseOffset: cursor.start + wordLength,
+  //     extentOffset: cursor.start + wordLength,
+  //   );
+  //   return newText;
+  // }
+
+  String insertAtChangedPoint(String word, int start, int end) {
+    String text = _commentController.text;
+    String newText = text.replaceRange(start, end, word);
+    print(newText);
+    return newText;
   }
 
   @override
@@ -460,6 +587,17 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
                         hintStyle: GoogleFonts.raleway(fontSize: 12),
                         contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
                         focusedBorder: InputBorder.none,
+                        suffix: InkWell(
+                          child: Text("@",
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 30)),
+                          onTap: () {
+                            var cursor = _commentController.selection;
+                            start = cursor.start;
+                            end = cursor.end;
+                            showOverlay(context);
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -481,4 +619,9 @@ class _ViewPostScreenState extends State<ViewPostScreen> {
       ),
     );
   }
+}
+
+class UserTest {
+  final String name;
+  UserTest({this.name});
 }
