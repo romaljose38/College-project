@@ -1,15 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:ui';
 import 'package:data_connection_checker/data_connection_checker.dart';
-import 'package:foo/chat/socket.dart';
 import 'package:foo/models.dart';
 import 'package:foo/screens/post_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../test_cred.dart';
-import 'package:path_provider/path_provider.dart' as pathProvider;
+
 import 'package:http/http.dart' as http;
 
 import 'models/post_model.dart' as pst;
@@ -50,7 +48,7 @@ class _FeedScreenState extends State<FeedScreen> {
       });
   }
 
-  void _checkConnectionStatus() async {
+  Future<void> _checkConnectionStatus() async {
     bool result = await DataConnectionChecker().hasConnection;
     print("result");
     print(result);
@@ -65,7 +63,7 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  setInitialData() async {
+  Future<void> setInitialData() async {
     print("this is the path");
     await _checkConnectionStatus();
     prefs = await SharedPreferences.getInstance();

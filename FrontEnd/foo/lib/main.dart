@@ -1,6 +1,7 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:foo/notification_handler.dart';
 import 'initialscreen.dart';
 import 'router.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +14,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  final IOSInitializationSettings initializationSettingsIOS =
+      IOSInitializationSettings();
+  final MacOSInitializationSettings initializationSettingsMacOS =
+      MacOSInitializationSettings();
+  final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+      macOS: initializationSettingsMacOS);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   Directory directory = await pathProvider.getApplicationDocumentsDirectory();
   Hive.init(directory.path);
@@ -31,6 +47,12 @@ Future<void> main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
   await Firebase.initializeApp();
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print(message.data);
+    print(message.messageType);
+    showNotification(message.data['message'], message.data['username']);
+  });
+  print(await FirebaseMessaging.instance.getToken());
   runApp(MyApp(prefs: prefs));
 }
 

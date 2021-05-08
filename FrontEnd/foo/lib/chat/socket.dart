@@ -53,6 +53,7 @@ class NotificationController {
     List msgList = [];
     var threadList = Hive.box("Threads").values.toList();
     threadList.forEach((e) {
+      print(e);
       if (e.needToCheck()) {
         msgList.add([e.getUnsentMessages(), e.second.name]);
       }
@@ -120,7 +121,18 @@ class NotificationController {
       }
     } else if (data['type'] == 'notification') {
       addNotification(data);
+    } else if (data['type'] == 'seen_ticker') {
+      updateMsgSeenStatus(data);
     }
+  }
+
+  void updateMsgSeenStatus(data) {
+    String me = prefs.getString('username');
+    String threadName = me + '_' + data['from'];
+    var threadBox = Hive.box('Threads');
+    var existingThread = threadBox.get(threadName);
+    existingThread.updateChatSeenStatus(data['id']);
+    existingThread.save();
   }
 
   void addNotification(data) async {

@@ -46,6 +46,7 @@ class _LandingPageState extends State<LandingPage>
     NotificationController.streamController.onListen = () {
       print("here in controller");
     };
+
     animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 400),
@@ -62,11 +63,10 @@ class _LandingPageState extends State<LandingPage>
     if (result != null) {
       File _image = File(result.files.single.path);
 
-      animationController.reverse().whenComplete(() {
+      await animationController.reverse().whenComplete(() {
         overlayVisible = false;
         overlayEntry.remove();
       });
-
       Navigator.push(
           context,
           MaterialPageRoute(
@@ -257,6 +257,9 @@ class _LandingPageState extends State<LandingPage>
     List pages = [
       WillPopScope(
         onWillPop: () async {
+          setState(() {
+            curpgviewIndex = 0;
+          });
           print(_pageController.page);
           return false;
         },
@@ -301,13 +304,25 @@ class _LandingPageState extends State<LandingPage>
           ),
         ),
       ),
+      // bottomNavigationBar: Container(
+      //   height: 60,
+      //   decoration: BoxDecoration(
+      //     color: Colors.white,
+      //     borderRadius: BorderRadius.circular(25),
+      //   ),
+      // ),
       bottomNavigationBar: BottomAppBar(
-          color: Colors.white,
+          // color: Colors.transparent,
           shape: CircularNotchedRectangle(),
           child: Container(
-            // decoration: BoxDecoration(
-            //   color:Colors.transparent
-            // ),
+            // color: Colors.transparent,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
+              ),
+            ),
             child: new Row(
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,

@@ -29,7 +29,11 @@ def send_request(sender, instance, created, **kwargs):
             print("hes online")
             # send_notif(instance.to_user.username)
             async_to_sync(channel_layer.group_send)(instance.to_user.username, {
-                "type": "notification", "username": instance.from_user.username, 'user_id': instance.from_user.id, 'id': instance.id})
+                "type": "notification", 
+                "username": instance.from_user.username, 
+                'user_id': instance.from_user.id, 
+                'id': instance.id
+                })
 
 
 # @database_sync_to_async

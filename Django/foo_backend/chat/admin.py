@@ -7,7 +7,8 @@ from .models import (
     Post,
     Comment,
     FriendRequest,
-    Notification
+    Notification,
+    Story
 )
 # from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -25,7 +26,7 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ['admin']
     fieldsets = (
         (None, {'fields': ('email','uprn','username', 'password')}),
-        ('Personal info', {'fields': ()}),
+        ('Personal info', {'fields': ('token',)}),
         ('Permissions', {'fields': ('admin',)}),
     )
 
@@ -65,3 +66,5 @@ class PostInline(admin.ModelAdmin):
 admin.site.register(Post,PostInline)
 admin.site.register(FriendRequest)
 admin.site.register(Notification)
+admin.site.register(Story)
+

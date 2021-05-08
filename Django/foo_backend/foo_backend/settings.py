@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'chat.apps.ChatConfig',
     'channels',
     'rest_framework',
+    'fcm_django'
+
 ]
 
 MIDDLEWARE = [
@@ -83,7 +85,9 @@ REST_FRAMEWORK = {
 ]
 }
 
-
+FCM_DJANGO_SETTINGS = {
+        "FCM_SERVER_KEY": "AAAAQU1ex8s:APA91bEsDL3_1Mlcpt5Mh79ILENJuQ-KAa_59LifC66dodff61RLWU7N--WIIFX-CtVV4zvqz0yv7xib6vw_NZtGDBbk697JfBDvcznwuj0io7v4vDHBuaRGJspKip2ttJLuG2Jbfche"
+}
 
 
 # WSGI_APPLICATION = 'foo_backend.wsgi.application'

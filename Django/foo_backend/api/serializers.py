@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from chat.models import (
 Post,
-Comment
+Comment,
+Story
 )
 
 User = get_user_model()
@@ -120,3 +121,23 @@ class PostDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['file','caption','post_type','comment_set']
+
+
+
+
+class StoryRelatedField(serializers.RelatedField):
+
+    def to_representation(self, instance):
+        return {"file":instance.file.url, "views":instance.views.count(),'time':instance.time_created.strftime("%Y-%m-%d %H:%M:%S")}
+
+    def get_queryset(self):
+        return Story.objects.all()
+
+
+class UserStorySerializer(serializers.ModelSerializer):
+
+    stories = StoryRelatedField(many=True)
+
+    class Meta:
+        model = User
+        fields = ['username','id','stories']

@@ -48,17 +48,21 @@ class ChatMessage extends HiveObject {
   @HiveField(11)
   String filePath;
 
-  ChatMessage(
-      {this.thread,
-      this.message,
-      this.time,
-      this.id,
-      this.senderName,
-      this.isMe,
-      this.msgType,
-      this.base64string,
-      this.ext,
-      this.filePath});
+  @HiveField(12)
+  bool hasSeen;
+
+  ChatMessage({
+    this.thread,
+    this.message,
+    this.time,
+    this.id,
+    this.senderName,
+    this.isMe = false,
+    this.msgType,
+    this.base64string,
+    this.ext,
+    this.filePath,
+  });
 }
 
 @HiveType(typeId: 2)
@@ -96,6 +100,16 @@ class Thread extends HiveObject {
     return false;
   }
 
+  bool updateChatSeenStatus(id) {
+    for (int i = 0; i < chatList.length; i++) {
+      if (chatList[chatList.length - 1 - i].id == id) {
+        chatList[chatList.length - 1 - i].hasSeen = true;
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool updateChatId({id, newId}) {
     for (int i = 0; i < chatList.length; i++) {
       if (chatList[chatList.length - 1 - i].id == id) {
@@ -107,24 +121,31 @@ class Thread extends HiveObject {
   }
 
   bool needToCheck() {
-    if (this.chatList.last.isMe == true) {
-      if (this.chatList.last.haveReachedServer == true) {
-        return false;
-      } else {
-        return true;
+    if (this.chatList.length > 0) {
+      if (this.chatList.last.isMe == true) {
+        if (this.chatList.last.haveReachedServer == true) {
+          return false;
+        } else {
+          return true;
+        }
       }
+      return false;
     }
     return false;
   }
 
   List getUnsentMessages() {
     List msgs = [];
-    for (int i = 0; i < chatList.length; i++) {
-      if (chatList[chatList.length - 1 - i].haveReachedServer != true) {
-        msgs.add(chatList[chatList.length - 1 - i]);
-      } else if (chatList[chatList.length - 1 - i].haveReachedServer == true) {
-        return msgs;
+    if (chatList.length > 0) {
+      for (int i = 0; i < chatList.length; i++) {
+        if (chatList[chatList.length - 1 - i].haveReachedServer != true) {
+          msgs.add(chatList[chatList.length - 1 - i]);
+        } else if (chatList[chatList.length - 1 - i].haveReachedServer ==
+            true) {
+          return msgs;
+        }
       }
+      return msgs;
     }
   }
 }

@@ -49,6 +49,8 @@ dependencies:
   emoji_picker_flutter: ^1.0.4
   flutter_keyboard_visibility: ^5.0.1
   audioplayers: ^0.18.3
+  modal_bottom_sheet: ^2.0.0
+  flutter_local_notifications: ^5.0.0+4
   
 
 dev_dependencies:

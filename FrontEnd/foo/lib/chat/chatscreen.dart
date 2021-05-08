@@ -257,10 +257,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 var thread = box.get(threadName);
 
                 List __chatList = thread.chatList ?? [];
-
+                print(__chatList);
                 return ChatCloudList(
                     chatList: __chatList,
-                    needScroll: true,
+                    needScroll: (__chatList.length == 0) ? false : true,
                     curUser: curUser,
                     otherUser: otherUser);
               },
@@ -329,9 +329,7 @@ class _RecordAppState extends State<RecordApp>
     // });
     _keyboardVisibilityController = KeyboardVisibilityController()
       ..onChange.listen((bool _keyboardVisible) {
-        setState(() {
-          this._keyboardVisible = _keyboardVisible;
-        });
+        this._keyboardVisible = _keyboardVisible;
 
         if (_keyboardVisible && _emojiVisible) {
           setState(() {
@@ -352,6 +350,7 @@ class _RecordAppState extends State<RecordApp>
     _chatFocus.dispose();
     _animationController.dispose();
     _chatController.dispose();
+
     // _keyboardVisibilityController.dispose()
     super.dispose();
   }

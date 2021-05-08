@@ -102,13 +102,14 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       filePath: fields[11] as String,
     )
       ..haveReceived = fields[4] as bool
-      ..haveReachedServer = fields[10] as bool;
+      ..haveReachedServer = fields[10] as bool
+      ..hasSeen = fields[12] as bool;
   }
 
   @override
   void write(BinaryWriter writer, ChatMessage obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.thread)
       ..writeByte(1)
@@ -132,7 +133,9 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       ..writeByte(10)
       ..write(obj.haveReachedServer)
       ..writeByte(11)
-      ..write(obj.filePath);
+      ..write(obj.filePath)
+      ..writeByte(12)
+      ..write(obj.hasSeen);
   }
 
   @override

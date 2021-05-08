@@ -9,10 +9,10 @@ import 'dart:async';
 import 'mediacloud.dart';
 
 class ChatCloudList extends StatefulWidget {
-  List chatList;
-  bool needScroll;
-  String curUser;
-  String otherUser;
+  final List chatList;
+  final bool needScroll;
+  final String curUser;
+  final String otherUser;
 
   ChatCloudList(
       {Key key, this.chatList, this.needScroll, this.curUser, this.otherUser});
@@ -33,15 +33,17 @@ class _ChatCloudListState extends State<ChatCloudList> {
   }
 
   void sendReadTicket() {
-    if (widget.chatList.last.isMe == false) {
-      var data = {
-        "type": "seen_ticker",
-        "from": widget.curUser,
-        "to": widget.otherUser,
-        "id": widget.chatList.last.id,
-      };
-      print(data);
-      NotificationController.sendToChannel(jsonEncode(data));
+    if (widget.chatList.length != 0) {
+      if (widget.chatList.last.isMe == false) {
+        var data = {
+          "type": "seen_ticker",
+          "from": widget.curUser,
+          "to": widget.otherUser,
+          "id": widget.chatList.last.id,
+        };
+        print(data);
+        NotificationController.sendToChannel(jsonEncode(data));
+      }
     }
   }
 

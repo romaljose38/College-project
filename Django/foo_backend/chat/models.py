@@ -178,7 +178,8 @@ class Notification(models.Model):
     notif_type = models.CharField(max_length=10,choices=NOTIF_TYPES)
 
 def user_directory_path(instance, filename):
-    return 'user_{0}/{1}'.format(instance.user.id, filename)
+    extension = filename.split(".")[-1]
+    return 'user_{0}/{1}'.format(instance.user.id, filename[:4]+'.'+extension)
   
 
 class Post(models.Model):
@@ -218,4 +219,16 @@ class FriendRequest(models.Model):
     status = models.CharField(max_length=10, choices=STATES)
     has_received = models.BooleanField(default=False)
 
-# class FriendRequestNotifica
+
+
+
+def user_story_directory_path(instance, filename):
+    extension = filename.split(".")[-1]
+    return 'user_{0}/stories/{1}'.format(instance.user.id, filename[:4]+'.'+extension)
+  
+class Story(models.Model):
+
+    user = models.ForeignKey(User, related_name="stories", on_delete=models.CASCADE)
+    file = models.FileField(upload_to=user_story_directory_path)
+    time_created = models.DateTimeField(auto_now_add=True)
+    views = models.ManyToManyField(User, related_name="story_views")

@@ -10,7 +10,7 @@ import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'feed_icons.dart' as icons;
+// import 'feed_icons.dart' as icons;
 import 'package:foo/models.dart';
 
 class PostTile extends StatefulWidget {
@@ -30,23 +30,30 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   String userName;
   AnimationController _animController;
   Animation _animation;
+  AnimationController _overlayanimController;
+  Animation _overlayAnimation;
   bool hasTapped = false;
+  OverlayEntry overlayEntry;
 
   @override
   void initState() {
     super.initState();
+
+    //Controller and animation for single tap overlay
     _animController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     _animation = Tween<double>(begin: 0, end: 1).animate(_animController);
+
+    //Controller and animation for double tap overlay
+    _overlayanimController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _overlayAnimation =
+        Tween<double>(begin: 0, end: 1).animate(_overlayanimController);
+
     setUserName();
     likeCount = widget.post.likeCount ?? 0;
     hasLiked = widget.post.haveLiked ?? false;
     postId = widget.post.postId ?? 0;
-    testReq();
-  }
-
-  testReq() async {
-    var resp = await http.get(Uri.http(localhost, '/api'));
   }
 
   Future<void> setUserName() async {
@@ -54,7 +61,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
     userName = _prefs.getString("username");
   }
 
-  likePost() async {
+  Future<void> likePost() async {
     print(hasLiked);
     print(likeCount);
     print(postId);
@@ -85,7 +92,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
     }
   }
 
-  updatePostInHive(int id, bool status) {
+  void updatePostInHive(int id, bool status) {
     var feedBox = Hive.box("Feed");
     Feed feed = feedBox.get('feed');
     if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
@@ -186,6 +193,53 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   void dispose() {
     super.dispose();
     _animController.dispose();
+    _overlayanimController.dispose();
+  }
+
+  void showOverlay(BuildContext context, {String url}) {
+    OverlayState overlayState = Overlay.of(context);
+    print("in here");
+    overlayEntry = OverlayEntry(
+        builder: (context) => FadeTransition(
+              opacity: _overlayAnimation,
+              child: GestureDetector(
+                onTap: () {
+                  _overlayanimController
+                      .reverse()
+                      .whenComplete(() => overlayEntry.remove());
+                },
+                child: Scaffold(
+                  backgroundColor: Colors.black.withOpacity(.5),
+                  body: Center(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        alignment: Alignment.center,
+                        width: MediaQuery.of(context).size.width * .8,
+                        height: MediaQuery.of(context).size.height * .8,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: CachedNetworkImage(
+                            imageUrl: url,
+                            fit: BoxFit.contain,
+                            progressIndicatorBuilder:
+                                (context, string, progress) {
+                              return CircularProgressIndicator(
+                                value: progress.progress,
+                                strokeWidth: 1,
+                                backgroundColor: Colors.purple,
+                              );
+                            },
+                          ),
+                        ), // ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ));
+    _overlayanimController.forward();
+    overlayState.insert(overlayEntry);
   }
 
   @override
@@ -220,18 +274,24 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
               hasTapped = true;
             });
           },
+          onDoubleTap: () {
+            return showOverlay(context, url: widget.post.postUrl);
+          },
           child: Stack(
             children: [
-              Container(
-                height: 420,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  // boxShadow: [BoxShadow()],
-                  borderRadius: BorderRadius.circular(25),
-                  image: DecorationImage(
-                    image: AssetImage("assets/images/user4.png"),
-                    // image: CachedNetworkImageProvider(widget.post.postUrl),
-                    fit: BoxFit.cover,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(25),
+                child: Container(
+                  height: 420,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    // boxShadow: [BoxShadow()],
+                    // borderRadius: BorderRadius.circular(25),
+                    image: DecorationImage(
+                      image: CachedNetworkImageProvider(widget.post.postUrl),
+                      // image: CachedNetworkImageProvider(widget.post.postUrl),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
@@ -244,13 +304,24 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
-                            child: ClipOval(
-                              child: Image(
-                                height: 50.0,
-                                width: 50.0,
-                                image: AssetImage(widget.post.userDpUrl),
-                                fit: BoxFit.cover,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      Profile(userId: widget.post.userId),
+                                ),
+                              );
+                            },
+                            child: CircleAvatar(
+                              child: ClipOval(
+                                child: Image(
+                                  height: 50.0,
+                                  width: 50.0,
+                                  image: AssetImage(widget.post.userDpUrl),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                           ),
@@ -261,7 +332,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                             // color: Colors.black.withOpacity(.3),
                             decoration: BoxDecoration(
                               color: Colors.black.withOpacity(.3),
-                              borderRadius: BorderRadius.circular(25),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               "Deepika Charly",

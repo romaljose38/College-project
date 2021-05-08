@@ -306,11 +306,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_msg = ChatMessage.objects.get(id=msg_id)
         chat_msg.recipients.add(self.user)
         chat_msg.save()
-        if (self.user != chat_msg.user) and chat_msg.user.profile.online:
-            return True, chat_msg.id ,chat_msg.user
-        else:
-            notification = Notification(notif_type="received", notif_from=self.user, notif_to=chat_msg.user, chatmsg_id=chat_msg.id)
-            notification.save()
+        if (self.user != chat_msg.user):
+            if chat_msg.user.profile.online:
+                return True, chat_msg.id ,chat_msg.user
+            else:
+                notification = Notification(notif_type="received", notif_from=self.user, notif_to=chat_msg.user, chatmsg_id=chat_msg.id)
+                notification.save()
+            return False, None, None
+        return False, None, None
+       
 
 
 
@@ -390,7 +394,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     async def seen_ticker(self,event):
         print(event)
-
+        await self.send(text_data=json.dumps(event))
 
 
     async def chat_received_notif(self,event):

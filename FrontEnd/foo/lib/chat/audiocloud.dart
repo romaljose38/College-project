@@ -173,7 +173,7 @@ class AudioCloud extends StatelessWidget {
 }
 
 class Player extends StatefulWidget {
-  File file;
+  final File file;
 
   Player({Key key, this.file}) : super(key: key);
 
@@ -196,7 +196,7 @@ class _PlayerState extends State<Player> {
   }
 
   //adds listeners to the player to update the slider and all..
-  addListeners() {
+  void addListeners() {
     player.onDurationChanged.listen((Duration d) {
       setState(() {
         totalDuration = d.inMilliseconds;
@@ -226,7 +226,7 @@ class _PlayerState extends State<Player> {
   }
 
   //activates the player and responsible for changing the pause/play icon
-  playerStateChange() async {
+  Future<void> playerStateChange() async {
     print("button click");
     if ((widget.file != null) & (!hasInitialized)) {
       print("initializing");
@@ -250,7 +250,7 @@ class _PlayerState extends State<Player> {
   }
 
   //manages slider seeking
-  seekAudio(double val) async {
+  Future<void> seekAudio(double val) async {
     print(val);
 
     Duration position = Duration(milliseconds: (val * totalDuration).toInt());

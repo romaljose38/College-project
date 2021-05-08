@@ -4,41 +4,37 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:foo/screens/models/post_model.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart' as pathProvider;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models.dart';
 import '../test_cred.dart';
 
 class Profile extends StatelessWidget {
-  final Post post;
-
-  Profile({this.post});
-
+  final int userId;
   List<Post> posts = [];
   String profUserName;
   String curUser;
   String requestStatus;
   bool isMe;
+  String userDpUrl;
 
-  int userId;
+  Profile({this.userId});
 
   //Gets the data corresponding to the profile
   Future<List> getData() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
     curUser = _prefs.getString("username");
-    var response = await http.get(Uri.http(
-        localhost, '/api/${post.userId}/profile', {'username': curUser}));
+    var response = await http.get(
+        Uri.http(localhost, '/api/$userId/profile', {'username': curUser}));
     var respJson = jsonDecode(response.body);
-    userId = respJson['id'];
     requestStatus = respJson['requestStatus'];
     profUserName = respJson['username'];
     isMe = respJson['isMe'];
+    // userDpUrl = respJson['dp']
     print(userId);
     print(respJson);
     List result = [];
@@ -78,7 +74,7 @@ class Profile extends StatelessWidget {
                     details: details,
                     userName: this.profUserName,
                     userId: this.userId,
-                    userDpUrl: this.post.userDpUrl,
+                    userDpUrl: "assets/images/user4.png",
                     requestStatus: this.requestStatus,
                     curUser: this.curUser,
                     isMe: this.isMe);
@@ -161,7 +157,7 @@ class _ProfileBodyState extends State<ProfileBody>
     animation = Tween<double>(begin: 0, end: 1).animate(animationController);
   }
 
-  showOverlay(BuildContext context, String url) {
+  void showOverlay(BuildContext context, String url) {
     OverlayState overlayState = Overlay.of(context);
     overlayEntry = OverlayEntry(
         builder: (context) => FadeTransition(
@@ -169,29 +165,35 @@ class _ProfileBodyState extends State<ProfileBody>
               child: Scaffold(
                   backgroundColor: Colors.black.withOpacity(.5),
                   body: Center(
-                    child: Container(
-                        alignment: Alignment.center,
-                        width: MediaQuery.of(context).size.width * .8,
-                        height: MediaQuery.of(context).size.height * .8,
-                        child: CachedNetworkImage(
-                          imageUrl: url,
-                          fit: BoxFit.contain,
-                          progressIndicatorBuilder:
-                              (context, string, progress) {
-                            return CircularProgressIndicator(
-                              value: progress.progress,
-                              strokeWidth: 1,
-                              backgroundColor: Colors.purple,
-                            );
-                          },
-                        )),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                          alignment: Alignment.center,
+                          width: MediaQuery.of(context).size.width * .8,
+                          height: MediaQuery.of(context).size.height * .8,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: CachedNetworkImage(
+                              imageUrl: url,
+                              fit: BoxFit.contain,
+                              progressIndicatorBuilder:
+                                  (context, string, progress) {
+                                return CircularProgressIndicator(
+                                  value: progress.progress,
+                                  strokeWidth: 1,
+                                  backgroundColor: Colors.purple,
+                                );
+                              },
+                            ),
+                          )),
+                    ),
                   )),
             ));
     animationController.forward();
     overlayState.insert(overlayEntry);
   }
 
-  void sendFriendRequest() async {
+  Future<void> sendFriendRequest() async {
     var resp = await http.get(Uri.http(localhost, '/api/add_friend',
         {'username': widget.curUser, 'id': widget.userId.toString()}));
 
@@ -203,7 +205,7 @@ class _ProfileBodyState extends State<ProfileBody>
   }
 
   //renders the relationship button with the appropriate icon
-  properStatusButton() {
+  IconButton properStatusButton() {
     switch (requestStatus) {
       case "pending":
         {
@@ -232,7 +234,7 @@ class _ProfileBodyState extends State<ProfileBody>
     }
   }
 
-  handleChat() async {
+  Future<void> handleChat() async {
     String threadName = "${widget.curUser}_${widget.userName}";
     var threadBox = Hive.box("Threads");
     Thread thread;
@@ -245,6 +247,7 @@ class _ProfileBodyState extends State<ProfileBody>
       );
       thread.lastAccessed = DateTime.now();
       await threadBox.put(threadName, thread);
+      thread.save();
     }
     Navigator.push(
       context,

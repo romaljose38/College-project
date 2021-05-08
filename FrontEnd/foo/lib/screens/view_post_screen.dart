@@ -87,7 +87,7 @@ class _ViewPostScreenState extends State<ViewPostScreen>
     });
   }
 
-  likePost() async {
+  Future<void> likePost() async {
     print(hasLiked);
     print(likeCount);
     print(postId);
@@ -118,7 +118,7 @@ class _ViewPostScreenState extends State<ViewPostScreen>
     }
   }
 
-  updatePostInHive(int id, bool status) {
+  void updatePostInHive(int id, bool status) {
     var feedBox = Hive.box("Feed");
     Feed feed = feedBox.get('feed');
     if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
@@ -127,7 +127,7 @@ class _ViewPostScreenState extends State<ViewPostScreen>
     }
   }
 
-  _addComment() async {
+  Future<void> _addComment() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
     String username = _prefs.getString("username");
     String comment = _commentController.text;

@@ -4,15 +4,6 @@ import 'chattile.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class ChatListScreen extends StatefulWidget {
-  // final NotificationController controller;
-  List threads = [];
-
-  ChatListScreen(
-      {Key key,
-      //  @required this.controller,
-      this.threads})
-      : super(key: key);
-
   @override
   _ChatListScreenState createState() => _ChatListScreenState();
 }
@@ -25,99 +16,107 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      //     child: Scaffold(
-      //   backgroundColor: Color.fromRGBO(226, 235, 243, 1),
-      //   body: Padding(
-      //     padding: const EdgeInsets.all(8.0),
-      //     child: CustomScrollView(
-      //       slivers: [
-      //         SliverAppBar(
-      //           brightness: Brightness.dark,
-      //           expandedHeight: 150,
-      //           floating: true,
-      //           backgroundColor: Colors.transparent,
-      //           leading: Icon(
-      //             Icons.arrow_back,
-      //             color: Colors.black,
-      //           ),
-      //           flexibleSpace: FlexibleSpaceBar(
-      //             background: Align(
-      //               alignment: Alignment.centerLeft,
-      //               child: Padding(
-      //                 padding: const EdgeInsets.only(left: 30),
-      //                 child: Text("Conversation",
-      //                     style: TextStyle(
-      //                         color: Color.fromRGBO(60, 82, 111, 1),
-      //                         fontWeight: FontWeight.w700,
-      //                         fontSize: 25)),
-      //               ),
-      //             ),
-      //           ),
-      //         ),
-      //         // SliverToBoxAdapter(
-      //         // child:
-      //         ValueListenableBuilder(
-      //             valueListenable: Hive.box("Threads").listenable(),
-      //             builder: (context, box, widget) {
-      //               print(box.values.toList());
-      //               List threads = box.values.toList();
-      //               if (threads.length >= 1) {
-      //                 threads.sort((a, b) {
-      //                   return b.lastAccessed.compareTo(a.lastAccessed);
-      //                 });
-      //               }
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: SafeArea(
+        //     child: Scaffold(
+        //   backgroundColor: Color.fromRGBO(226, 235, 243, 1),
+        //   body: Padding(
+        //     padding: const EdgeInsets.all(8.0),
+        //     child: CustomScrollView(
+        //       slivers: [
+        //         SliverAppBar(
+        //           brightness: Brightness.dark,
+        //           expandedHeight: 150,
+        //           floating: true,
+        //           backgroundColor: Colors.transparent,
+        //           leading: Icon(
+        //             Icons.arrow_back,
+        //             color: Colors.black,
+        //           ),
+        //           flexibleSpace: FlexibleSpaceBar(
+        //             background: Align(
+        //               alignment: Alignment.centerLeft,
+        //               child: Padding(
+        //                 padding: const EdgeInsets.only(left: 30),
+        //                 child: Text("Conversation",
+        //                     style: TextStyle(
+        //                         color: Color.fromRGBO(60, 82, 111, 1),
+        //                         fontWeight: FontWeight.w700,
+        //                         fontSize: 25)),
+        //               ),
+        //             ),
+        //           ),
+        //         ),
+        //         // SliverToBoxAdapter(
+        //         // child:
+        //         ValueListenableBuilder(
+        //             valueListenable: Hive.box("Threads").listenable(),
+        //             builder: (context, box, widget) {
+        //               print(box.values.toList());
+        //               List threads = box.values.toList();
+        //               if (threads.length >= 1) {
+        //                 threads.sort((a, b) {
+        //                   return b.lastAccessed.compareTo(a.lastAccessed);
+        //                 });
+        //               }
 
-      //               return SliverList(
-      //                 delegate: SliverChildBuilderDelegate(
-      //                   (context, index) {
-      //                     return ChatTile(
-      //                         // controller:widget.controller,
-      //                         thread: threads[index]);
-      //                   },
-      //                   childCount: threads == null ? 0 : threads.length,
-      //                 ),
-      //               );
-      //             }),
-      //         // ),
-      //       ],
-      //     ),
-      //   ),
-      // )
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          leading: Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
+        //               return SliverList(
+        //                 delegate: SliverChildBuilderDelegate(
+        //                   (context, index) {
+        //                     return ChatTile(
+        //                         // controller:widget.controller,
+        //                         thread: threads[index]);
+        //                   },
+        //                   childCount: threads == null ? 0 : threads.length,
+        //                 ),
+        //               );
+        //             }),
+        //         // ),
+        //       ],
+        //     ),
+        //   ),
+        // )
+        child: Scaffold(
           backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text("Conversations",
-              style: TextStyle(
-                  color: Color.fromRGBO(60, 82, 111, 1),
-                  fontWeight: FontWeight.bold)),
-          actions: [Icon(Icons.more_vert, color: Colors.black)],
-        ),
-        body: ValueListenableBuilder(
-            valueListenable: Hive.box("Threads").listenable(),
-            builder: (context, box, widget) {
-              print(box.values.toList());
-              List threads = box.values.toList();
-              if (threads.length >= 1) {
-                threads.sort((a, b) {
-                  return b.lastAccessed.compareTo(a.lastAccessed);
-                });
-              }
-              return ListView.builder(
-                  itemCount: threads.length,
-                  itemBuilder: (context, index) {
-                    return ChatTile(thread: threads[index]);
-                  });
-            }),
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            leading: Icon(
+              Icons.arrow_back,
+              color: Colors.black,
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Text("Conversations",
+                style: TextStyle(
+                    color: Color.fromRGBO(60, 82, 111, 1),
+                    fontWeight: FontWeight.bold)),
+            actions: [Icon(Icons.more_vert, color: Colors.black)],
+          ),
+          body: ValueListenableBuilder(
+              valueListenable: Hive.box("Threads").listenable(),
+              builder: (context, box, widget) {
+                print(box.values.toList());
 
-        //     )),
+                List threads = box.values.toList();
+
+                if (threads.length > 1) {
+                  threads.sort((a, b) {
+                    return b.lastAccessed.compareTo(a.lastAccessed);
+                  });
+                }
+                print(threads);
+                return ListView.builder(
+                    itemCount: threads.length,
+                    itemBuilder: (context, index) {
+                      print(index);
+                      print(threads[index]);
+                      return ChatTile(thread: threads[index]);
+                    });
+              }),
+
+          //     )),
+        ),
       ),
     );
   }
