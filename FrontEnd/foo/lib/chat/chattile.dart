@@ -14,11 +14,10 @@ class ChatTile extends StatelessWidget {
 
   String getDate(DateTime date) => DateFormat("dd/MM/yyyy").format(date);
 
+  
+
   @override
   Widget build(BuildContext context) {
-    print(thread.second.name);
-    print(thread.lastAccessed);
-    print(thread.first.name);
     return Container(
       decoration: BoxDecoration(
         color: Colors.transparent,
@@ -39,7 +38,8 @@ class ChatTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
             ),
           ),
-          onTap: () {
+          onTap: () async {
+            
             Navigator.push(
                 context,
                 MaterialPageRoute(

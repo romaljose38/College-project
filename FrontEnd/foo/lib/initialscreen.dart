@@ -1,15 +1,16 @@
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:foo/auth/register.dart';
 import 'package:foo/landing_page.dart';
+import 'package:foo/main.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Renderer extends StatefulWidget {
-
   SharedPreferences prefs;
 
-  Renderer({Key key,this.prefs});
+  Renderer({Key key, this.prefs});
 
   @override
   _RendererState createState() => _RendererState();
@@ -24,16 +25,16 @@ class _RendererState extends State<Renderer> {
   void initState() {
     get_prefs();
     super.initState();
-    
+
     // timer = Timer.periodic(
-        // Duration(seconds: 2), (Timer t) => _checkConnectionStatus());
+    // Duration(seconds: 2), (Timer t) => _checkConnectionStatus());
   }
 
-  void get_prefs() async{
+  void get_prefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-  setState((){
-    prefs=prefs;
-  });
+    setState(() {
+      prefs = prefs;
+    });
   }
   // void _checkConnectionStatus() async {
   //   bool result = await DataConnectionChecker().hasConnection;
@@ -51,7 +52,9 @@ class _RendererState extends State<Renderer> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.prefs.containsKey("loggedIn") ? LandingPageProxy(): RegisterView() ;
+    return widget.prefs.containsKey("loggedIn")
+        ? LandingPageProxy()
+        : RegisterView();
   }
 }
 

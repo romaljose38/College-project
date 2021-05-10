@@ -50,8 +50,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Future<void> _checkConnectionStatus() async {
     bool result = await DataConnectionChecker().hasConnection;
-    print("result");
-    print(result);
+
     if (result == true) {
       setState(() {
         isConnected = true;
@@ -64,14 +63,12 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Future<void> setInitialData() async {
-    print("this is the path");
     await _checkConnectionStatus();
     prefs = await SharedPreferences.getInstance();
     curUser = prefs.getString("username");
     var feedBox = Hive.box("Feed");
     Feed feed;
     if (feedBox.containsKey("feed")) {
-      print("old feed");
       feed = feedBox.get("feed");
 
       for (int i = 0; i < feed.posts.length; i++) {
@@ -82,23 +79,19 @@ class _FeedScreenState extends State<FeedScreen> {
       setState(() {
         itemCount += postsList.length;
       });
-      print(feed.posts);
     } else {
       feed = Feed();
-      print("new feed");
+
       await feedBox.put('feed', feed);
     }
 
     if (isConnected) {
-      print("requesting");
       var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
       var respJson = jsonDecode(response.body);
-      print(respJson);
-      print(respJson.runtimeType);
+
       if (response.statusCode == 200) {
         respJson.forEach((e) {
           if (feed.isNew(e['id'])) {
-            print(e);
             Post post = Post(
                 username: e['user']['username'],
                 postUrl: 'http://' + localhost + e['file'],
@@ -106,7 +99,8 @@ class _FeedScreenState extends State<FeedScreen> {
                 postId: e['id'],
                 userId: e['user']['id'],
                 likeCount: e['likeCount'],
-                haveLiked: e['hasLiked']);
+                haveLiked: e['hasLiked'],
+                type: e['post_type']);
             listKey.currentState.insertItem(0);
             postsList.insert(0, post);
             feed.addPost(post);
@@ -173,8 +167,6 @@ class _FeedScreenState extends State<FeedScreen> {
   Future<void> _getNewPosts() async {
     var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
     var respJson = jsonDecode(response.body);
-    print(respJson);
-    print(respJson.runtimeType);
 
     var feedBox = Hive.box("Feed");
     var feed;
@@ -187,7 +179,6 @@ class _FeedScreenState extends State<FeedScreen> {
 
     respJson.forEach((e) {
       if (feed.isNew(e['id'])) {
-        print(e);
         Post post = Post(
             username: e['user']['username'],
             postUrl: 'http://' + localhost + e['file'],
@@ -195,9 +186,10 @@ class _FeedScreenState extends State<FeedScreen> {
             postId: e['id'],
             userId: e['user']['id'],
             likeCount: e['likeCount'],
-            haveLiked: e['hasLiked']);
-        listKey.currentState.insertItem(1);
-        postsList.insert(1, post);
+            haveLiked: e['hasLiked'],
+            type: e['post_type']);
+        listKey.currentState.insertItem(0);
+        postsList.insert(0, post);
         feed.addPost(post);
         setState(() {
           itemCount += 1;

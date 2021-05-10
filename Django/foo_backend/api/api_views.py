@@ -60,61 +60,61 @@ def video_upload_handler(request):
 
 @api_view(['GET'])
 def get_user_list(request):
-	try:
-	    param = request.query_params['name']
-	    print(param)
-	    qs = User.objects.filter(Q(username__icontains=param)
-	                             | Q(f_name__icontains=param))
-	    # .filter(l_name__icontains=param)
-	    data = serialize('json', queryset=qs, fields=[
-	                     'f_name', 'l_name', 'username'])
-	    print(request.query_params)
-	    print(data)
-	    return Response(status=200, data={"resp": data})
-	except Exception as e:
-		print(e)
-		return Response(status=400)
+    try:
+        param = request.query_params['name']
+        print(param)
+        qs = User.objects.filter(Q(username__icontains=param)
+                                 | Q(f_name__icontains=param))
+        # .filter(l_name__icontains=param)
+        data = serialize('json', queryset=qs, fields=[
+                         'f_name', 'l_name', 'username'])
+        print(request.query_params)
+        print(data)
+        return Response(status=200, data={"resp": data})
+    except Exception as e:
+        print(e)
+        return Response(status=400)
 
 
 @api_view(['GET'])
 def get_posts(request, username):
-	try:
-	    user = User.objects.get(username=username)
-	    qs = Post.objects.order_by("time_created")
-	    serialized = PostSerializer(qs, many=True, context={"user": user})
-	    print(serialized.data)
-	    return Response(status=200, data=serialized.data)
-	except Exception as e:
-		print(e)
-		return Response(status=400)
+    try:
+        user = User.objects.get(username=username)
+        qs = Post.objects.order_by("time_created")
+        serialized = PostSerializer(qs, many=True, context={"user": user})
+        print(serialized.data)
+        return Response(status=200, data=serialized.data)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
 
 
 @api_view(['GET'])
 def get_profile_and_posts(request, id):
-	try:
-	    user = User.objects.get(id=id)
-	    cur_user = User.objects.get(username=request.query_params['username'])
-	    friend_request = FriendRequest.objects.filter(
-	        from_user=cur_user, to_user=user)
-	    print(friend_request)
-	    serialized = UserProfileSerializer(
-	        user, context={"request": friend_request,'cur_user':cur_user})
-	    print(serialized.data)
-	    return Response(status=200, data=serialized.data)
-	except Exception as e:
-		print(e)
-		return Response(status=400)
+    try:
+        user = User.objects.get(id=id)
+        cur_user = User.objects.get(username=request.query_params['username'])
+        friend_request = FriendRequest.objects.filter(
+            from_user=cur_user, to_user=user)
+        print(friend_request)
+        serialized = UserProfileSerializer(
+            user, context={"request": friend_request,'cur_user':cur_user})
+        print(serialized.data)
+        return Response(status=200, data=serialized.data)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
 
 
 @api_view(['GET'])
 def get_comments(request, id):
-	try:
-	    post = Post.objects.get(id=id)
-	    serialized = PostDetailSerializer(post)
-	    return Response(status=200, data=serialized.data)
-	except Exception as e:
-		print(e)
-		return Response(status=400)
+    try:
+        post = Post.objects.get(id=id)
+        serialized = PostDetailSerializer(post)
+        return Response(status=200, data=serialized.data)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
 
 
 @api_view(['POST'])
@@ -171,9 +171,9 @@ def send_friend_request(request):
         to_user = User.objects.get(id=request.query_params['id'])
         friend_request = FriendRequest.objects.create(
             from_user=from_user,
-			to_user=to_user, 
-			status="pending",
-			)
+            to_user=to_user, 
+            status="pending",
+            )
         friend_request.save()
         return Response(status=200)
     except Exception as e:
@@ -194,9 +194,12 @@ def handle_friend_request(request):
         frnd_rqst = qs.first()
         if action=="accept":       
             frnd_rqst.status = "accepted"
+            from_user.profile.friends.add(to_user)
+            to_user.profile.friends.add(from_user)
+            frnd_rqst.delete()
         elif action=="reject":
             frnd_rqst.status = "rejected"
-        frnd_rqst.save()
+            frnd_rqst.delete()
         print(qs)
         return Response(status=200)
     except Exception as e:
@@ -207,10 +210,30 @@ def handle_friend_request(request):
 
 @api_view(['GET'])
 def get_stories(request):
-	try:
-		qs = User.objects.all()
-		serialized = UserStorySerializer(qs, many=True)
-		return Response(status=200, data=serialized.data)
-	except Exception as e:
-		print(e)
-		return Response(status=400)
+    try:
+        qs = User.objects.all()
+        serialized = UserStorySerializer(qs, many=True)
+        print(serialized.data)
+        newList = [i for i in serialized.data if i is not None]
+        print(newList)
+        return Response(status=200, data=newList)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+
+@csrf_exempt
+@api_view(['POST', 'PUT'])
+@parser_classes([MultiPartParser])
+def story_upload_handler(request):
+    try:
+        file = request.data['file']
+        username = request.data['username']
+        print(request.data)
+        user = User.objects.get(username=username)
+        story = Story.objects.create(file=file, user=user)
+        story.save()
+        return Response(status=200)
+    except:
+        return Response(status=400)

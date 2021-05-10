@@ -79,6 +79,9 @@ class Thread extends HiveObject {
   @HiveField(3)
   DateTime lastAccessed;
 
+  @HiveField(4)
+  bool isTyping;
+
   Thread({this.first, this.second});
 
   void addChat(chat) {
@@ -176,6 +179,9 @@ class Post {
   @HiveField(7)
   int userId;
 
+  @HiveField(8)
+  String type;
+
   Post(
       {this.username,
       this.userDpUrl,
@@ -184,7 +190,8 @@ class Post {
       this.commentCount,
       this.postId,
       this.haveLiked,
-      this.userId});
+      this.userId,
+      this.type});
 }
 
 class Comment {
