@@ -37,26 +37,24 @@ class _ChatScreenState extends State<ChatScreen> {
   String threadName;
   TextEditingController _chatController = TextEditingController();
   Thread thread;
+  SharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
     otherUser = widget.thread.second.name;
+    curUser = widget.thread.first.name;
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     thread = Hive.box('threads').get(threadName);
-    // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    //Gets the username of the logged in user.
-    //We need the current username to distinguish between the sender and receiver. So that the chatclouds can be aligned
-    //on their respective sides.
+
     _getUserName();
   }
 
   void _getUserName() async {
-    SharedPreferences _prefs = await SharedPreferences.getInstance();
-    curUser = _prefs.getString('username');
-    print(_prefs.getString('username'));
-    print(_prefs.getString('user'));
+    _prefs = await SharedPreferences.getInstance();
+    // curUser = _prefs.getString('username');
+    _prefs.setString("curUser", otherUser);
   }
 
   void _sendMessage(TextEditingController _chatController) {
@@ -183,95 +181,112 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color.fromRGBO(240, 247, 255, 1),
-      appBar: PreferredSize(
-          preferredSize: Size(double.infinity, 100),
-          child: SafeArea(
-            child: Container(
-                height: 100,
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        stops: [
-                          .3,
-                          1
-                        ],
-                        colors: [
-                          Color.fromRGBO(248, 251, 255, 1),
-                          Color.fromRGBO(240, 247, 255, 1)
-                        ]),
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                    boxShadow: [
-                      BoxShadow(
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3),
-                        color: Color.fromRGBO(226, 235, 243, 1),
-                      )
-                    ]),
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Active",
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    color: Color.fromRGBO(180, 190, 255, 1)),
-                              ),
-                              SizedBox(height: 7),
-                              Text(widget.thread.second.name,
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color.fromRGBO(59, 79, 108, 1)))
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: CircleAvatar(
-                            radius: 35,
-                            child: Text(widget.thread.second.name),
-                          ),
+    return WillPopScope(
+      onWillPop: () async {
+        _prefs.setString("curUser", "");
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Color.fromRGBO(240, 247, 255, 1),
+        appBar: PreferredSize(
+            preferredSize: Size(double.infinity, 100),
+            child: SafeArea(
+              child: Container(
+                  height: 100,
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          stops: [
+                            .3,
+                            1
+                          ],
+                          colors: [
+                            Color.fromRGBO(248, 251, 255, 1),
+                            Color.fromRGBO(240, 247, 255, 1)
+                          ]),
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      boxShadow: [
+                        BoxShadow(
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
+                          color: Color.fromRGBO(226, 235, 243, 1),
                         )
                       ]),
-                )),
-          )),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-        child: Column(children: <Widget>[
-          Expanded(
-            child: ValueListenableBuilder(
-              valueListenable: Hive.box("Threads").listenable(),
-              builder: (context, box, widget) {
-                var thread = box.get(threadName);
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ValueListenableBuilder(
+                                    valueListenable: Hive.box("Threads")
+                                        .listenable(keys: [threadName]),
+                                    builder: (context, box, widget) {
+                                      var existingThread = box.get(threadName);
 
-                List __chatList = thread.chatList ?? [];
-                print(__chatList);
-                return ChatCloudList(
-                    chatList: __chatList,
-                    needScroll: (__chatList.length == 0) ? false : true,
-                    curUser: curUser,
-                    otherUser: otherUser);
-              },
+                                      return Text(
+                                        existingThread.isTyping == true
+                                            ? "typing..."
+                                            : "active",
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            color: Color.fromRGBO(
+                                                180, 190, 255, 1)),
+                                      );
+                                    }),
+                                SizedBox(height: 7),
+                                Text(widget.thread.second.name,
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color.fromRGBO(59, 79, 108, 1)))
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: CircleAvatar(
+                              radius: 35,
+                              child: Text(widget.thread.second.name),
+                            ),
+                          )
+                        ]),
+                  )),
+            )),
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+          child: Column(children: <Widget>[
+            Expanded(
+              child: ValueListenableBuilder(
+                valueListenable: Hive.box("Threads").listenable(),
+                builder: (context, box, widget) {
+                  var thread = box.get(threadName);
+
+                  List __chatList = thread.chatList ?? [];
+
+                  return ChatCloudList(
+                      chatList: __chatList,
+                      needScroll: (__chatList.length == 0) ? false : true,
+                      curUser: curUser,
+                      otherUser: otherUser);
+                },
+              ),
             ),
-          ),
-          RecordApp(
-            sendMessage: _sendMessage,
-            sendImage: _sendImage,
-            sendAudio: _sendAudio,
-          ),
-        ]),
+            RecordApp(
+              sendMessage: _sendMessage,
+              sendImage: _sendImage,
+              sendAudio: _sendAudio,
+              otherUser: otherUser,
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -281,8 +296,9 @@ class RecordApp extends StatefulWidget {
   final Function sendMessage;
   final Function sendImage;
   final Function sendAudio;
+  final String otherUser;
 
-  RecordApp({this.sendMessage, this.sendImage, this.sendAudio});
+  RecordApp({this.sendMessage, this.sendImage, this.sendAudio, this.otherUser});
 
   @override
   _RecordAppState createState() => _RecordAppState();
@@ -330,13 +346,39 @@ class _RecordAppState extends State<RecordApp>
     _keyboardVisibilityController = KeyboardVisibilityController()
       ..onChange.listen((bool _keyboardVisible) {
         this._keyboardVisible = _keyboardVisible;
-
+        if (_keyboardVisible) {
+          sendTypingStarted();
+          print("typing thudangi");
+        } else {
+          sendTypingStopped();
+          print("typing theernnu");
+        }
         if (_keyboardVisible && _emojiVisible) {
           setState(() {
             _emojiVisible = false;
           });
         }
       });
+  }
+
+  void sendTypingStarted() {
+    var data = {
+      'to': widget.otherUser,
+      'type': 'typing_status',
+      'status': 'typing',
+    };
+
+    NotificationController.sendToChannel(jsonEncode(data));
+  }
+
+  void sendTypingStopped() {
+    var data = {
+      'to': widget.otherUser,
+      'type': 'typing_status',
+      'status': 'stopped',
+    };
+
+    NotificationController.sendToChannel(jsonEncode(data));
   }
 
   void animateMicColor() {

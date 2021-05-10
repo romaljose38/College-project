@@ -41,7 +41,6 @@ class _ChatCloudListState extends State<ChatCloudList> {
           "to": widget.otherUser,
           "id": widget.chatList.last.id,
         };
-        print(data);
         NotificationController.sendToChannel(jsonEncode(data));
       }
     }

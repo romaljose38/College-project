@@ -4,11 +4,12 @@ import 'dart:ui';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:foo/chat/listscreen.dart';
 import 'package:foo/chat/socket.dart';
 import 'package:foo/colour_palette.dart';
 import 'package:foo/notifications/notification_screen.dart';
-import 'package:foo/profile/profile.dart';
+import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/search_screen.dart';
 import 'package:foo/upload_screens/image_upload_screen.dart';
@@ -42,10 +43,8 @@ class _LandingPageState extends State<LandingPage>
 
   @override
   void initState() {
+    notifInit();
     super.initState();
-    NotificationController.streamController.onListen = () {
-      print("here in controller");
-    };
 
     animationController = AnimationController(
       vsync: this,
@@ -53,6 +52,31 @@ class _LandingPageState extends State<LandingPage>
     );
     animation =
         Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
+  }
+
+  notifInit() async {
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    final IOSInitializationSettings initializationSettingsIOS =
+        IOSInitializationSettings();
+    final MacOSInitializationSettings initializationSettingsMacOS =
+        MacOSInitializationSettings();
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS,
+            macOS: initializationSettingsMacOS);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: handleEntry);
+  }
+
+  Future<dynamic> handleEntry(String payload) async {
+    await Navigator.push(
+        context, MaterialPageRoute(builder: (_) => ChatListScreen()));
   }
 
   // function that picks an image from the gallery

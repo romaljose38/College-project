@@ -164,13 +164,14 @@ class ThreadAdapter extends TypeAdapter<Thread> {
       second: fields[1] as User,
     )
       ..chatList = (fields[2] as List)?.cast<ChatMessage>()
-      ..lastAccessed = fields[3] as DateTime;
+      ..lastAccessed = fields[3] as DateTime
+      ..isTyping = fields[4] as bool;
   }
 
   @override
   void write(BinaryWriter writer, Thread obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.first)
       ..writeByte(1)
@@ -178,7 +179,9 @@ class ThreadAdapter extends TypeAdapter<Thread> {
       ..writeByte(2)
       ..write(obj.chatList)
       ..writeByte(3)
-      ..write(obj.lastAccessed);
+      ..write(obj.lastAccessed)
+      ..writeByte(4)
+      ..write(obj.isTyping);
   }
 
   @override

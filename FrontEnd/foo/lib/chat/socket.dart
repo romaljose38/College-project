@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:async';
 
 import 'package:foo/models.dart';
+import 'package:foo/notification_handler.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo/test_cred.dart';
@@ -18,7 +19,7 @@ class NotificationController {
 
   String username;
   SharedPreferences prefs;
-
+  LocalNotificationHandler _handler = LocalNotificationHandler();
   static WebSocket channel;
   static bool isActive = false;
 
@@ -100,7 +101,6 @@ class NotificationController {
 
   dataHandler(data) {
     if (data.containsKey('received')) {
-      print(data);
       _updateChatStatus(data['received'], data['name']);
     } else if (data.containsKey("r_s")) {
       _updateReachedServerStatus(
@@ -123,7 +123,23 @@ class NotificationController {
       addNotification(data);
     } else if (data['type'] == 'seen_ticker') {
       updateMsgSeenStatus(data);
+    } else if (data['type'] == 'typing_status') {
+      updateTypingStatus(data);
     }
+  }
+
+  void updateTypingStatus(data) {
+    String me = prefs.getString('username');
+    String threadName = me + '_' + data['from'];
+    var threadBox = Hive.box('Threads');
+    var existingThread = threadBox.get(threadName);
+    if (data['status'] == "typing") {
+      existingThread.isTyping = true;
+    } else {
+      existingThread.isTyping = false;
+    }
+
+    existingThread.save();
   }
 
   void updateMsgSeenStatus(data) {
@@ -141,6 +157,7 @@ class NotificationController {
         !prefs.containsKey('lastNotifId')) {
       prefs.setInt("lastNotifId", data['id']);
       DateTime curTime = DateTime.now();
+      _handler.friendRequestNotif(data['username']);
       var notif = Notifications(
           type: NotificationType.friendRequest,
           userName: data['username'],
@@ -170,6 +187,9 @@ class NotificationController {
   }
 
   _chicanery(threadName, thread, data) async {
+    // showNotification(data['message']['message'], data['message']['from']);
+    _handler.chatNotif(data['message']['from'], data['message']['message']);
+
     var box = Hive.box("Threads");
     await box.put(threadName, thread);
     if (data['msg_type'] == 'txt') {
@@ -224,9 +244,11 @@ class NotificationController {
 
       await _chicanery(threadName, thread, data);
     } else {
-      print("existing thread");
-      print(data['message']['id']);
       var existingThread = threadBox.get(threadName);
+
+      if (prefs.getString("curUser") != data['message']['from']) {
+        _handler.chatNotif(data['message']['from'], data['message']['message']);
+      }
       if (data['msg_type'] == 'txt') {
         existingThread.addChat(ChatMessage(
           message: data['message']['message'],

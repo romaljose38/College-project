@@ -201,6 +201,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     )
                 else:
                     await self.create_notification_from_json(text_data_json,to_user)
+            elif text_data_json['type']=='typing_status':
+                text_data_json['from'] = self.room_group_name
+                to = text_data_json['to']
+                text_data_json.pop("to")
+                await self.channel_layer.group_send(
+                        to,
+                        text_data_json
+                    )
+                
             else:
                 to = text_data_json['to']
                 time_str = text_data_json['time']
@@ -402,4 +411,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json_data)
 
 
-    
+    async def typing_status(self,event):
+        await self.send(text_data=json.dumps(event))

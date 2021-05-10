@@ -48,7 +48,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ["file","user",'id']
+        fields = ["file","user",'id',"post_type"]
 
 
     def to_representation(self, instance):
@@ -99,8 +99,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 representation['requestStatus'] = "pending"
             elif request.first().status == "rejected":
                 representation['requestStatus'] = "rejected"
-        else:
-            representation['requestStatus'] = "open"
+        elif request.count==0:
+            if cur_user in instance.profile.friends.all():
+                representation['requestStatus'] = "accepted"
+            else:
+                representation['requestStatus'] = "open"
 
 
         return representation
@@ -141,3 +144,10 @@ class UserStorySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username','id','stories']
+
+    def to_representation(self,instance):
+        if instance.stories.all().count()>0:
+            representation = super().to_representation(instance);
+            return representation
+        else:
+            return;
