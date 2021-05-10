@@ -12,6 +12,8 @@ import 'package:hive/hive.dart';
 import 'package:foo/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:foo/stories/story_pick.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -68,7 +70,8 @@ class MyApp extends StatelessWidget {
       title: 'Foo Register',
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
-      home: Renderer(prefs: prefs),
+      home: StoryPicker(),
+      //home: Renderer(prefs: prefs),
       // home: AudioPlayerP(),
     );
   }
