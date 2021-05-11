@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart';
+import 'package:foo/stories/story.dart';
 import 'dart:io';
 
 class StoryController {
@@ -64,8 +65,16 @@ class NetworkFileMedia extends StatelessWidget {
               case 'image':
                 {
                   this.animController.forward();
-                  return Image(
-                      image: FileImage(snapshot.data), fit: BoxFit.contain);
+                  return GestureDetector(
+                    onTapDown: (_) {
+                      this.animController.stop();
+                    },
+                    onTapUp: (_) {
+                      this.animController.forward();
+                    },
+                    child: Image(
+                        image: FileImage(snapshot.data), fit: BoxFit.contain),
+                  );
                 }
               case 'video':
                 {
@@ -92,45 +101,62 @@ class NetworkFileMedia extends StatelessWidget {
 class StoryVideoPlayer extends StatefulWidget {
   final File videoFile;
   final AnimationController animController;
-  //VideoPlayerController videoController;
 
-  StoryVideoPlayer({
-    @required this.videoFile,
-    @required this.animController,
-    //this.videoController
-  });
+  StoryVideoPlayer({@required this.videoFile, @required this.animController});
 
   @override
   _StoryVideoPlayerState createState() => _StoryVideoPlayerState();
 }
 
 class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
+  VideoPlayerController videoController;
+
   @override
   void initState() {
     super.initState();
-    StoryController.videoController =
-        VideoPlayerController.file(widget.videoFile)
-          ..initialize().then((_) {
-            setState(() {});
-            if (StoryController.videoController.value.isInitialized) {
-              widget.animController.duration =
-                  StoryController.videoController.value.duration;
-              StoryController.videoController.play();
-              widget.animController.forward();
-            }
-          });
+    videoController = VideoPlayerController.file(widget.videoFile)
+      ..initialize().then((_) {
+        setState(() {});
+        if (videoController.value.isInitialized) {
+          widget.animController.duration = videoController.value.duration;
+          videoController.play();
+          widget.animController.forward();
+        }
+      });
+    widget.animController.addStatusListener((status) {
+      if (status == AnimationStatus.forward) {
+        videoController.play();
+      } else {
+        videoController.pause();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    videoController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (StoryController.videoController != null &&
-        StoryController.videoController.value.isInitialized) {
-      return FittedBox(
-        fit: BoxFit.contain,
-        child: SizedBox(
-          width: StoryController.videoController.value.size.width,
-          height: StoryController.videoController.value.size.height,
-          child: VideoPlayer(StoryController.videoController),
+    if (videoController != null && videoController.value.isInitialized) {
+      return GestureDetector(
+        onTapDown: (_) {
+          videoController.pause();
+          widget.animController.stop();
+        },
+        onTapUp: (_) {
+          videoController.play();
+          widget.animController.forward();
+        },
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: videoController.value.size.width,
+            height: videoController.value.size.height,
+            child: VideoPlayer(videoController),
+          ),
         ),
       );
     }

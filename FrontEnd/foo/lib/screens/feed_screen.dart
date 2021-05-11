@@ -247,18 +247,25 @@ class _FeedScreenState extends State<FeedScreen> {
     return Scaffold(
       // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
       floatingActionButton: TextButton(
-        child: Text("A"),
+        child: Text(
+          "A",
+          style: TextStyle(color: Colors.black),
+        ),
         onPressed: () {
           listKey.currentState.insertItem(0);
           var feedBox = Hive.box("Feed");
           var feed = feedBox.get('feed');
-          postsList.insert(0, feed.posts[1]);
+          postsList.insert(0, feed.posts[0]);
         },
       ),
       backgroundColor: Colors.white,
       body: RefreshIndicator(
           triggerMode: RefreshIndicatorTriggerMode.anywhere,
-          onRefresh: _getNewPosts,
+          onRefresh: () {
+            _getNewPosts();
+            _fetchStory();
+            return Future.value('nothing');
+          },
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(child: _horiz()),

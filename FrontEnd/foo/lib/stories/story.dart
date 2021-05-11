@@ -22,8 +22,8 @@ class StoryScreen extends StatefulWidget {
 
 class _StoryScreenState extends State<StoryScreen>
     with SingleTickerProviderStateMixin {
-  PageController _pageController;
   AnimationController _animController;
+  PageController _pageController;
   //VideoPlayerController _videoController;
   int _currentIndex = 0;
 
@@ -63,7 +63,7 @@ class _StoryScreenState extends State<StoryScreen>
   void dispose() {
     _pageController.dispose();
     _animController.dispose();
-    StoryController.videoController?.dispose();
+    // StoryController.videoController?.dispose();
     super.dispose();
   }
 
@@ -74,9 +74,17 @@ class _StoryScreenState extends State<StoryScreen>
     return (video_formats.contains(format)) ? 'video' : 'image';
   }
 
+  String _formatTime(String timeString) {
+    String time = timeString.split(' ').last;
+    return 'Today ' + time.substring(0, 5);
+  }
+
+  String timeUploaded;
+
   @override
   Widget build(BuildContext context) {
     final story = widget.stories[_currentIndex];
+    timeUploaded = _formatTime(story['time']);
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -87,11 +95,12 @@ class _StoryScreenState extends State<StoryScreen>
               controller: _pageController,
               physics: NeverScrollableScrollPhysics(),
               itemCount: widget.stories.length,
-              onPageChanged: (int page) {
-                StoryController.videoController?.dispose();
-              },
+              // onPageChanged: (int page) {
+              //   StoryController.videoController?.dispose();
+              // },
               itemBuilder: (context, i) {
                 final story = widget.stories[i];
+                timeUploaded = _formatTime(story['time']);
 
                 return NetworkFileMedia(
                   url: 'http://$localhost${story['file']}',
@@ -135,10 +144,11 @@ class _StoryScreenState extends State<StoryScreen>
                   ]),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 1.5,
-                      vertical: 10.0,
+                      horizontal: 8.5,
+                      vertical: 20.0,
                     ),
-                    child: UserInfo(username: widget.username),
+                    child: UserInfo(
+                        username: widget.username, timeUploaded: timeUploaded),
                   ),
                 ],
               ),
@@ -180,18 +190,18 @@ class _StoryScreenState extends State<StoryScreen>
           );
         }
       });
-    } else {
-      if (_getTypeOf(story['file']) == 'video') {
-        //story['type'], == 'video') {
-        print("Video is ${StoryController.videoController}");
-        if (StoryController.videoController.value.isPlaying) {
-          StoryController.videoController.pause();
-          _animController.stop();
-        } else {
-          StoryController.videoController.play();
-          _animController.forward();
-        }
-      }
+      // } else {
+      //   if (_getTypeOf(story['file']) == 'video') {
+      //     //story['type'], == 'video') {
+      //     print("Video is ${StoryController.videoController}");
+      //     if (StoryController.videoController.value.isPlaying) {
+      //       StoryController.videoController.pause();
+      //       _animController.stop();
+      //     } else {
+      //       StoryController.videoController.play();
+      //       _animController.forward();
+      //     }
+      //   }
     }
   }
 
@@ -258,7 +268,7 @@ class AnimatedBar extends StatelessWidget {
 
   Container _buildContainer(double width, Color color) {
     return Container(
-      height: 5.0,
+      height: 3.0,
       width: width,
       decoration: BoxDecoration(
         color: color,
@@ -274,10 +284,12 @@ class AnimatedBar extends StatelessWidget {
 
 class UserInfo extends StatelessWidget {
   final String username;
+  final String timeUploaded;
 
   const UserInfo({
     Key key,
     @required this.username,
+    @required this.timeUploaded,
   }) : super(key: key);
 
   @override
@@ -306,7 +318,7 @@ class UserInfo extends StatelessWidget {
                 ),
               ),
               Text(
-                "52 minutes ago",
+                timeUploaded,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12.0,
