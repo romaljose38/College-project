@@ -237,3 +237,17 @@ def story_upload_handler(request):
         return Response(status=200)
     except:
         return Response(status=400)
+
+
+@api_view(['GET'])
+def get_status(request):
+    try:
+        username = request.query_params['username']
+        user = User.objects.get(username=username)
+        if(user.profile.online):
+        	return Response(status=200)
+        else:
+        	return Response(status=202)
+    except Exception as e:
+        print(e)
+        return Response(status=400)

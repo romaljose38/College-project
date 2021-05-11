@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:foo/chat/socket.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'audiocloud.dart';
 import 'chatcloud.dart';
 import 'dart:async';
@@ -13,9 +14,15 @@ class ChatCloudList extends StatefulWidget {
   final bool needScroll;
   final String curUser;
   final String otherUser;
+  final SharedPreferences prefs;
 
   ChatCloudList(
-      {Key key, this.chatList, this.needScroll, this.curUser, this.otherUser});
+      {Key key,
+      this.chatList,
+      this.needScroll,
+      this.curUser,
+      this.otherUser,
+      this.prefs});
 
   @override
   _ChatCloudListState createState() => _ChatCloudListState();
@@ -23,7 +30,7 @@ class ChatCloudList extends StatefulWidget {
 
 class _ChatCloudListState extends State<ChatCloudList> {
   ScrollController _scrollController = ScrollController();
-
+  SharedPreferences _prefs;
   int day;
 
   @override
@@ -32,23 +39,50 @@ class _ChatCloudListState extends State<ChatCloudList> {
     // _setname();
   }
 
-  void sendReadTicket() {
+  Future<void> initSharePrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<void> sendReadTicket() async {
     if (widget.chatList.length != 0) {
       if (widget.chatList.last.isMe == false) {
-        var data = {
-          "type": "seen_ticker",
-          "from": widget.curUser,
-          "to": widget.otherUser,
-          "id": widget.chatList.last.id,
-        };
-        NotificationController.sendToChannel(jsonEncode(data));
+        var id;
+        await initSharePrefs();
+        if (_prefs.containsKey("lastSeenId")) {
+          id = _prefs.getInt("lastSeenId");
+          print("pazhee id");
+        } else {
+          id = widget.chatList.last.id;
+          var data = {
+            "type": "seen_ticker",
+            "from": widget.curUser,
+            "to": widget.otherUser,
+            "id": id,
+          };
+          NotificationController.sendToChannel(jsonEncode(data));
+          _prefs.setInt('lastSeenId', id);
+        }
+        if (id != widget.chatList.last.id) {
+          print("ayakkanam");
+          var data = {
+            "type": "seen_ticker",
+            "from": widget.curUser,
+            "to": widget.otherUser,
+            "id": id,
+          };
+          NotificationController.sendToChannel(jsonEncode(data));
+          _prefs.setInt("lastSeenId", widget.chatList.last.id);
+        }
       }
     }
   }
 
   void _scrollToEnd() async {
-    _scrollController.animateTo(_scrollController.position.minScrollExtent,
-        duration: Duration(milliseconds: 100), curve: Curves.linear);
+    if (_scrollController.position.pixels !=
+        _scrollController.position.minScrollExtent) {
+      _scrollController.animateTo(_scrollController.position.minScrollExtent,
+          duration: Duration(milliseconds: 100), curve: Curves.linear);
+    }
   }
 
   @override

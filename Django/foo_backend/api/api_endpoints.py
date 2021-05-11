@@ -16,6 +16,8 @@ urlpatterns = [
     path('remove_like',api_views.dislike_post, name="dislike post"),
     path('add_friend',api_views.send_friend_request, name="add friend"),
     path('handle_request',api_views.handle_friend_request, name="handle_request"),
-    path('get_stories', api_views.get_stories, name="get_stories")
+    path('get_stories', api_views.get_stories, name="get_stories"),
+    path('get_status', api_views.get_status, name="get_status"),
+
 
 ]
