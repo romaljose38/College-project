@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:foo/chat/socket.dart';
+import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'audiocloud.dart';
 import 'chatcloud.dart';
@@ -85,6 +86,21 @@ class _ChatCloudListState extends State<ChatCloudList> {
     }
   }
 
+  void updateLastChatMsgStatus() {
+    if (widget.chatList != null) {
+      if (widget.chatList.length > 0) {
+        if (widget.chatList.last.isMe != true) {
+          var threadBox = Hive.box("Threads");
+          var thread = threadBox.get(widget.curUser + '_' + widget.otherUser);
+          if (thread.hasUnseen > 0) {
+            thread.hasUnseen = 0;
+            thread.save();
+          }
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.needScroll) {
@@ -93,7 +109,7 @@ class _ChatCloudListState extends State<ChatCloudList> {
     }
 
     sendReadTicket();
-
+    updateLastChatMsgStatus();
     return ListView.builder(
         reverse: true,
         controller: _scrollController,
@@ -115,6 +131,7 @@ class _ChatCloudListState extends State<ChatCloudList> {
           } else {
             needDay = false;
           }
+
           if (widget.chatList[reversedIndex].msgType == "txt") {
             return ChatCloud(
               msgObj: widget.chatList[reversedIndex],

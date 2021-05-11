@@ -18,6 +18,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:timeago/timeago.dart' as timeago;
 
 class ChatScreen extends StatefulWidget {
   // final NotificationController controller;
@@ -59,7 +60,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     super.dispose();
-    // timer.cancel;
+    timer.cancel();
     _chatController.dispose();
   }
 
@@ -67,15 +68,18 @@ class _ChatScreenState extends State<ChatScreen> {
     var resp = await http
         .get(Uri.http(localhost, '/api/get_status', {"username": otherUser}));
     if (resp.statusCode == 200) {
-      if (userStatus != "Online") {
+      Map body = jsonDecode(resp.body);
+      if (body['status'] == "online") {
+        if (userStatus != "Online") {
+          setState(() {
+            userStatus = "Online";
+          });
+        }
+      } else {
+        DateTime time = DateTime.parse(body['status']);
+        print(time.toString());
         setState(() {
-          userStatus = "Online";
-        });
-      }
-    } else if (resp.statusCode == 202) {
-      if (userStatus != "Offline") {
-        setState(() {
-          userStatus = "Offline";
+          userStatus = timeago.format(time);
         });
       }
     }

@@ -212,6 +212,37 @@ class _ProfileTestState extends State<ProfileTest>
     }
   }
 
+  IconButton chatIcon() => IconButton(
+      icon: Icon(Ionicons.chatbox_outline),
+      onPressed: () {
+        print("rejected");
+      });
+
+  Row properRow() {
+    List widgetList;
+    if (!widget.isMe) {
+      widgetList = [
+        properStatusButton(),
+        chatIcon(),
+        Spacer(),
+      ];
+    } else {
+      widgetList = [];
+    }
+    return Row(children: [
+      Spacer(),
+      Text(
+        "Deepika Charly",
+        style: GoogleFonts.raleway(
+          fontSize: 23,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      Spacer(),
+      ...widgetList,
+    ]);
+  }
+
   Future<void> handleChat() async {
     String threadName = "${widget.curUser}_${widget.userName}";
     var threadBox = Hive.box("Threads");
@@ -394,28 +425,8 @@ class _ProfileTestState extends State<ProfileTest>
           ),
         ],
       ),
-      Row(children: [
-        Spacer(),
-        Text(
-          "Deepika Charly",
-          style: GoogleFonts.raleway(
-            fontSize: 23,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Spacer(),
-        IconButton(
-            icon: Icon(Ionicons.person_add_outline),
-            onPressed: () {
-              print("rejected");
-            }),
-        IconButton(
-            icon: Icon(Ionicons.chatbox_outline),
-            onPressed: () {
-              print("rejected");
-            }),
-        Spacer(),
-      ]),
+      properRow(),
+      SizedBox(height: 8),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Text(

@@ -165,13 +165,14 @@ class ThreadAdapter extends TypeAdapter<Thread> {
     )
       ..chatList = (fields[2] as List)?.cast<ChatMessage>()
       ..lastAccessed = fields[3] as DateTime
-      ..isTyping = fields[4] as bool;
+      ..isTyping = fields[4] as bool
+      ..hasUnseen = fields[5] as int;
   }
 
   @override
   void write(BinaryWriter writer, Thread obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.first)
       ..writeByte(1)
@@ -181,7 +182,9 @@ class ThreadAdapter extends TypeAdapter<Thread> {
       ..writeByte(3)
       ..write(obj.lastAccessed)
       ..writeByte(4)
-      ..write(obj.isTyping);
+      ..write(obj.isTyping)
+      ..writeByte(5)
+      ..write(obj.hasUnseen);
   }
 
   @override
@@ -214,13 +217,14 @@ class PostAdapter extends TypeAdapter<Post> {
       postId: fields[5] as int,
       haveLiked: fields[6] as bool,
       userId: fields[7] as int,
+      type: fields[8] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Post obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -236,7 +240,9 @@ class PostAdapter extends TypeAdapter<Post> {
       ..writeByte(6)
       ..write(obj.haveLiked)
       ..writeByte(7)
-      ..write(obj.userId);
+      ..write(obj.userId)
+      ..writeByte(8)
+      ..write(obj.type);
   }
 
   @override

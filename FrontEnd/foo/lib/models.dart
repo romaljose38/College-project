@@ -82,6 +82,9 @@ class Thread extends HiveObject {
   @HiveField(4)
   bool isTyping;
 
+  @HiveField(5)
+  int hasUnseen;
+
   Thread({this.first, this.second});
 
   void addChat(chat) {

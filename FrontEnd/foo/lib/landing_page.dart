@@ -17,6 +17,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:foo/upload_screens/video_upload_screen.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LandingPageProxy extends StatelessWidget {
   NotificationController controller = NotificationController();
@@ -44,11 +45,13 @@ class _LandingPageState extends State<LandingPage>
   ImagePicker _picker = ImagePicker();
   int curpgviewIndex;
   PageController _pageController;
+  SharedPreferences _prefs;
 
   @override
   void initState() {
     notifInit();
     super.initState();
+    setPrefs();
     _pageController = PageController(initialPage: widget.index);
     animationController = AnimationController(
       vsync: this,
@@ -56,6 +59,10 @@ class _LandingPageState extends State<LandingPage>
     );
     animation =
         Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
+  }
+
+  Future<void> setPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
   }
 
   notifInit() async {
@@ -168,7 +175,9 @@ class _LandingPageState extends State<LandingPage>
       });
     } else if (_page == 0) {
       //0th _page is home(feed)
-      if (curpgviewIndex == 0) {
+      if (curpgviewIndex == 1) {
+        _pageController.previousPage(
+            duration: Duration(milliseconds: 100), curve: Curves.easeIn);
         return Future.value(false);
       }
       SystemNavigator.pop(); //Exits the app

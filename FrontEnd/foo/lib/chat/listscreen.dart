@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'chattile.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -78,42 +79,52 @@ class _ChatListScreenState extends State<ChatListScreen> {
         //   ),
         // )
         child: Scaffold(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Colors.white,
           extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            leading: Icon(
-              Icons.arrow_back,
-              color: Colors.black,
-            ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Text("Conversations",
-                style: TextStyle(
-                    color: Color.fromRGBO(60, 82, 111, 1),
-                    fontWeight: FontWeight.bold)),
-            actions: [Icon(Icons.more_vert, color: Colors.black)],
+
+          body: Column(
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width,
+                padding: EdgeInsets.fromLTRB(20, 30, 10, 30),
+                child: Row(
+                  children: [
+                    Text(
+                      "Chat",
+                      style: GoogleFonts.lato(
+                        color: Color.fromRGBO(60, 82, 111, 1),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 30,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ValueListenableBuilder(
+                    valueListenable: Hive.box("Threads").listenable(),
+                    builder: (context, box, widget) {
+                      print(box.values.toList());
+
+                      List threads = box.values.toList();
+
+                      if (threads.length > 1) {
+                        threads.sort((a, b) {
+                          return b.lastAccessed.compareTo(a.lastAccessed);
+                        });
+                      }
+                      print(threads);
+                      return ListView.builder(
+                          itemCount: threads.length,
+                          itemBuilder: (context, index) {
+                            print(index);
+                            print(threads[index]);
+                            return ChatTile(thread: threads[index]);
+                          });
+                    }),
+              ),
+            ],
           ),
-          body: ValueListenableBuilder(
-              valueListenable: Hive.box("Threads").listenable(),
-              builder: (context, box, widget) {
-                print(box.values.toList());
-
-                List threads = box.values.toList();
-
-                if (threads.length > 1) {
-                  threads.sort((a, b) {
-                    return b.lastAccessed.compareTo(a.lastAccessed);
-                  });
-                }
-                print(threads);
-                return ListView.builder(
-                    itemCount: threads.length,
-                    itemBuilder: (context, index) {
-                      print(index);
-                      print(threads[index]);
-                      return ChatTile(thread: threads[index]);
-                    });
-              }),
 
           //     )),
         ),

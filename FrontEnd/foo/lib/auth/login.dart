@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
       print(data);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       data.forEach((key, value) {
-        if (key == "uprn") {
+        if ((key == "uprn") | (key == "id")) {
           prefs.setInt(key, value);
         } else {
           prefs.setString(key, value);
