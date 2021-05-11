@@ -22,7 +22,7 @@ class StoryPicker extends StatelessWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                       builder: (context) => StoryBuilder(
-                            myStories: myStories,
+                            myStoryList: myStories['data'],
                             initialPage: index,
                           )),
                 );

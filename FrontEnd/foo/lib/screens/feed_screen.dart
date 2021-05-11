@@ -12,6 +12,8 @@ import 'package:http/http.dart' as http;
 
 import 'models/post_model.dart' as pst;
 
+import 'package:foo/stories/story_builder.dart';
+
 class FeedScreen extends StatefulWidget {
   @override
   _FeedScreenState createState() => _FeedScreenState();
@@ -25,10 +27,15 @@ class _FeedScreenState extends State<FeedScreen> {
   bool isConnected = false;
   GlobalKey<AnimatedListState> listKey;
 
+  //
+  var myStoryList = [];
+  //
+
   @override
   initState() {
     listKey = GlobalKey<AnimatedListState>();
     setInitialData();
+    _fetchStory();
     super.initState();
     // _getNewPosts();
     _scrollController
@@ -117,45 +124,71 @@ class _FeedScreenState extends State<FeedScreen> {
 
   List postsList = [];
 
+  Future<void> _fetchStory() async {
+    await _checkConnectionStatus();
+    var response = await http.get(Uri.http(localhost, '/api/get_stories'));
+    setState(() {
+      myStoryList = jsonDecode(response.body);
+    });
+    print(myStoryList);
+  }
+
   Container _horiz() {
     return Container(
       width: double.infinity,
       height: 100.0,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: pst.stories.length + 1,
+        //itemCount: pst.stories.length + 1,
+        itemCount: myStoryList.length + 1,
         itemBuilder: (BuildContext context, int index) {
           if (index == 0) {
             return SizedBox(width: 10.0);
           }
-          return Container(
-            margin: EdgeInsets.all(10.0),
-            width: 80.0,
-            height: 45.0,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(35),
-              border: Border.all(color: Colors.pink.shade400, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black45.withOpacity(.2),
-                  offset: Offset(0, 2),
-                  spreadRadius: 1,
-                  blurRadius: 6.0,
+          return GestureDetector(
+            onTap: () {
+              print(
+                  "You tickled ${myStoryList[index - 1]['username']} $index times");
+              print("${myStoryList[index - 1]['stories'][0]['file']}");
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) => StoryBuilder(
+                          myStoryList: myStoryList,
+                          initialPage: index - 1,
+                        )),
+              );
+            },
+            child: Container(
+              margin: EdgeInsets.all(10.0),
+              width: 80.0,
+              height: 45.0,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(35),
+                border: Border.all(color: Colors.pink.shade400, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black45.withOpacity(.2),
+                    offset: Offset(0, 2),
+                    spreadRadius: 1,
+                    blurRadius: 6.0,
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(3.0),
+                child: Container(
+                  width: 80,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      // shape: BoxShape.circle,
+                      image: DecorationImage(
+                        //image: AssetImage(pst.stories[index - 1]),
+                        image: NetworkImage(
+                            'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                        fit: BoxFit.cover,
+                      )),
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(3.0),
-              child: Container(
-                width: 80,
-                height: 40,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    // shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: AssetImage(pst.stories[index - 1]),
-                      fit: BoxFit.cover,
-                    )),
               ),
             ),
           );

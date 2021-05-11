@@ -4,15 +4,14 @@ import 'package:foo/stories/story.dart';
 // ignore: must_be_immutable
 class StoryBuilder extends StatelessWidget {
   final int initialPage;
-  final Map myStories;
+  final myStoryList;
   PageController storyBuildController;
 
-  StoryBuilder({this.myStories, this.initialPage}) {
+  StoryBuilder({this.myStoryList, this.initialPage}) {
     storyBuildController = PageController(initialPage: this.initialPage);
   }
   @override
   Widget build(BuildContext context) {
-    var myStoryList = myStories['data'];
     return PageView.builder(
       controller: storyBuildController,
       //itemCount: storyList.length,

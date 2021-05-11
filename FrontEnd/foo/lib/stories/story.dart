@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:foo/stories/media_downloader.dart';
+import 'package:foo/test_cred.dart';
 
 // ignore: must_be_immutable
 class StoryScreen extends StatefulWidget {
@@ -66,6 +67,13 @@ class _StoryScreenState extends State<StoryScreen>
     super.dispose();
   }
 
+  String _getTypeOf(String url) {
+    List<String> video_formats = ['mp4', 'mkv', 'flv'];
+    // List<String> image_formats = ['jpeg', 'gif', 'png', 'jpg'];
+    String format = url.split('.').last;
+    return (video_formats.contains(format)) ? 'video' : 'image';
+  }
+
   @override
   Widget build(BuildContext context) {
     final story = widget.stories[_currentIndex];
@@ -86,9 +94,9 @@ class _StoryScreenState extends State<StoryScreen>
                 final story = widget.stories[i];
 
                 return NetworkFileMedia(
-                  url: story['url'],
+                  url: 'http://$localhost${story['file']}',
                   animController: _animController,
-                  mediaType: story['type'],
+                  mediaType: _getTypeOf(story['file']), //story['type'],
                 );
                 //return const SizedBox.shrink();
               },
@@ -173,7 +181,8 @@ class _StoryScreenState extends State<StoryScreen>
         }
       });
     } else {
-      if (story['type'] == 'video') {
+      if (_getTypeOf(story['file']) == 'video') {
+        //story['type'], == 'video') {
         print("Video is ${StoryController.videoController}");
         if (StoryController.videoController.value.isPlaying) {
           StoryController.videoController.pause();
@@ -189,7 +198,7 @@ class _StoryScreenState extends State<StoryScreen>
   void _loadStory({Map story, bool animateToPage = true}) {
     _animController.stop();
     _animController.reset();
-    if (story['type'] == 'image')
+    if (_getTypeOf(story['file']) == 'image') //story['type'], == 'image')
       _animController.duration = const Duration(seconds: 10);
     if (animateToPage) {
       _pageController.animateToPage(
