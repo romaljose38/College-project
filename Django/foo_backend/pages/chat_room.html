@@ -79,7 +79,8 @@
         </div>
 
 <button id="snd">Send</button>
-<button id="typing">Send</button>
+<button id="typing">typing..</button>
+<button id="stopped">stopped..</button>
     </div>
 </body>
 
@@ -129,12 +130,22 @@ var socket = new WebSocket('ws://192.168.42.10:8000/ws/chat_room/{{user}}/');
             }));
             messageInputDom.value = '';
         };
-         document.querySelector('#type').onclick = function(e) {
+         document.querySelector('#typing').onclick = function(e) {
 
             socket.send(JSON.stringify({
                 'to':"deepika",
                 'type':'typing_status',
                 'status':'typing'
+
+            }));
+            messageInputDom.value = '';
+        };
+        document.querySelector('#stopped').onclick = function(e) {
+
+            socket.send(JSON.stringify({
+                'to':"deepika",
+                'type':'typing_status',
+                'status':'stopped'
 
             }));
             messageInputDom.value = '';

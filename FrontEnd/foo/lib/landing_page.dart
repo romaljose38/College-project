@@ -28,6 +28,10 @@ class LandingPageProxy extends StatelessWidget {
 }
 
 class LandingPage extends StatefulWidget {
+  int index;
+
+  LandingPage({this.index = 0});
+
   @override
   _LandingPageState createState() => _LandingPageState();
 }
@@ -39,13 +43,13 @@ class _LandingPageState extends State<LandingPage>
   OverlayEntry overlayEntry;
   ImagePicker _picker = ImagePicker();
   int curpgviewIndex;
-  PageController _pageController = PageController(initialPage: 0);
+  PageController _pageController;
 
   @override
   void initState() {
     notifInit();
     super.initState();
-
+    _pageController = PageController(initialPage: widget.index);
     animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 400),
@@ -76,7 +80,7 @@ class _LandingPageState extends State<LandingPage>
 
   Future<dynamic> handleEntry(String payload) async {
     await Navigator.push(
-        context, MaterialPageRoute(builder: (_) => ChatListScreen()));
+        context, MaterialPageRoute(builder: (_) => LandingPage(index: 1)));
   }
 
   // function that picks an image from the gallery
@@ -164,6 +168,9 @@ class _LandingPageState extends State<LandingPage>
       });
     } else if (_page == 0) {
       //0th _page is home(feed)
+      if (curpgviewIndex == 0) {
+        return Future.value(false);
+      }
       SystemNavigator.pop(); //Exits the app
     } else {
       setState(() {

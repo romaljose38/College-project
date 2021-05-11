@@ -285,7 +285,9 @@ class NotificationController {
 
   static sendToChannel(data) {
     if (NotificationController.isActive == true) {
-      channel.add(data);
+      if (channel != null) {
+        channel.add(data);
+      }
     } else {
       return false;
     }

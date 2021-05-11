@@ -18,16 +18,18 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  ScrollController _scrollController = ScrollController();
+  // ScrollController _scrollController = ScrollController();
+  // ScrollController _nestedScrollController = ScrollController();
+  TrackingScrollController _scrollController = TrackingScrollController();
   SharedPreferences prefs;
   String curUser;
   int itemCount = 0;
   bool isConnected = false;
-  GlobalKey<AnimatedListState> listKey;
+  GlobalKey<SliverAnimatedListState> listKey;
 
   @override
   initState() {
-    listKey = GlobalKey<AnimatedListState>();
+    listKey = GlobalKey<SliverAnimatedListState>();
     setInitialData();
     super.initState();
     // _getNewPosts();
@@ -46,6 +48,13 @@ class _FeedScreenState extends State<FeedScreen> {
         //   });
         // }
       });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _scrollController.dispose();
+    // _nestedScrollController.dispose();
   }
 
   Future<void> _checkConnectionStatus() async {
@@ -74,7 +83,7 @@ class _FeedScreenState extends State<FeedScreen> {
       for (int i = 0; i < feed.posts.length; i++) {
         listKey.currentState
             .insertItem(0, duration: Duration(milliseconds: 200));
-        postsList.add(feed.posts[i]);
+        postsList.insert(0, feed.posts[i]);
       }
       setState(() {
         itemCount += postsList.length;
@@ -204,23 +213,75 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
+      floatingActionButton: TextButton(
+        child: Text("A"),
+        onPressed: () {
+          listKey.currentState.insertItem(0);
+          var feedBox = Hive.box("Feed");
+          var feed = feedBox.get('feed');
+          postsList.insert(0, feed.posts[1]);
+        },
+      ),
       backgroundColor: Colors.white,
       body: RefreshIndicator(
           triggerMode: RefreshIndicatorTriggerMode.anywhere,
           onRefresh: _getNewPosts,
-          child: AnimatedList(
-            initialItemCount: 1,
-            key: listKey,
-            controller: _scrollController,
-            itemBuilder: (context, index, animation) {
-              return FadeTransition(
-                opacity: Tween<double>(begin: 0, end: 1).animate(animation),
-                child: (index == 0)
-                    ? _horiz()
-                    : PostTile(post: postsList[index - 1], index: index - 1),
-              );
-            },
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(child: _horiz()),
+              SliverAnimatedList(
+                initialItemCount: itemCount,
+                key: listKey,
+                // controller: _scrollController,
+                itemBuilder: (context, index, animation) {
+                  return SlideTransition(
+                    position:
+                        Tween<Offset>(begin: Offset(0, -.4), end: Offset(0, 0))
+                            .animate(CurvedAnimation(
+                                parent: animation, curve: Curves.easeInOut)),
+                    child: FadeTransition(
+                        opacity:
+                            Tween<double>(begin: 0, end: 1).animate(animation),
+                        child: PostTile(post: postsList[index], index: index)),
+                  );
+                },
+              ),
+            ],
           )
+          // child: NestedScrollView(
+          //   floatHeaderSlivers: true,
+          //   controller: _scrollController,
+          //   headerSliverBuilder: (ctx, val) {
+          //     print(val);
+          //     return [];
+          //   },
+          //   body: AnimatedList(
+          //     initialItemCount: itemCount,
+          //     key: listKey,
+          //     controller: _scrollController,
+          //     itemBuilder: (context, index, animation) {
+          //       return SlideTransition(
+          //         position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
+          //             .animate(animation),
+          //         child: PostTile(post: postsList[index], index: index),
+          //       );
+          //     },
+          //   ),
+          // ),
+          // child: AnimatedList(
+          //   initialItemCount: 1,
+          //   key: listKey,
+          //   controller: _scrollController,
+          //   itemBuilder: (context, index, animation) {
+          //     return SlideTransition(
+          //       position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
+          //           .animate(animation),
+          //       child: (index == 0)
+          //           ?
+          //           : PostTile(post: postsList[index - 1], index: index - 1),
+          //     );
+          //   },
+          // )
           // child: ListView.builder(
           //     cacheExtent: 200,
           //     controller: _scrollController,

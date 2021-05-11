@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:foo/test_cred.dart';
 import 'chatcloudlist.dart';
 import 'socket.dart';
 import 'dart:convert';
@@ -16,6 +17,7 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
   // final NotificationController controller;
@@ -38,6 +40,8 @@ class _ChatScreenState extends State<ChatScreen> {
   TextEditingController _chatController = TextEditingController();
   Thread thread;
   SharedPreferences _prefs;
+  Timer timer;
+  String userStatus = "Offline";
 
   @override
   void initState() {
@@ -49,6 +53,32 @@ class _ChatScreenState extends State<ChatScreen> {
     thread = Hive.box('threads').get(threadName);
 
     _getUserName();
+    timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    // timer.cancel;
+    _chatController.dispose();
+  }
+
+  Future<void> obtainStatus() async {
+    var resp = await http
+        .get(Uri.http(localhost, '/api/get_status', {"username": otherUser}));
+    if (resp.statusCode == 200) {
+      if (userStatus != "Online") {
+        setState(() {
+          userStatus = "Online";
+        });
+      }
+    } else if (resp.statusCode == 202) {
+      if (userStatus != "Offline") {
+        setState(() {
+          userStatus = "Offline";
+        });
+      }
+    }
   }
 
   void _getUserName() async {
@@ -187,6 +217,7 @@ class _ChatScreenState extends State<ChatScreen> {
         return true;
       },
       child: Scaffold(
+        extendBodyBehindAppBar: true,
         backgroundColor: Color.fromRGBO(240, 247, 255, 1),
         appBar: PreferredSize(
             preferredSize: Size(double.infinity, 100),
@@ -234,7 +265,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       return Text(
                                         existingThread.isTyping == true
                                             ? "typing..."
-                                            : "active",
+                                            : userStatus,
                                         style: TextStyle(
                                             fontSize: 15,
                                             color: Color.fromRGBO(
@@ -275,7 +306,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       chatList: __chatList,
                       needScroll: (__chatList.length == 0) ? false : true,
                       curUser: curUser,
-                      otherUser: otherUser);
+                      otherUser: otherUser,
+                      prefs: _prefs);
                 },
               ),
             ),
