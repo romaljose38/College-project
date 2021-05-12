@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:foo/stories/media_downloader.dart';
-import 'package:foo/test_cred.dart';
+import 'package:http/http.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:video_player/video_player.dart';
+import 'package:timeago/timeago.dart' as timeago;
+
+import 'dart:io';
+import 'dart:async';
 
 // ignore: must_be_immutable
 class StoryScreen extends StatefulWidget {
@@ -9,11 +14,17 @@ class StoryScreen extends StatefulWidget {
   final storyBuilderController;
   String username;
   var stories;
+  String profilePic;
+  int userCount;
 
   StoryScreen(
-      {@required this.storyObject, @required this.storyBuilderController}) {
+      {@required this.storyObject,
+      @required this.storyBuilderController,
+      @required this.userCount}) {
     username = storyObject['username'];
     stories = storyObject['stories'];
+    profilePic =
+        'https://cdn.britannica.com/s:300x169,c:crop/15/153115-050-9C83E2C3/Steve-Jobs-computer-Apple-II-1977.jpg';
   }
 
   @override
@@ -24,7 +35,7 @@ class _StoryScreenState extends State<StoryScreen>
     with SingleTickerProviderStateMixin {
   AnimationController _animController;
   PageController _pageController;
-  //VideoPlayerController _videoController;
+  TransformationController transformationController;
   int _currentIndex = 0;
 
   @override
@@ -47,23 +58,27 @@ class _StoryScreenState extends State<StoryScreen>
           } else {
             // Out of bounds - loop story
             // You can also Navigator.of(context).pop() here
-            // _currentIndex = 0;
-            // _loadStory(story: widget.stories[_currentIndex]);
-            widget.storyBuilderController.nextPage(
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.linear,
-            );
+            if (widget.storyBuilderController.page.round() + 1 <
+                widget.userCount) {
+              widget.storyBuilderController.nextPage(
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.linear,
+              );
+            } else {
+              Navigator.pop(context);
+            }
           }
         });
       }
     });
+    transformationController = TransformationController();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _animController.dispose();
-    // StoryController.videoController?.dispose();
+    transformationController.dispose();
     super.dispose();
   }
 
@@ -75,11 +90,49 @@ class _StoryScreenState extends State<StoryScreen>
   }
 
   String _formatTime(String timeString) {
-    String time = timeString.split(' ').last;
-    return 'Today ' + time.substring(0, 5);
+    DateTime time = DateTime.parse(timeString);
+    return timeago.format(time);
   }
 
   String timeUploaded;
+
+  // Things required for downloading the necessary files
+
+  Timer _timer;
+  String storyDir = '/storage/emulated/0/foo/stories';
+
+  String _getMediaName(String url) {
+    return url.split('/').last;
+  }
+
+  Future<void> _downloadMedia(String url) async {
+    var response = await get(Uri.parse(url));
+    var mediaName = _getMediaName(url);
+    var filePathAndName = "$storyDir/$mediaName";
+
+    if (await Permission.storage.request().isGranted) {
+      File file2 = File(filePathAndName);
+      await file2.create(recursive: true);
+      await file2.writeAsBytes(response.bodyBytes);
+    }
+  }
+
+  Future<bool> _isExistsInStorage(String url) async {
+    String mediaName = _getMediaName(url);
+    return await File("$storyDir/$mediaName").exists();
+  }
+
+  Future<File> _getOrDownload(String url) async {
+    String mediaName = _getMediaName(url);
+    if (!(await _isExistsInStorage(url))) {
+      await _downloadMedia(url);
+    }
+    return File("$storyDir/$mediaName");
+  }
+
+  var a = Offset.zero;
+
+  //
 
   @override
   Widget build(BuildContext context) {
@@ -87,94 +140,131 @@ class _StoryScreenState extends State<StoryScreen>
     timeUploaded = _formatTime(story['time']);
     return Scaffold(
       backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTapDown: (details) => _onTapDown(details, story),
-        child: Stack(
-          children: <Widget>[
-            PageView.builder(
-              controller: _pageController,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: widget.stories.length,
-              // onPageChanged: (int page) {
-              //   StoryController.videoController?.dispose();
-              // },
-              itemBuilder: (context, i) {
-                final story = widget.stories[i];
-                timeUploaded = _formatTime(story['time']);
+      body: Stack(
+        children: <Widget>[
+          PageView.builder(
+            controller: _pageController,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: widget.stories.length,
+            itemBuilder: (context, i) {
+              final story = widget.stories[i];
+              timeUploaded = _formatTime(story['time']);
 
-                return NetworkFileMedia(
-                  url: 'http://$localhost${story['file']}',
-                  animController: _animController,
-                  mediaType: _getTypeOf(story['file']), //story['type'],
-                );
-                //return const SizedBox.shrink();
-              },
-            ),
-            Positioned(
-              top: 40.0,
-              left: 10.0,
-              right: 10.0,
-              child: Column(
-                children: <Widget>[
-                  // Row(
-                  //   children: <Widget>[
-                  //     ...widget.stories
-                  //         .asMap()
-                  //         .map((i, e) {
-                  //           return MapEntry(
-                  //             i,
-                  //             AnimatedBar(
-                  //               animController: _animController,
-                  //               position: i,
-                  //               currentIndex: _currentIndex,
-                  //             ),
-                  //           );
-                  //         })
-                  //         .values
-                  //         .toList()
-                  //   ],
-                  // ),
-                  Row(children: [
-                    for (int i = 0; i < widget.stories.length; i++)
-                      AnimatedBar(
-                        animController: _animController,
-                        position: i,
-                        currentIndex: _currentIndex,
-                      )
-                  ]),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8.5,
-                      vertical: 20.0,
-                    ),
-                    child: UserInfo(
-                        username: widget.username, timeUploaded: timeUploaded),
+              return FutureBuilder(
+                  future: _getOrDownload(story['file']),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      switch (_getTypeOf(story['file'])) {
+                        case 'image':
+                          {
+                            _animController.forward();
+                            return GestureDetector(
+                              onTapDown: (_) {
+                                _animController.stop();
+                                _timer = Timer(Duration(milliseconds: 200), () {
+                                  print("timer started");
+                                });
+                              },
+                              onTapUp: (details) {
+                                _animController.forward();
+                                if (_timer.isActive) {
+                                  _backwardOrForward(details);
+                                }
+                              },
+                              child: InteractiveViewer(
+                                transformationController:
+                                    transformationController,
+                                minScale: 0.8,
+                                maxScale: 1.6,
+                                onInteractionStart: (details) {
+                                  _animController.stop();
+                                },
+                                onInteractionEnd: (details) {
+                                  _animController.forward();
+                                },
+                                child: Image(
+                                    image: FileImage(snapshot.data),
+                                    fit: BoxFit.contain),
+                              ),
+                            );
+                          }
+                        case 'video':
+                          {
+                            return GestureDetector(
+                              child: StoryVideoPlayer(
+                                videoFile: snapshot.data,
+                                animController: _animController,
+                                backwardOrForward: _backwardOrForward,
+                              ),
+                            );
+                          }
+                      }
+                    } else {
+                      _animController.stop();
+                      return UnconstrainedBox(
+                          child: CircularProgressIndicator(
+                        strokeWidth: 1,
+                        backgroundColor: Colors.purple,
+                      ));
+                    }
+                    return Container(); //Just to avoid the warning!
+                  });
+            },
+          ),
+          Positioned(
+            top: 40.0,
+            left: 10.0,
+            right: 10.0,
+            child: Column(
+              children: <Widget>[
+                Row(children: [
+                  for (int i = 0; i < widget.stories.length; i++)
+                    AnimatedBar(
+                      animController: _animController,
+                      position: i,
+                      currentIndex: _currentIndex,
+                    )
+                ]),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8.5,
+                    vertical: 20.0,
                   ),
-                ],
-              ),
+                  child: UserInfo(
+                    username: widget.username,
+                    timeUploaded: timeUploaded,
+                    profilePic: widget.profilePic,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  void _onTapDown(TapDownDetails details, Map story) {
+  void _backwardOrForward(TapUpDetails details) {
+    print("You tapped Up!");
     final double screenWidth = MediaQuery.of(context).size.width;
     final double dx = details.globalPosition.dx;
-    if (dx < screenWidth / 3) {
+    if (dx < screenWidth / 2) {
       setState(() {
         if (_currentIndex - 1 >= 0) {
           _currentIndex -= 1;
           _loadStory(story: widget.stories[_currentIndex]);
         } else {
-          widget.storyBuilderController.previousPage(
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.linear,
-          );
+          if (widget.storyBuilderController.page.round() - 1 >= 0) {
+            widget.storyBuilderController.previousPage(
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.linear,
+            );
+          } else {
+            Navigator.pop(context);
+          }
         }
       });
-    } else if (dx > 2 * screenWidth / 3) {
+    } else if (dx > screenWidth / 2) {
       setState(() {
         if (_currentIndex + 1 < widget.stories.length) {
           _currentIndex += 1;
@@ -182,26 +272,17 @@ class _StoryScreenState extends State<StoryScreen>
         } else {
           // Out of bounds - loop story
           // You can also Navigator.of(context).pop() here
-          // _currentIndex = 0;
-          // _loadStory(story: widget.stories[_currentIndex]);
-          widget.storyBuilderController.nextPage(
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.linear,
-          );
+          if (widget.storyBuilderController.page.round() + 1 <
+              widget.userCount) {
+            widget.storyBuilderController.nextPage(
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.linear,
+            );
+          } else {
+            Navigator.pop(context);
+          }
         }
       });
-      // } else {
-      //   if (_getTypeOf(story['file']) == 'video') {
-      //     //story['type'], == 'video') {
-      //     print("Video is ${StoryController.videoController}");
-      //     if (StoryController.videoController.value.isPlaying) {
-      //       StoryController.videoController.pause();
-      //       _animController.stop();
-      //     } else {
-      //       StoryController.videoController.play();
-      //       _animController.forward();
-      //     }
-      //   }
     }
   }
 
@@ -285,12 +366,14 @@ class AnimatedBar extends StatelessWidget {
 class UserInfo extends StatelessWidget {
   final String username;
   final String timeUploaded;
+  final String profilePic;
 
-  const UserInfo({
-    Key key,
-    @required this.username,
-    @required this.timeUploaded,
-  }) : super(key: key);
+  const UserInfo(
+      {Key key,
+      @required this.username,
+      @required this.timeUploaded,
+      @required this.profilePic})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -300,7 +383,7 @@ class UserInfo extends StatelessWidget {
           radius: 20.0,
           backgroundColor: Colors.grey[300],
           backgroundImage: CachedNetworkImageProvider(
-            'https://www.filmibeat.com/ph-big/2019/07/ismart-shankar_156195627930.jpg',
+            profilePic,
           ),
         ),
         const SizedBox(width: 10.0),
@@ -328,15 +411,85 @@ class UserInfo extends StatelessWidget {
             ],
           ),
         ),
-        // IconButton(
-        //   icon: const Icon(
-        //     Icons.close,
-        //     size: 30.0,
-        //     color: Colors.white,
-        //   ),
-        //   onPressed: () => Navigator.of(context).pop(),
-        // ),
       ],
     );
+  }
+}
+
+class StoryVideoPlayer extends StatefulWidget {
+  final File videoFile;
+  final AnimationController animController;
+  final Function backwardOrForward;
+
+  StoryVideoPlayer(
+      {@required this.videoFile,
+      @required this.animController,
+      @required this.backwardOrForward});
+
+  @override
+  _StoryVideoPlayerState createState() => _StoryVideoPlayerState();
+}
+
+class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
+  VideoPlayerController videoController;
+
+  @override
+  void initState() {
+    super.initState();
+    videoController = VideoPlayerController.file(widget.videoFile)
+      ..initialize().then((_) {
+        setState(() {});
+        if (videoController.value.isInitialized) {
+          widget.animController.duration = videoController.value.duration;
+          videoController.play();
+          widget.animController.forward();
+        }
+      });
+    widget.animController.addStatusListener((status) {
+      if (status == AnimationStatus.forward) {
+        videoController.play();
+      } else {
+        videoController.pause();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    videoController.dispose();
+    super.dispose();
+  }
+
+  Timer _timer;
+
+  @override
+  Widget build(BuildContext context) {
+    if (videoController != null && videoController.value.isInitialized) {
+      return GestureDetector(
+        onTapDown: (_) {
+          videoController.pause();
+          widget.animController.stop();
+          _timer = Timer(Duration(milliseconds: 200), () {
+            print("Video tap timer started");
+          });
+        },
+        onTapUp: (details) {
+          videoController.play();
+          widget.animController.forward();
+          if (_timer.isActive) {
+            widget.backwardOrForward(details);
+          }
+        },
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: videoController.value.size.width,
+            height: videoController.value.size.height,
+            child: VideoPlayer(videoController),
+          ),
+        ),
+      );
+    }
+    return Center(child: Text("Video not working!"));
   }
 }

@@ -101,8 +101,12 @@ class NetworkFileMedia extends StatelessWidget {
 class StoryVideoPlayer extends StatefulWidget {
   final File videoFile;
   final AnimationController animController;
+  Function backwardOrForward;
 
-  StoryVideoPlayer({@required this.videoFile, @required this.animController});
+  StoryVideoPlayer(
+      {@required this.videoFile,
+      @required this.animController,
+      @required this.backwardOrForward});
 
   @override
   _StoryVideoPlayerState createState() => _StoryVideoPlayerState();
@@ -138,6 +142,8 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
     super.dispose();
   }
 
+  Timer _timer;
+
   @override
   Widget build(BuildContext context) {
     if (videoController != null && videoController.value.isInitialized) {
@@ -145,10 +151,16 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
         onTapDown: (_) {
           videoController.pause();
           widget.animController.stop();
+          _timer = Timer(Duration(milliseconds: 200), () {
+            print("Video tap timer started");
+          });
         },
-        onTapUp: (_) {
+        onTapUp: (details) {
           videoController.play();
           widget.animController.forward();
+          if (_timer.isActive) {
+            widget.backwardOrForward(details);
+          }
         },
         child: FittedBox(
           fit: BoxFit.contain,

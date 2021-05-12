@@ -152,7 +152,40 @@ class _FeedScreenState extends State<FeedScreen> {
         itemCount: myStoryList.length + 1,
         itemBuilder: (BuildContext context, int index) {
           if (index == 0) {
-            return SizedBox(width: 10.0);
+            return Container(
+              margin: EdgeInsets.all(10.0),
+              width: 80.0,
+              height: 45.0,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(35),
+                border: Border.all(color: Colors.pink.shade400, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black45.withOpacity(.2),
+                    offset: Offset(0, 2),
+                    spreadRadius: 1,
+                    blurRadius: 6.0,
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(3.0),
+                child: Container(
+                  width: 80,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      // shape: BoxShape.circle,
+                      image: DecorationImage(
+                        //image: AssetImage(pst.stories[index - 1]),
+                        image: NetworkImage(
+                            'https://img.icons8.com/cotton/2x/plus--v3.png'),
+                        fit: BoxFit.cover,
+                      )),
+                ),
+              ),
+            );
+            //return SizedBox(width: 10.0);
           }
           return GestureDetector(
             onTap: () {

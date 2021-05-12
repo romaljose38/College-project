@@ -18,6 +18,7 @@ urlpatterns = [
     path('handle_request',api_views.handle_friend_request, name="handle_request"),
     path('get_stories', api_views.get_stories, name="get_stories"),
     path('get_status', api_views.get_status, name="get_status"),
+    path('story_upload', api_views.story_upload_handler, name="story_upload"),
 
 
 ]
