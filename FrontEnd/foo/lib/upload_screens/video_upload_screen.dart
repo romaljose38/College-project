@@ -60,7 +60,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         Uri.http(localhost, '/api/upload'); //This web address has to be changed
     var request = http.MultipartRequest('POST', uri)
       ..fields['username'] = username
-      ..fields['type'] = 'video'
+      ..fields['type'] = 'vid'
       ..fields['caption'] = captionController.text
       ..files.add(await http.MultipartFile.fromPath(
         'file',

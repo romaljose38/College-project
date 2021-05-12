@@ -185,6 +185,9 @@ class Post {
   @HiveField(8)
   String type;
 
+  @HiveField(9)
+  String caption;
+
   Post(
       {this.username,
       this.userDpUrl,
@@ -194,13 +197,14 @@ class Post {
       this.postId,
       this.haveLiked,
       this.userId,
-      this.type});
+      this.type,
+      this.caption});
 }
 
 class Comment {
   String username;
   String userdpUrl;
-  String comment;
+  Map comment;
 
   Comment({this.username, this.userdpUrl, this.comment});
 }

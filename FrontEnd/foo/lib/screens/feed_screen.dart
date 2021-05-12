@@ -113,6 +113,8 @@ class _FeedScreenState extends State<FeedScreen> {
                 postUrl: 'http://' + localhost + e['file'],
                 userDpUrl: 'assets/images/user0.png',
                 postId: e['id'],
+                commentCount: e['comment_count'],
+                caption: e['caption'],
                 userId: e['user']['id'],
                 likeCount: e['likeCount'],
                 haveLiked: e['hasLiked'],
@@ -227,6 +229,8 @@ class _FeedScreenState extends State<FeedScreen> {
             userDpUrl: 'assets/images/user0.png',
             postId: e['id'],
             userId: e['user']['id'],
+            commentCount: e['comment_count'],
+            caption: e['caption'],
             likeCount: e['likeCount'],
             haveLiked: e['hasLiked'],
             type: e['post_type']);

@@ -72,11 +72,13 @@ class _ViewPostScreenState extends State<ViewPostScreen>
       print(respJson);
 
       respJson['comment_set'].forEach((e) {
+        var comment = jsonDecode(e['comment']);
+
         setState(() {
           commentsList.insert(
               0,
               _buildComment(Comment(
-                  comment: e['comment'],
+                  comment: comment,
                   userdpUrl: widget.post.userDpUrl,
                   username: e['user'])));
         });
@@ -87,70 +89,110 @@ class _ViewPostScreenState extends State<ViewPostScreen>
     });
   }
 
-  Future<void> likePost() async {
-    print(hasLiked);
-    print(likeCount);
-    print(postId);
-    if (hasLiked) {
-      var response = await http.get(Uri.http(localhost, 'api/remove_like', {
-        'username': userName,
-        'id': postId.toString(),
-      }));
-      if (response.statusCode == 200) {
-        setState(() {
-          hasLiked = false;
-          likeCount -= 1;
-        });
-      }
-      updatePostInHive(postId, false);
-    } else {
-      var response = await http.get(Uri.http(localhost, '/api/add_like', {
-        'username': userName,
-        'id': postId.toString(),
-      }));
-      if (response.statusCode == 200) {
-        setState(() {
-          hasLiked = true;
-          likeCount += 1;
-        });
-      }
-      updatePostInHive(postId, true);
-    }
-  }
+  // Future<void> likePost() async {
+  //   print(hasLiked);
+  //   print(likeCount);
+  //   print(postId);
+  //   if (hasLiked) {
+  //     var response = await http.get(Uri.http(localhost, 'api/remove_like', {
+  //       'username': userName,
+  //       'id': postId.toString(),
+  //     }));
+  //     if (response.statusCode == 200) {
+  //       setState(() {
+  //         hasLiked = false;
+  //         likeCount -= 1;
+  //       });
+  //     }
+  //     updatePostInHive(postId, false);
+  //   } else {
+  //     var response = await http.get(Uri.http(localhost, '/api/add_like', {
+  //       'username': userName,
+  //       'id': postId.toString(),
+  //     }));
+  //     if (response.statusCode == 200) {
+  //       setState(() {
+  //         hasLiked = true;
+  //         likeCount += 1;
+  //       });
+  //     }
+  //     updatePostInHive(postId, true);
+  //   }
+  // }
 
-  void updatePostInHive(int id, bool status) {
-    var feedBox = Hive.box("Feed");
-    Feed feed = feedBox.get('feed');
-    if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
-      feed.updatePostStatus(id, status);
-      feed.save();
-    }
-  }
+  // void updatePostInHive(int id, bool status) {
+  //   var feedBox = Hive.box("Feed");
+  //   Feed feed = feedBox.get('feed');
+  //   if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
+  //     feed.updatePostStatus(id, status);
+  //     feed.save();
+  //   }
+  // }
 
   Future<void> _addComment() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
     String username = _prefs.getString("username");
     String comment = _commentController.text;
+    List commentSplit = comment.split(' ');
+    List finalMentionList = [];
+    Map mapToSend = {};
+    print(commentSplit);
+    commentSplit.forEach((element) {
+      if (element != "") {
+        if (element[0] == "@") {
+          String stringToCheck = element.substring(1, element.length);
+          mapToSend[element] = true;
+          if (mentionList.contains(stringToCheck)) {
+            print("yep avdond");
+            finalMentionList.add(stringToCheck);
+          }
+        } else {
+          mapToSend[element] = false;
+        }
+      }
+    });
+    print(mapToSend);
+    print(finalMentionList);
     var response =
         await http.post(Uri.http(localhost, '/api/$username/add_comment'),
             headers: <String, String>{
               'Content-Type': 'application/json; charset=UTF-8',
             },
             body: jsonEncode({
-              'comment': comment,
+              'comment': mapToSend,
               'post': widget.post.postId,
+              'mentions': finalMentionList,
             }));
+
     _commentController.text = "";
     if (response.statusCode == 200) {
       setState(() {
         commentsList.insert(
             0,
             _buildComment(Comment(
-                comment: comment,
+                comment: mapToSend,
                 userdpUrl: widget.post.userDpUrl,
                 username: username)));
       });
     }
+  }
+
+  List<TextSpan> customizeComment(Map comments) {
+    List<TextSpan> children = [];
+    comments.forEach((key, val) {
+      if (val) {
+        children.add(TextSpan(
+          text: '$key ',
+          style: TextStyle(color: Colors.yellow),
+        ));
+      } else {
+        children.add(TextSpan(
+          text: '$key ',
+          // style: TextStyle(color: Colors.yellow),
+        ));
+      }
+    });
+    return children;
   }
 
   Widget _buildComment(Comment comment) {
@@ -196,12 +238,15 @@ class _ViewPostScreenState extends State<ViewPostScreen>
         ),
         subtitle: Padding(
           padding: EdgeInsets.only(top: 5),
-          child: Text(comment.comment,
-              overflow: TextOverflow.ellipsis,
+          child: RichText(
+            text: TextSpan(
+              children: customizeComment(comment.comment),
               style: GoogleFonts.raleway(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600)),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ),
         trailing: IconButton(
           icon: Icon(
@@ -216,7 +261,7 @@ class _ViewPostScreenState extends State<ViewPostScreen>
   }
 
   //For mention
-
+  List mentionList = [];
   bool overlayVisible = false;
   Animation animation;
   OverlayEntry overlayEntry;
@@ -286,6 +331,7 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                                 _commentController.text = insertAtChangedPoint(
                                     '@${user.name}', start, end);
                                 print(user.name);
+                                mentionList.add(user.name);
                               },
                               child: ListTile(
                                 title: Text(user.name),
@@ -466,68 +512,11 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 20.0),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: <Widget>[
-                                        Row(
-                                          children: <Widget>[
-                                            Row(
-                                              children: <Widget>[
-                                                IconButton(
-                                                  icon: Icon(
-                                                    hasLiked
-                                                        ? Ionicons.heart
-                                                        : Ionicons
-                                                            .heart_outline,
-                                                    color: Colors.white,
-                                                  ),
-                                                  iconSize: 25.0,
-                                                  onPressed: likePost,
-                                                ),
-                                                Text(
-                                                  likeCount.toString(),
-                                                  style: TextStyle(
-                                                    fontSize: 12.0,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(width: 20.0),
-                                            Row(
-                                              children: <Widget>[
-                                                IconButton(
-                                                  icon: Icon(
-                                                      Ionicons.chatbox_outline,
-                                                      color: Colors.white),
-                                                  iconSize: 25.0,
-                                                  onPressed: () {
-                                                    print('Chat');
-                                                  },
-                                                ),
-                                                Text(
-                                                  '350',
-                                                  style: TextStyle(
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: Colors.white),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Ionicons.bookmarks_outline,
-                                            color: Colors.white,
-                                          ),
-                                          iconSize: 25.0,
-                                          onPressed: () => print('Save post'),
-                                        ),
-                                      ],
-                                    ),
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: <Widget>[
+                                          //action buttons if needed
+                                        ]),
                                   ),
                                 ],
                               ),
@@ -546,7 +535,10 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                     child: (hasFetched)
                         ? Column(
                             children: (commentsList == [])
-                                ? [Text("waiting")]
+                                ? [
+                                    Text("No comments",
+                                        style: TextStyle(color: Colors.white))
+                                  ]
                                 : commentsList,
                           )
                         : Center(

@@ -28,7 +28,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         Uri.http(localhost, '/api/upload'); //This web address has to be changed
     var request = http.MultipartRequest('POST', uri)
       ..fields['username'] = username
-      ..fields['type'] = 'image'
+      ..fields['type'] = 'img'
       ..fields['caption'] = captionController.text
       ..files.add(await http.MultipartFile.fromPath(
         'file',

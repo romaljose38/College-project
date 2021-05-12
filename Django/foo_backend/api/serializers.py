@@ -53,12 +53,13 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ["file","user",'id',"post_type"]
+        fields = ["file","user",'id',"post_type",'caption']
 
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         user = self.context['user']
+        representation['comment_count']=instance.comment_set.all().count()
         if user in instance.likes.all():
             representation['hasLiked'] = True
         else:

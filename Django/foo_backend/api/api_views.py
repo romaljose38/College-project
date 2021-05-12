@@ -21,6 +21,7 @@ from .serializers import (
     PostDetailSerializer,
     UserStorySerializer,
 )
+import json
 
 User = get_user_model()
 
@@ -120,17 +121,25 @@ def get_comments(request, id):
 @api_view(['POST'])
 def add_comment(request, username):
     try:
+        print(request.data['comment'])
+        print(json.dumps(request.data['comment']).__class__)
+        print(request.data['mentions'])
+        print(request.data['mentions'].__class__)
         user = User.objects.get(username=username)
         post = Post.objects.get(id=request.data['post'])
         comment = Comment.objects.create(
-            user=user, post=post, comment=request.data['comment'])
+            user=user, post=post, comment=json.dumps(request.data['comment']))
+        for i in request.data['mentions']:
+            comment.mentions.add(User.objects.get(username=i))
+
         comment.save()
         context = {
             'id': comment.id
         }
-        print(user, comment)
+
         return Response(status=200, data=context)
-    except:
+    except Exception as e:
+        print(e)
         return Response(status=400)
 
 
@@ -245,9 +254,9 @@ def get_status(request):
         username = request.query_params['username']
         user = User.objects.get(username=username)
         if(user.profile.online):
-        	return Response(status=200,data={"status":"online"})
+            return Response(status=200,data={"status":"online"})
         else:
-        	return Response(status=200,data={"status":user.profile.last_seen.strftime("%Y-%m-%d %H:%M:%S")})
+            return Response(status=200,data={"status":user.profile.last_seen.strftime("%Y-%m-%d %H:%M:%S")})
     except Exception as e:
         print(e)
         return Response(status=400)
