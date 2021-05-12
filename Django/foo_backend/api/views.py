@@ -30,7 +30,8 @@ def login(request):
 def register(request):
     serialized = UserSerializer(data=request.data)
     if serialized.is_valid():
-        serialized.save()
+        user = serialized.save()
+        serialized.validated_data['id'] = user.id
         return Response(serialized.validated_data)
     else:
         return Response(status=400,data=serialized.errors)

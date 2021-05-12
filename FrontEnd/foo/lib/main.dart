@@ -71,120 +71,33 @@ class MyApp extends StatelessWidget {
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
       home: Renderer(prefs: prefs),
+      // home: StackTest(),
       // home: Test(),
       // home: AudioPlayerP(),
     );
   }
 }
 
-class Test extends StatefulWidget {
-  @override
-  _TestState createState() => _TestState();
-}
-
-class _TestState extends State<Test> with SingleTickerProviderStateMixin {
-  double z = 0;
-  double x = 0;
-  double y = 0;
-  AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: Duration(seconds: 5));
-  }
-
+class StackTest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    getCircle(color) => CircleAvatar(
+          backgroundColor: color,
+          radius: 25,
+        );
+
     return Scaffold(
-        floatingActionButton: TextButton(
-          child: Text("T"),
-          onPressed: () {
-            _controller.forward().whenComplete(() => _controller.reverse());
-          },
-        ),
-        body: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            double val = _controller.value;
-            print(val);
-            return Center(
-              child: Transform(
-                transform: Matrix4.identity()
-                  ..rotateX(90)
-                  ..rotateY(pi * val),
-                // ..rotateZ(val * 2),
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  color: Colors.black,
-                ),
-              ),
-            );
-          },
-        ));
+      body: Container(
+          height: 100,
+          width: 300,
+          color: Colors.white,
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              Positioned(left: 0, child: getCircle(Colors.blue)),
+              Positioned(left: 25, child: getCircle(Colors.black))
+            ],
+          )),
+    );
   }
 }
-      //   body: Column(childaren: [
-      // Transform(
-      //   transform: Matrix4.identity()
-      //     ..rotateZ(z)
-      //     ..rotateX(x)
-      //     ..rotateY(y),
-      //   // ..rotateY(0)
-      //   // ..rotateX(90),
-      //   child: Container(
-      //     height: 200,
-      //     width: 200,
-      //     color: Colors.black,
-      //   ),
-      // ),
-      // TextButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       z++;
-      //     });
-      //   },
-      //   child: Text("z up"),
-      // ),
-      // TextButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       z--;
-      //     });
-      //   },
-      //   child: Text("z down"),
-      // ),
-      // TextButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       x++;
-      //     });
-      //   },
-      //   child: Text("x up"),
-      // ),
-      // TextButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       x--;
-      //     });
-      //   },
-      //   child: Text("x down"),
-      // ),
-      // TextButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       y++;
-      //     });
-      //   },
-      //   child: Text("y up"),
-      // ),
-      // TextButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       y--;
-      //     });
-      //   },
-      //   child: Text("y down"),
-      // ),

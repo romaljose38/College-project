@@ -264,7 +264,7 @@ class _RegisterFormState extends State<RegisterForm> {
                 child: GestureDetector(
                     child: RichText(
                         text: TextSpan(
-                            text: "Already have an account?.",
+                            // text: "Already have an account?.",
                             style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w500),

@@ -35,6 +35,11 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance);
+        representation['id'] = instance.id
+        return representation
+
 
 class UserCustomSerializer(serializers.ModelSerializer):
 
@@ -99,7 +104,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 representation['requestStatus'] = "pending"
             elif request.first().status == "rejected":
                 representation['requestStatus'] = "rejected"
-        elif request.count==0:
+        elif request.count()==0:
             if cur_user in instance.profile.friends.all():
                 representation['requestStatus'] = "accepted"
             else:

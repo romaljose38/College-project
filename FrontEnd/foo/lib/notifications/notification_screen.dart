@@ -3,89 +3,10 @@ import 'package:foo/notifications/friend_request_tile.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-// import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart' as pathProvider;
+import 'package:timeago/timeago.dart' as timeago;
+import 'package:foo/models.dart';
 
 class NotificationScreen extends StatelessWidget {
-  // _showModal(BuildContext context) {
-  //   showCustomModalBottomSheet(
-  //       context: context,
-  //       containerWidget: (context, animation, child) {
-  //         return child;
-  //       },
-  //       backgroundColor: Colors.transparent,
-  //       builder: (context) {
-  //         return Scaffold(
-  //           backgroundColor: Colors.transparent,
-  //           body: Container(
-  //             alignment: Alignment.center,
-  //             child: ClipRRect(
-  //               borderRadius: BorderRadius.circular(25),
-  //               // color: Colors.transparent,
-  //               child: Container(
-  //                   width: MediaQuery.of(context).size.width * .9,
-  //                   height: MediaQuery.of(context).size.height * .9,
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.white,
-  //                     borderRadius: BorderRadius.circular(25),
-  //                   ),
-  //                   child: Column(
-  //                     children: [
-  //                       Align(
-  //                         alignment: Alignment.centerLeft,
-  //                         child: Padding(
-  //                           padding: EdgeInsets.fromLTRB(20, 7, 10, 20),
-  //                           child: Text(
-  //                             "Conversations",
-  //                             style: TextStyle(
-  //                               fontSize: 25,
-  //                               fontWeight: FontWeight.w700,
-  //                               letterSpacing: .05,
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       ),
-  //                       Expanded(
-  //                         child: Container(
-  //                           margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
-  //                           decoration: BoxDecoration(
-  //                             color: Colors.white,
-  //                             borderRadius: BorderRadius.only(
-  //                               topLeft: Radius.circular(50),
-  //                             ),
-  //                             boxShadow: [
-  //                               BoxShadow(
-  //                                 color: Colors.black.withOpacity(.1),
-  //                                 offset: Offset(-1, -1),
-  //                                 blurRadius: 5,
-  //                               ),
-  //                             ],
-  //                           ),
-  //                           child: ClipRRect(
-  //                             borderRadius: BorderRadius.only(
-  //                               topLeft: Radius.circular(50),
-  //                             ),
-  //                             child: Container(
-  //                               padding: EdgeInsets.only(left: 40, top: 20),
-  //                               child: ListView(
-  //                                 children: [
-  //                                   // Divider(),
-  //                                   Tile(),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   )),
-  //             ),
-  //           ),
-  //         );
-  //       });
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,12 +91,29 @@ class NotificationScreen extends StatelessWidget {
                     ),
                     child: Container(
                       padding: EdgeInsets.only(left: 40, top: 20),
-                      child: ListView(
-                        children: [
-                          // Divider(),
-                          Tile(),
-                        ],
+                      child: ValueListenableBuilder(
+                        valueListenable: Hive.box("Notifications").listenable(),
+                        builder: (context, box, index) {
+                          List notifications = box.values.toList() ?? [];
+                          if (notifications.length > 1) {
+                            // notifications.sort((a,b)=>a.)
+                          }
+                          return ListView.builder(
+                            itemCount: notifications.length ?? 0,
+                            itemBuilder: (context, index) {
+                              return Tile(
+                                notification: notifications[index],
+                              );
+                            },
+                          );
+                        },
                       ),
+                      // child: ListView(
+                      //   children: [
+                      //     // Divider(),
+                      //     Tile(),
+                      //   ],
+                      // ),
                     ),
                   ),
                 ),
@@ -204,6 +142,9 @@ class NotificationScreen extends StatelessWidget {
 }
 
 class Tile extends StatelessWidget {
+  final Notifications notification;
+
+  Tile({this.notification});
   // GlobalKey key;
   @override
   Widget build(BuildContext context) {
@@ -230,25 +171,25 @@ class Tile extends StatelessWidget {
             children: [
               RichText(
                 text: TextSpan(
-                  text: "Pranav ",
+                  text: "You have a friend request from ",
                   style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w300,
                   ),
                   children: [
                     TextSpan(
-                      text: "started following you. ",
+                      text: this.notification.userName,
                       style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w300,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
               SizedBox(height: 5),
               Text(
-                "5 min ago",
+                timeago.format(this.notification.timeCreated),
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.grey,

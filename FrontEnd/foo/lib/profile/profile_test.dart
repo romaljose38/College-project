@@ -223,16 +223,18 @@ class _ProfileTestState extends State<ProfileTest>
     if (!widget.isMe) {
       widgetList = [
         properStatusButton(),
-        chatIcon(),
         Spacer(),
       ];
+      if (requestStatus == "accepted") {
+        widgetList.insert(1, chatIcon());
+      }
     } else {
       widgetList = [];
     }
     return Row(children: [
       Spacer(),
       Text(
-        "Deepika Charly",
+        widget.fullName,
         style: GoogleFonts.raleway(
           fontSize: 23,
           fontWeight: FontWeight.w600,
@@ -374,7 +376,7 @@ class _ProfileTestState extends State<ProfileTest>
               Text("Friends",
                   style: GoogleFonts.raleway(
                     fontSize: 14,
-                    letterSpacing: .1,
+                    letterSpacing: 1.2,
                     color: Colors.grey.shade600,
                   )),
             ],
@@ -419,6 +421,7 @@ class _ProfileTestState extends State<ProfileTest>
               Text("Posts",
                   style: GoogleFonts.raleway(
                     fontSize: 14,
+                    letterSpacing: 1.2,
                     color: Colors.grey.shade600,
                   )),
             ],

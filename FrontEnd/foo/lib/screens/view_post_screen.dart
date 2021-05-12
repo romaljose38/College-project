@@ -227,14 +227,18 @@ class _ViewPostScreenState extends State<ViewPostScreen>
     print(search);
     var resp =
         await http.get(Uri.http(localhost, '/api/users', {'name': search}));
-    var respJson = jsonDecode(resp.body)['resp'];
-    var list = jsonDecode(respJson);
+    var respJson = jsonDecode(resp.body);
+    print(respJson);
+
     List<UserTest> returList = [];
-    list.forEach((e) {
+    respJson.forEach((e) {
       print(e);
-      returList.add(UserTest(name: e["fields"]["username"]));
+      returList.add(UserTest(
+          name: e["username"],
+          id: e['id'],
+          f_name: e['f_name'],
+          l_name: e['l_name']));
     });
-    print(returList);
     return returList;
   }
 
@@ -253,9 +257,11 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                   .whenComplete(() => {overlayEntry.remove()});
             },
             child: Container(
+              // clipBehavior: Clip.antiAlias,
               width: double.infinity,
               height: double.infinity,
               color: Colors.transparent,
+
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -623,5 +629,8 @@ class _ViewPostScreenState extends State<ViewPostScreen>
 
 class UserTest {
   final String name;
-  UserTest({this.name});
+  final String l_name;
+  final String f_name;
+  final int id;
+  UserTest({this.name, this.id, this.l_name, this.f_name});
 }
