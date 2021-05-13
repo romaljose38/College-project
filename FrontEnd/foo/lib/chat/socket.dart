@@ -143,6 +143,7 @@ class NotificationController {
   }
 
   void updateMsgSeenStatus(data) {
+    print("in messaeg seen status");
     String me = prefs.getString('username');
     String threadName = me + '_' + data['from'];
     var threadBox = Hive.box('Threads');

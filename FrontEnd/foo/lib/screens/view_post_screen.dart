@@ -583,12 +583,12 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                       decoration: InputDecoration(
                         hintText: "Add a comment",
                         hintStyle: GoogleFonts.raleway(fontSize: 12),
-                        contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
+                        contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 10),
                         focusedBorder: InputBorder.none,
                         suffix: InkWell(
                           child: Text("@",
                               style:
-                                  TextStyle(color: Colors.black, fontSize: 30)),
+                                  TextStyle(color: Colors.black, fontSize: 25)),
                           onTap: () {
                             var cursor = _commentController.selection;
                             start = cursor.start;
@@ -607,7 +607,7 @@ class _ViewPostScreenState extends State<ViewPostScreen>
                     ),
                     child: CircleAvatar(
                         child: IconButton(
-                      icon: Icon(Ionicons.paper_plane),
+                      icon: Icon(Ionicons.paper_plane, size: 16),
                       onPressed: _addComment,
                     )),
                   ),

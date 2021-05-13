@@ -92,7 +92,9 @@ class ChatCloud extends StatelessWidget {
                               ? (Icon(
                                   this.msgObj.haveReachedServer
                                       ? (this.msgObj.haveReceived
-                                          ? Icons.done_all
+                                          ? (this.msgObj.hasSeen == true)
+                                              ? Icons.done_outline_sharp
+                                              : Icons.done_all
                                           : Icons.done)
                                       : Icons.timelapse_outlined,
                                   size: 12.0,
@@ -131,6 +133,8 @@ class ChatCloud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(msgObj.hasSeen);
+    print("has seen");
     return Column(
       children: [
         (needDate == true) ? dateCloud() : Container(),
