@@ -82,6 +82,9 @@ class Thread extends HiveObject {
   @HiveField(4)
   bool isTyping;
 
+  @HiveField(5)
+  int hasUnseen;
+
   Thread({this.first, this.second});
 
   void addChat(chat) {
@@ -182,6 +185,9 @@ class Post {
   @HiveField(8)
   String type;
 
+  @HiveField(9)
+  String caption;
+
   Post(
       {this.username,
       this.userDpUrl,
@@ -191,13 +197,14 @@ class Post {
       this.postId,
       this.haveLiked,
       this.userId,
-      this.type});
+      this.type,
+      this.caption});
 }
 
 class Comment {
   String username;
   String userdpUrl;
-  String comment;
+  Map comment;
 
   Comment({this.username, this.userdpUrl, this.comment});
 }

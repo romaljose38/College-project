@@ -199,6 +199,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    print(widget.post.type);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
       child: Container(
@@ -241,7 +242,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                 transitionOnUserGestures: true,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(25),
-                  child: postAudio(),
+                  child: widget.post.type == "img" ? postImage() : postAudio(),
                 ),
               ),
               Positioned(
@@ -279,7 +280,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                           // borderRadius: BorderRadius.circular(20),
                           ),
                       child: Text(
-                        "Deepika Charly",
+                        widget.post.username,
                         style: GoogleFonts.raleway(
                           fontSize: 15,
                           color: Colors.white,
@@ -375,7 +376,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                                 },
                               ),
                               Text(
-                                "144",
+                                widget.post.commentCount.toString(),
                                 style: TextStyle(
                                   fontSize: 13.0,
                                   color: Colors.white,
@@ -386,10 +387,17 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                           ),
                         ),
                       ]),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 15),
-                        child: ExpandableText(
-                          "It is good to love god for hope of reward in this or the next world, but it is better to love god for love's sake",
+                      Container(
+                        // decoration: BoxDecoration(
+                        //   color: Colors.black.withOpacity(.3),
+                        //   borderRadius: BorderRadius.circular(15),
+                        // ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 15),
+                          child: ExpandableText(
+                            // "It is good to love god for hope of reward in this or the next world, but it is better to love god for love's sake",
+                            widget.post.caption,
+                          ),
                         ),
                       ),
                     ],

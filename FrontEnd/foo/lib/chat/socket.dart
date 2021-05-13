@@ -220,6 +220,12 @@ class NotificationController {
         id: data['message']['id'],
       ));
     }
+    if (thread.hasUnseen != null) {
+      thread.hasUnseen += 1;
+    } else {
+      thread.hasUnseen = 1;
+    }
+
     thread.save();
   }
 
@@ -248,7 +254,15 @@ class NotificationController {
 
       if (prefs.getString("curUser") != data['message']['from']) {
         _handler.chatNotif(data['message']['from'], data['message']['message']);
+        if (existingThread.hasUnseen != null) {
+          existingThread.hasUnseen += 1;
+        } else {
+          existingThread.hasUnseen = 1;
+        }
       }
+      // else{
+      //   existingThread.hasUnseen=true;
+      // }
       if (data['msg_type'] == 'txt') {
         existingThread.addChat(ChatMessage(
           message: data['message']['message'],
@@ -279,6 +293,7 @@ class NotificationController {
           id: data['message']['id'],
         ));
       }
+
       existingThread.save();
     }
   }

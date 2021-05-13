@@ -8,7 +8,8 @@ from .models import (
     Comment,
     FriendRequest,
     Notification,
-    Story
+    Story,
+    Comment
 )
 # from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -67,4 +68,6 @@ admin.site.register(Post,PostInline)
 admin.site.register(FriendRequest)
 admin.site.register(Notification)
 admin.site.register(Story)
+admin.site.register(Comment)
+
 

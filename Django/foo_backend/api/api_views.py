@@ -17,9 +17,11 @@ from .serializers import (
     PostSerializer,
     UserSerializer,
     UserProfileSerializer,
+    UserCustomSerializer,
     PostDetailSerializer,
     UserStorySerializer,
 )
+import json
 
 User = get_user_model()
 
@@ -28,7 +30,7 @@ User = get_user_model()
 @api_view(['POST'])
 def login(request):
     print(request.data)
-    email = request.data['email']
+    email = request.data["email"]
     password = request.data["password"]
     user = auth.authenticate(email=email, password=password)
     if user is not None:
@@ -66,11 +68,10 @@ def get_user_list(request):
         qs = User.objects.filter(Q(username__icontains=param)
                                  | Q(f_name__icontains=param))
         # .filter(l_name__icontains=param)
-        data = serialize('json', queryset=qs, fields=[
-                         'f_name', 'l_name', 'username'])
+        serialized = UserCustomSerializer(qs,many=True)
         print(request.query_params)
-        print(data)
-        return Response(status=200, data={"resp": data})
+        # print(data)
+        return Response(status=200, data=serialized.data)
     except Exception as e:
         print(e)
         return Response(status=400)
@@ -120,17 +121,25 @@ def get_comments(request, id):
 @api_view(['POST'])
 def add_comment(request, username):
     try:
+        print(request.data['comment'])
+        print(json.dumps(request.data['comment']).__class__)
+        print(request.data['mentions'])
+        print(request.data['mentions'].__class__)
         user = User.objects.get(username=username)
         post = Post.objects.get(id=request.data['post'])
         comment = Comment.objects.create(
-            user=user, post=post, comment=request.data['comment'])
+            user=user, post=post, comment=json.dumps(request.data['comment']))
+        for i in request.data['mentions']:
+            comment.mentions.add(User.objects.get(username=i))
+
         comment.save()
         context = {
             'id': comment.id
         }
-        print(user, comment)
+
         return Response(status=200, data=context)
-    except:
+    except Exception as e:
+        print(e)
         return Response(status=400)
 
 
@@ -245,9 +254,9 @@ def get_status(request):
         username = request.query_params['username']
         user = User.objects.get(username=username)
         if(user.profile.online):
-        	return Response(status=200)
+            return Response(status=200,data={"status":"online"})
         else:
-        	return Response(status=202)
+            return Response(status=200,data={"status":user.profile.last_seen.strftime("%Y-%m-%d %H:%M:%S")})
     except Exception as e:
         print(e)
         return Response(status=400)

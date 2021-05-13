@@ -35,6 +35,11 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance);
+        representation['id'] = instance.id
+        return representation
+
 
 class UserCustomSerializer(serializers.ModelSerializer):
 
@@ -48,12 +53,13 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ["file","user",'id',"post_type"]
+        fields = ["file","user",'id',"post_type",'caption']
 
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         user = self.context['user']
+        representation['comment_count']=instance.comment_set.all().count()
         if user in instance.likes.all():
             representation['hasLiked'] = True
         else:
@@ -99,7 +105,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 representation['requestStatus'] = "pending"
             elif request.first().status == "rejected":
                 representation['requestStatus'] = "rejected"
-        elif request.count==0:
+        elif request.count()==0:
             if cur_user in instance.profile.friends.all():
                 representation['requestStatus'] = "accepted"
             else:

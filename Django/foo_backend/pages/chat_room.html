@@ -102,6 +102,15 @@ var socket = new WebSocket('ws://192.168.1.35:8000/ws/chat_room/{{user}}/');
                     'received':data.id
                 
             }));
+
+        socket.send(JSON.stringify(
+            {
+            "type": "seen_ticker",
+            "from": "romal",
+            "to": "deepika",
+            "id": data.id,
+          }
+        ));
     }
 
     socket.onclose = function(e){

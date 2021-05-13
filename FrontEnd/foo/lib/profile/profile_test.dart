@@ -212,6 +212,39 @@ class _ProfileTestState extends State<ProfileTest>
     }
   }
 
+  IconButton chatIcon() => IconButton(
+      icon: Icon(Ionicons.chatbox_outline),
+      onPressed: () {
+        print("rejected");
+      });
+
+  Row properRow() {
+    List widgetList;
+    if (!widget.isMe) {
+      widgetList = [
+        properStatusButton(),
+        Spacer(),
+      ];
+      if (requestStatus == "accepted") {
+        widgetList.insert(1, chatIcon());
+      }
+    } else {
+      widgetList = [];
+    }
+    return Row(children: [
+      Spacer(),
+      Text(
+        widget.fullName,
+        style: GoogleFonts.raleway(
+          fontSize: 23,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      Spacer(),
+      ...widgetList,
+    ]);
+  }
+
   Future<void> handleChat() async {
     String threadName = "${widget.curUser}_${widget.userName}";
     var threadBox = Hive.box("Threads");
@@ -343,7 +376,7 @@ class _ProfileTestState extends State<ProfileTest>
               Text("Friends",
                   style: GoogleFonts.raleway(
                     fontSize: 14,
-                    letterSpacing: .1,
+                    letterSpacing: 1.2,
                     color: Colors.grey.shade600,
                   )),
             ],
@@ -388,34 +421,15 @@ class _ProfileTestState extends State<ProfileTest>
               Text("Posts",
                   style: GoogleFonts.raleway(
                     fontSize: 14,
+                    letterSpacing: 1.2,
                     color: Colors.grey.shade600,
                   )),
             ],
           ),
         ],
       ),
-      Row(children: [
-        Spacer(),
-        Text(
-          "Deepika Charly",
-          style: GoogleFonts.raleway(
-            fontSize: 23,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Spacer(),
-        IconButton(
-            icon: Icon(Ionicons.person_add_outline),
-            onPressed: () {
-              print("rejected");
-            }),
-        IconButton(
-            icon: Icon(Ionicons.chatbox_outline),
-            onPressed: () {
-              print("rejected");
-            }),
-        Spacer(),
-      ]),
+      properRow(),
+      SizedBox(height: 8),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Text(

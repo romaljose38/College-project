@@ -91,7 +91,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user = await self.get_user_from_username(username)
         print(self.user.username)
         status = await self.update_user_online(self.user)
-
+        self.recent_chat_with = ""
         if status:
         
             
@@ -204,6 +204,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif text_data_json['type']=='typing_status':
                 text_data_json['from'] = self.room_group_name
                 to = text_data_json['to']
+                self.recent_chat_with  = to
                 text_data_json.pop("to")
                 await self.channel_layer.group_send(
                         to,
@@ -386,19 +387,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json_data)
 
     async def notification(self,event):
-    	print(event)
-    	await self.send(text_data=json.dumps(event))
+        print(event)
+        await self.send(text_data=json.dumps(event))
 
     @database_sync_to_async
     def get_user_from_username(self, username):
         return User.objects.get(username=username)
 
     async def disconnect(self, close_code):
+        if self.recent_chat_with != "":
+            data =  {'from':self.room_group_name,
+                    'type': 'typing_status',
+                    'status': 'stopped',}
+            print(self.recent_chat_with)
+            await self.channel_layer.group_send(
+                self.recent_chat_with,
+                data
+                )
+        
         await self.update_user_offline(self.user)
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
 
     @database_sync_to_async
     def update_user_offline(self, user):
-        Profile.objects.filter(user=user).update(online=False)
+        Profile.objects.filter(user=user).update(online=False,last_seen=timezone.now())
 
     
     async def seen_ticker(self,event):
@@ -412,4 +427,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
     async def typing_status(self,event):
+        print("reached here")
         await self.send(text_data=json.dumps(event))

@@ -117,7 +117,7 @@ class _RegisterFormState extends State<RegisterForm> {
       print(data);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       data.forEach((key, value) {
-        if (key == "uprn") {
+        if ((key == "uprn") | (key == "id")) {
           prefs.setInt(key, value);
         } else {
           prefs.setString(key, value);
@@ -264,7 +264,7 @@ class _RegisterFormState extends State<RegisterForm> {
                 child: GestureDetector(
                     child: RichText(
                         text: TextSpan(
-                            text: "Already have an account?.",
+                            // text: "Already have an account?.",
                             style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w500),
