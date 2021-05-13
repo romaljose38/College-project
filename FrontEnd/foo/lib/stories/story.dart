@@ -4,6 +4,7 @@ import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:foo/test_cred.dart';
 
 import 'dart:io';
 import 'dart:async';
@@ -46,7 +47,6 @@ class _StoryScreenState extends State<StoryScreen>
 
     final firstStory = widget.stories.first;
     _loadStory(story: firstStory, animateToPage: false);
-
     _animController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _animController.stop();
@@ -151,7 +151,7 @@ class _StoryScreenState extends State<StoryScreen>
               timeUploaded = _formatTime(story['time']);
 
               return FutureBuilder(
-                  future: _getOrDownload(story['file']),
+                  future: _getOrDownload('http://$localhost${story['file']}'),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.done) {
                       switch (_getTypeOf(story['file'])) {
@@ -161,9 +161,8 @@ class _StoryScreenState extends State<StoryScreen>
                             return GestureDetector(
                               onTapDown: (_) {
                                 _animController.stop();
-                                _timer = Timer(Duration(milliseconds: 200), () {
-                                  print("timer started");
-                                });
+                                _timer =
+                                    Timer(Duration(milliseconds: 200), () {});
                               },
                               onTapUp: (details) {
                                 _animController.forward();
@@ -245,7 +244,6 @@ class _StoryScreenState extends State<StoryScreen>
   }
 
   void _backwardOrForward(TapUpDetails details) {
-    print("You tapped Up!");
     final double screenWidth = MediaQuery.of(context).size.width;
     final double dx = details.globalPosition.dx;
     if (dx < screenWidth / 2) {
@@ -379,13 +377,13 @@ class UserInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        CircleAvatar(
-          radius: 20.0,
-          backgroundColor: Colors.grey[300],
-          backgroundImage: CachedNetworkImageProvider(
-            profilePic,
-          ),
-        ),
+        // CircleAvatar(
+        //   radius: 20.0,
+        //   backgroundColor: Colors.grey[300],
+        //   backgroundImage: CachedNetworkImageProvider(
+        //     profilePic,
+        //   ),
+        // ),
         const SizedBox(width: 10.0),
         Expanded(
           child: Wrap(
@@ -469,9 +467,7 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
         onTapDown: (_) {
           videoController.pause();
           widget.animController.stop();
-          _timer = Timer(Duration(milliseconds: 200), () {
-            print("Video tap timer started");
-          });
+          _timer = Timer(Duration(milliseconds: 200), () {});
         },
         onTapUp: (details) {
           videoController.play();
