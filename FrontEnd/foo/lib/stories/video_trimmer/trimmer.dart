@@ -1,36 +1,71 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_crop/image_crop.dart';
 import 'package:video_trimmer/video_trimmer.dart';
+import 'package:file_picker/file_picker.dart';
 
-class TrimPickPage extends StatelessWidget {
+class StoryUploadPick extends StatelessWidget {
   final Trimmer _trimmer = Trimmer();
-  final ImagePicker _image = ImagePicker();
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Video Trimmer"),
-        backgroundColor: Colors.transparent,
-      ),
-      body: Center(
-        child: Container(
-          child: ElevatedButton(
-            child: Text("LOAD VIDEO"),
-            onPressed: () async {
-              PickedFile pickFile = await _image.getVideo(
-                source: ImageSource.gallery,
-              );
-              File file = File(pickFile.path);
-              if (file != null) {
-                await _trimmer.loadVideo(videoFile: file);
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return TrimmerView(_trimmer);
-                }));
-              }
-            },
+    return GestureDetector(
+      onTap: () async {
+        FilePickerResult result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mkv'],
+        );
+
+        if (result != null) {
+          PlatformFile file = result.files.first;
+          String mediaExt = file.extension;
+          File media = File(file.path);
+
+          print(mediaExt);
+
+          if (['jpg', 'jpeg', 'png', 'gif'].contains(mediaExt)) {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+              return CropMyImage(file: media);
+            }));
+          } else {
+            await _trimmer.loadVideo(videoFile: media);
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+              return TrimmerView(_trimmer);
+            }));
+          }
+        }
+      },
+      child: Container(
+        margin: EdgeInsets.all(10.0),
+        width: 80.0,
+        height: 45.0,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(35),
+          border: Border.all(color: Colors.pink.shade400, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black45.withOpacity(.2),
+              offset: Offset(0, 2),
+              spreadRadius: 1,
+              blurRadius: 6.0,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(3.0),
+          child: Container(
+            width: 80,
+            height: 40,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                // shape: BoxShape.circle,
+                image: DecorationImage(
+                  //image: AssetImage(pst.stories[index - 1]),
+                  image: NetworkImage(
+                      'https://img.icons8.com/cotton/2x/plus--v3.png'),
+                  fit: BoxFit.cover,
+                )),
           ),
         ),
       ),
@@ -75,10 +110,6 @@ class _TrimmerViewState extends State<TrimmerView> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // appBar: AppBar(
-        //   title: Text("Video Trimmer"),
-        //   backgroundColor: Colors.transparent,
-        // ),
         body: Builder(
           builder: (context) => Center(
             child: Container(
@@ -129,11 +160,6 @@ class _TrimmerViewState extends State<TrimmerView> {
                         Center(
                             child: TextButton(
                           child: _isPlaying
-                              // ? Icon(
-                              //     Icons.pause,
-                              //     size: 80.0,
-                              //     color: Colors.white,
-                              //   )
                               ? Container()
                               : Icon(
                                   Icons.play_arrow,
@@ -172,33 +198,125 @@ class _TrimmerViewState extends State<TrimmerView> {
                       },
                     ),
                   ),
-                  // TextButton(
-                  //   child: _isPlaying
-                  //       ? Icon(
-                  //           Icons.pause,
-                  //           size: 80.0,
-                  //           color: Colors.white,
-                  //         )
-                  //       : Icon(
-                  //           Icons.play_arrow,
-                  //           size: 80.0,
-                  //           color: Colors.white,
-                  //         ),
-                  //   onPressed: () async {
-                  //     bool playbackState =
-                  //         await widget._trimmer.videPlaybackControl(
-                  //       startValue: _startValue,
-                  //       endValue: _endValue,
-                  //     );
-                  //     setState(() {
-                  //       _isPlaying = playbackState;
-                  //     });
-                  //   },
-                  // )
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class CropMyImage extends StatefulWidget {
+  final File file;
+
+  CropMyImage({@required this.file});
+
+  @override
+  _CropMyImageState createState() => _CropMyImageState();
+}
+
+class _CropMyImageState extends State<CropMyImage> {
+  final cropKey = GlobalKey<CropState>();
+  File _file;
+  File _sample;
+  File _lastCropped;
+
+  Future<void> _openImage() async {
+    final File file = File(widget.file.path);
+    final sample = await ImageCrop.sampleImage(
+      file: file,
+      preferredSize: context.size.longestSide.ceil(),
+    );
+
+    _sample?.delete();
+    _file?.delete();
+
+    setState(() {
+      _sample = sample;
+      _file = file;
+    });
+  }
+
+  Future<void> _cropImage() async {
+    final scale = cropKey.currentState.scale;
+    final area = cropKey.currentState.area;
+    if (area == null) {
+      // cannot crop, widget is not setup
+      return;
+    }
+
+    final sample = await ImageCrop.sampleImage(
+      file: _file,
+      preferredSize: (2000 / scale).round(),
+    );
+
+    final file = await ImageCrop.cropImage(
+      file: sample,
+      area: area,
+    );
+
+    sample.delete();
+
+    _lastCropped?.delete();
+    _lastCropped = file;
+
+    print("$file");
+  }
+
+  Widget _buildCroppingImage() {
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: Crop.file(_sample, key: cropKey),
+        ),
+        Container(
+          padding: const EdgeInsets.only(top: 20.0),
+          alignment: AlignmentDirectional.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              TextButton(
+                child: Text(
+                  'Crop Image',
+                  style: Theme.of(context)
+                      .textTheme
+                      .button
+                      .copyWith(color: Colors.white),
+                ),
+                onPressed: () => _cropImage(),
+              ),
+              _buildOpenImage(),
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildOpenImage() {
+    return TextButton(
+      child: Text(
+        'Open Image',
+        style: Theme.of(context).textTheme.button.copyWith(color: Colors.white),
+      ),
+      onPressed: () => _openImage(),
+    );
+  }
+
+  Widget _buildOpeningImage() {
+    return Center(child: _buildOpenImage());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        body: Container(
+          color: Colors.black,
+          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+          child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
         ),
       ),
     );
