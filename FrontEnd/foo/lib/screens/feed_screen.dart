@@ -141,18 +141,22 @@ class _FeedScreenState extends State<FeedScreen> {
     var response = await http.get(Uri.http(localhost, '/api/get_stories'));
     setState(() {
       myStoryList = jsonDecode(response.body);
+      myItemCounter = myStoryList.length + 1;
     });
     print(myStoryList);
   }
 
+  int myItemCounter = 1;
+
   Container _horiz() {
+    print("Is something happening?");
     return Container(
       width: double.infinity,
       height: 100.0,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         //itemCount: pst.stories.length + 1,
-        itemCount: myStoryList.length + 1,
+        itemCount: myItemCounter, //myStoryList.length + 1,
         itemBuilder: (BuildContext context, int index) {
           if (index == 0) {
             return StoryUploadPick();
@@ -162,6 +166,8 @@ class _FeedScreenState extends State<FeedScreen> {
               print(
                   "You tickled ${myStoryList[index - 1]['username']} $index times");
               print("${myStoryList[index - 1]['stories'][0]['file']}");
+              print("$myStoryList");
+              print("${myStoryList.length}");
               Navigator.of(context).push(
                 MaterialPageRoute(
                     builder: (context) => StoryBuilder(
