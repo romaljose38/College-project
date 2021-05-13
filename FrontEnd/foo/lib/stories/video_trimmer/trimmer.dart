@@ -223,6 +223,8 @@ class _CropMyImageState extends State<CropMyImage> {
   File _sample;
   File _lastCropped;
 
+  bool _isCropping = false;
+
   Future<void> _openImage() async {
     final File file = File(widget.file.path);
     final sample = await ImageCrop.sampleImage(
@@ -263,6 +265,9 @@ class _CropMyImageState extends State<CropMyImage> {
     _lastCropped = file;
 
     print("$file");
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => CropMyImage(file: file)),
+    );
   }
 
   Widget _buildCroppingImage() {
@@ -274,21 +279,22 @@ class _CropMyImageState extends State<CropMyImage> {
         Container(
           padding: const EdgeInsets.only(top: 20.0),
           alignment: AlignmentDirectional.center,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: <Widget>[
-              TextButton(
-                child: Text(
-                  'Crop Image',
-                  style: Theme.of(context)
-                      .textTheme
-                      .button
-                      .copyWith(color: Colors.white),
-                ),
-                onPressed: () => _cropImage(),
+          child: Center(
+            child: TextButton(
+              child: Text(
+                'Crop Image',
+                style: Theme.of(context)
+                    .textTheme
+                    .button
+                    .copyWith(color: Colors.white),
               ),
-              _buildOpenImage(),
-            ],
+              onPressed: () {
+                setState(() {
+                  _isCropping = false;
+                });
+                _cropImage();
+              },
+            ),
           ),
         )
       ],
@@ -296,12 +302,10 @@ class _CropMyImageState extends State<CropMyImage> {
   }
 
   Widget _buildOpenImage() {
-    return TextButton(
-      child: Text(
-        'Open Image',
-        style: Theme.of(context).textTheme.button.copyWith(color: Colors.white),
+    return OverflowBox(
+      child: Image(
+        image: FileImage(widget.file),
       ),
-      onPressed: () => _openImage(),
     );
   }
 
@@ -311,13 +315,51 @@ class _CropMyImageState extends State<CropMyImage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Container(
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size(double.infinity, 100),
+        child: Container(
+          padding: EdgeInsets.only(top: 35),
           color: Colors.black,
-          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
-          child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
+          child: Row(
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () {
+                  setState(() {
+                    _isCropping = false;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              Spacer(),
+              _isCropping
+                  ? Container()
+                  : IconButton(
+                      icon: Icon(Icons.crop, color: Colors.white),
+                      onPressed: () {
+                        setState(() {
+                          _isCropping = true;
+                        });
+                        _openImage();
+                      },
+                    ),
+              _isCropping
+                  ? Container()
+                  : IconButton(
+                      icon: Icon(Icons.upload_file, color: Colors.white),
+                      onPressed: () {
+                        print(widget.file);
+                      },
+                    )
+            ],
+          ),
         ),
+      ),
+      body: Container(
+        color: Colors.black,
+        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+        child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
       ),
     );
   }
