@@ -21,11 +21,12 @@ class StoryScreen extends StatefulWidget {
   StoryScreen(
       {@required this.storyObject,
       @required this.storyBuilderController,
-      @required this.userCount}) {
+      @required this.userCount,
+      @required this.profilePic}) {
     username = storyObject['username'];
     stories = storyObject['stories'];
-    profilePic =
-        'https://cdn.britannica.com/s:300x169,c:crop/15/153115-050-9C83E2C3/Steve-Jobs-computer-Apple-II-1977.jpg';
+    // profilePic =
+    //     'https://cdn.britannica.com/s:300x169,c:crop/15/153115-050-9C83E2C3/Steve-Jobs-computer-Apple-II-1977.jpg';
   }
 
   @override
@@ -377,13 +378,14 @@ class UserInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        // CircleAvatar(
-        //   radius: 20.0,
-        //   backgroundColor: Colors.grey[300],
-        //   backgroundImage: CachedNetworkImageProvider(
-        //     profilePic,
-        //   ),
-        // ),
+        CircleAvatar(
+          radius: 20.0,
+          backgroundColor: Colors.grey[300],
+          // backgroundImage: CachedNetworkImageProvider(
+          //   profilePic,
+          // ),
+          backgroundImage: AssetImage(profilePic),
+        ),
         const SizedBox(width: 10.0),
         Expanded(
           child: Wrap(

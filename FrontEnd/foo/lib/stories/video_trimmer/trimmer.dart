@@ -2,11 +2,37 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_crop/image_crop.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_trimmer/video_trimmer.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+
+import 'package:foo/landing_page.dart';
+import 'package:foo/test_cred.dart';
 
 class StoryUploadPick extends StatelessWidget {
   final Trimmer _trimmer = Trimmer();
+
+  Future<void> _uploadStory(BuildContext context, File mediaFile) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String username = prefs.getString('username');
+    var uri = Uri.http(localhost, '/api/story_upload');
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['username'] = username
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        mediaFile.path,
+      ));
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      print("Uploaded");
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => LandingPage()));
+    } else {
+      print("Upload failed");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +52,12 @@ class StoryUploadPick extends StatelessWidget {
 
           if (['jpg', 'jpeg', 'png', 'gif'].contains(mediaExt)) {
             Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return CropMyImage(file: media);
+              return CropMyImage(file: media, uploadFunc: _uploadStory);
             }));
           } else {
             await _trimmer.loadVideo(videoFile: media);
             Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return TrimmerView(_trimmer);
+              return TrimmerView(_trimmer, uploadFunc: _uploadStory);
             }));
           }
         }
@@ -63,7 +89,7 @@ class StoryUploadPick extends StatelessWidget {
                 image: DecorationImage(
                   //image: AssetImage(pst.stories[index - 1]),
                   image: NetworkImage(
-                      'https://img.icons8.com/cotton/2x/plus--v3.png'),
+                      'https://vz.cnwimg.com/thumb-1200x/wp-content/uploads/2020/04/hj.jpg'),
                   fit: BoxFit.cover,
                 )),
           ),
@@ -75,7 +101,8 @@ class StoryUploadPick extends StatelessWidget {
 
 class TrimmerView extends StatefulWidget {
   final Trimmer _trimmer;
-  TrimmerView(this._trimmer);
+  final Function uploadFunc;
+  TrimmerView(this._trimmer, {this.uploadFunc});
   @override
   _TrimmerViewState createState() => _TrimmerViewState();
 }
@@ -146,6 +173,7 @@ class _TrimmerViewState extends State<TrimmerView> {
                                           Text('Video Saved successfully'));
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(snackBar);
+                                  widget.uploadFunc(context, File(outputPath));
                                 });
                               },
                         icon: Icon(Icons.save, color: Colors.white),
@@ -186,10 +214,14 @@ class _TrimmerViewState extends State<TrimmerView> {
                       viewerWidth: MediaQuery.of(context).size.width,
                       maxVideoLength: Duration(seconds: 30),
                       onChangeStart: (value) {
-                        _startValue = value;
+                        setState(() {
+                          _startValue = value;
+                        });
                       },
                       onChangeEnd: (value) {
-                        _endValue = value;
+                        setState(() {
+                          _endValue = value;
+                        });
                       },
                       onChangePlaybackState: (value) {
                         setState(() {
@@ -210,8 +242,9 @@ class _TrimmerViewState extends State<TrimmerView> {
 
 class CropMyImage extends StatefulWidget {
   final File file;
+  final Function uploadFunc;
 
-  CropMyImage({@required this.file});
+  CropMyImage({@required this.file, @required this.uploadFunc});
 
   @override
   _CropMyImageState createState() => _CropMyImageState();
@@ -266,7 +299,11 @@ class _CropMyImageState extends State<CropMyImage> {
 
     print("$file");
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => CropMyImage(file: file)),
+      MaterialPageRoute(
+          builder: (context) => CropMyImage(
+                file: file,
+                uploadFunc: widget.uploadFunc,
+              )),
     );
   }
 
@@ -350,6 +387,7 @@ class _CropMyImageState extends State<CropMyImage> {
                       icon: Icon(Icons.upload_file, color: Colors.white),
                       onPressed: () {
                         print(widget.file);
+                        widget.uploadFunc(context, widget.file);
                       },
                     )
             ],

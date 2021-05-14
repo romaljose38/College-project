@@ -34,8 +34,9 @@ import 'package:foo/stories/story.dart';
 class StoryBuilder extends StatefulWidget {
   final int initialPage;
   final myStoryList;
+  final profilePic;
 
-  StoryBuilder({this.myStoryList, this.initialPage});
+  StoryBuilder({this.myStoryList, this.initialPage, this.profilePic});
 
   @override
   _StoryBuilderState createState() => _StoryBuilderState();
@@ -78,6 +79,7 @@ class _StoryBuilderState extends State<StoryBuilder> {
               storyObject: widget.myStoryList[index],
               storyBuilderController: storyBuildController,
               userCount: widget.myStoryList.length,
+              profilePic: widget.profilePic[index],
             ),
           );
         } else if (index == currentPageValue.floor() + 1) {
@@ -89,6 +91,7 @@ class _StoryBuilderState extends State<StoryBuilder> {
               storyObject: widget.myStoryList[index],
               storyBuilderController: storyBuildController,
               userCount: widget.myStoryList.length,
+              profilePic: widget.profilePic[index],
             ),
           );
         } else {
@@ -96,6 +99,7 @@ class _StoryBuilderState extends State<StoryBuilder> {
             storyObject: widget.myStoryList[index],
             storyBuilderController: storyBuildController,
             userCount: widget.myStoryList.length,
+            profilePic: widget.profilePic[index],
           );
         }
         // return StoryScreen(

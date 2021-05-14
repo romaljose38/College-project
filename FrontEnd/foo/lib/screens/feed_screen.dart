@@ -173,6 +173,7 @@ class _FeedScreenState extends State<FeedScreen> {
                     builder: (context) => StoryBuilder(
                           myStoryList: myStoryList,
                           initialPage: index - 1,
+                          profilePic: pst.stories,
                         )),
               );
             },
@@ -201,9 +202,9 @@ class _FeedScreenState extends State<FeedScreen> {
                       borderRadius: BorderRadius.circular(30),
                       // shape: BoxShape.circle,
                       image: DecorationImage(
-                        //image: AssetImage(pst.stories[index - 1]),
-                        image: NetworkImage(
-                            'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                        image: AssetImage(pst.stories[index - 1]),
+                        // image: NetworkImage(
+                        //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
                         fit: BoxFit.cover,
                       )),
                 ),
@@ -257,18 +258,18 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
-      floatingActionButton: TextButton(
-        child: Text(
-          "A",
-          style: TextStyle(color: Colors.black),
-        ),
-        onPressed: () {
-          listKey.currentState.insertItem(0);
-          var feedBox = Hive.box("Feed");
-          var feed = feedBox.get('feed');
-          postsList.insert(0, feed.posts[0]);
-        },
-      ),
+      // floatingActionButton: TextButton(
+      //   child: Text(
+      //     "A",
+      //     style: TextStyle(color: Colors.black),
+      //   ),
+      //   onPressed: () {
+      //     listKey.currentState.insertItem(0);
+      //     var feedBox = Hive.box("Feed");
+      //     var feed = feedBox.get('feed');
+      //     postsList.insert(0, feed.posts[0]);
+      //   },
+      // ),
       backgroundColor: Colors.white,
       body: RefreshIndicator(
           triggerMode: RefreshIndicatorTriggerMode.anywhere,
