@@ -10,6 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
 
+import 'package:video_player/video_player.dart';
+import 'package:foo/stories/video_trimmer/videoediting.dart';
+
 class StoryUploadPick extends StatelessWidget {
   final Trimmer _trimmer = Trimmer();
 
@@ -27,7 +30,7 @@ class StoryUploadPick extends StatelessWidget {
 
     if (response.statusCode == 200) {
       print("Uploaded");
-      Navigator.push(
+      Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => LandingPage()));
     } else {
       print("Upload failed");
@@ -57,7 +60,12 @@ class StoryUploadPick extends StatelessWidget {
           } else {
             await _trimmer.loadVideo(videoFile: media);
             Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return TrimmerView(_trimmer, uploadFunc: _uploadStory);
+              // return TrimmerView(_trimmer,
+              //     uploadFunc: _uploadStory);
+              return VideoEditor(
+                file: media,
+                uploadFunc: _uploadStory,
+              ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
             }));
           }
         }
@@ -120,7 +128,7 @@ class _TrimmerViewState extends State<TrimmerView> {
     });
 
     String _value;
-
+    print("Startvalue = $_startValue and Endvalue = $_endValue");
     await widget._trimmer
         .saveTrimmedVideo(startValue: _startValue, endValue: _endValue)
         .then((value) {
@@ -168,12 +176,17 @@ class _TrimmerViewState extends State<TrimmerView> {
                             : () async {
                                 _saveVideo().then((outputPath) {
                                   print('OUTPUT PATH: $outputPath');
-                                  final snackBar = SnackBar(
-                                      content:
-                                          Text('Video Saved successfully'));
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(snackBar);
-                                  widget.uploadFunc(context, File(outputPath));
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => Preview(outputPath),
+                                    ),
+                                  );
+                                  // final snackBar = SnackBar(
+                                  //     content:
+                                  //         Text('Video Saved successfully'));
+                                  // ScaffoldMessenger.of(context)
+                                  //     .showSnackBar(snackBar);
+                                  // widget.uploadFunc(context, File(outputPath));
                                 });
                               },
                         icon: Icon(Icons.save, color: Colors.white),
@@ -212,16 +225,12 @@ class _TrimmerViewState extends State<TrimmerView> {
                     child: TrimEditor(
                       viewerHeight: 50.0,
                       viewerWidth: MediaQuery.of(context).size.width,
-                      maxVideoLength: Duration(seconds: 30),
+                      //maxVideoLength: Duration(seconds: 30),
                       onChangeStart: (value) {
-                        setState(() {
-                          _startValue = value;
-                        });
+                        _startValue = value;
                       },
                       onChangeEnd: (value) {
-                        setState(() {
-                          _endValue = value;
-                        });
+                        _endValue = value;
                       },
                       onChangePlaybackState: (value) {
                         setState(() {
@@ -398,6 +407,62 @@ class _CropMyImageState extends State<CropMyImage> {
         color: Colors.black,
         padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
         child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
+      ),
+    );
+  }
+}
+
+class Preview extends StatefulWidget {
+  final String outputVideoPath;
+
+  Preview(this.outputVideoPath);
+
+  @override
+  _PreviewState createState() => _PreviewState();
+}
+
+class _PreviewState extends State<Preview> {
+  VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = VideoPlayerController.file(File(widget.outputVideoPath))
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text("Preview"),
+      ),
+      body: Center(
+        child: AspectRatio(
+          aspectRatio: _controller.value.aspectRatio,
+          child: _controller.value.isInitialized
+              ? Container(
+                  child: VideoPlayer(_controller),
+                )
+              : Container(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+        ),
       ),
     );
   }

@@ -57,6 +57,8 @@ dependencies:
   flutter_visualizers: ^0.0.2
   timeago: ^3.0.2
   image_crop: ^0.4.0
+  video_editor: ^1.1.0
+  helpers: ^1.1.3
   
 
 dev_dependencies:
