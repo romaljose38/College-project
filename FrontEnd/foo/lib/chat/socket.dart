@@ -7,6 +7,8 @@ import 'package:foo/notification_handler.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo/test_cred.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class NotificationController {
   static final NotificationController _singleton =
@@ -38,16 +40,18 @@ class NotificationController {
   }
 
   initWebSocketConnection() async {
-    print("conecting...");
-    if (NotificationController.isActive == false) {
-      channel = await connectWs();
+    await getUserName();
+    print("connected.");
+    // if (NotificationController.isActive == false) {
+    // channel = await connectWs();
 
-      NotificationController.isActive = true;
-      print("socket connection initializied");
-      channel.done.then((dynamic _) => _onDisconnected());
-      getPendingMessages();
-      broadcastNotifications();
-    }
+    NotificationController.isActive = true;
+    print("socket connection initializied");
+    channel.done.then((dynamic _) => _onDisconnected());
+    // channel.stream.handleError();
+    getPendingMessages();
+    broadcastNotifications();
+    // }
   }
 
   getPendingMessages() {
@@ -70,7 +74,7 @@ class NotificationController {
               'message': e.message,
               'id': e.id,
               'time': e.time.toString(),
-              'from': this.username,
+              'from': username,
               'to': senderName,
               'type': 'msg',
             });
@@ -91,11 +95,9 @@ class NotificationController {
     }, onDone: () {
       NotificationController.isActive = false;
       print("conecting aborted");
-      initWebSocketConnection();
     }, onError: (e) {
       NotificationController.isActive = false;
       print('Server error: $e');
-      initWebSocketConnection();
     });
   }
 
@@ -309,22 +311,19 @@ class NotificationController {
     }
   }
 
-  connectWs() async {
-    await getUserName();
-    try {
-      if (NotificationController.isActive == false) {
-        return await WebSocket.connect(wsUrl + this.username + '/');
-      }
-    } catch (e) {
-      NotificationController.isActive = false;
-      print("Error! can not connect WS connectWs " + e.toString());
-      await Future.delayed(Duration(milliseconds: 10000));
-      return await connectWs();
-    }
-  }
+  // connectWs() async {
+  //   await getUserName();
+  //   try {
+  //     return WebSocket.connect(wsUrl + this.username + '/');
+  //   } catch (e) {
+  //     NotificationController.isActive = false;
+  //     print("Error! can not connect WS connectWs " + e.toString());
+  //     // await Future.delayed(Duration(milliseconds: 10000));
+  //     // return await connectWs();
+  //   }
+  // }
 
   void _onDisconnected() {
     NotificationController.isActive = false;
-    initWebSocketConnection();
   }
 }

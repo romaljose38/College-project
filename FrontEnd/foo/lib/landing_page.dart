@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -12,15 +13,18 @@ import 'package:foo/notifications/notification_screen.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/search_screen.dart';
+import 'package:foo/test_cred.dart';
+import 'package:foo/upload_screens/audio_upoad_screen.dart';
 import 'package:foo/upload_screens/image_upload_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:foo/upload_screens/video_upload_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class LandingPageProxy extends StatelessWidget {
-  NotificationController controller = NotificationController();
+  // NotificationController controller = NotificationController();
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +50,9 @@ class _LandingPageState extends State<LandingPage>
   int curpgviewIndex;
   PageController _pageController;
   SharedPreferences _prefs;
+  Timer timer;
+  bool isConnected = false;
+  NotificationController controller;
 
   @override
   void initState() {
@@ -59,10 +66,48 @@ class _LandingPageState extends State<LandingPage>
     );
     animation =
         Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
+    timer = Timer.periodic(Duration(seconds: 10), (Timer t) => handleSocket());
+  }
+
+  Future<void> handleSocket() async {
+    var resp = await http.get(Uri.http(localhost, '/api/ping'));
+    print(NotificationController.isActive);
+    if (resp.statusCode == 200) {
+      if (NotificationController.isActive == false) {
+        if (!isConnected) {
+          await setPrefs();
+          String wsUrl = 'ws://$localhost/ws/chat_room/' +
+              _prefs.getString("username") +
+              "/";
+          // ignore: unused_local_variable
+          WebSocket channel = await WebSocket.connect(wsUrl);
+          NotificationController.channel = channel;
+          controller = NotificationController();
+          isConnected = true;
+        } else {
+          String wsUrl = 'ws://$localhost/ws/chat_room/' +
+              _prefs.getString("username") +
+              "/";
+          WebSocket channel = await WebSocket.connect(wsUrl);
+          NotificationController.channel = channel;
+          NotificationController.isActive = true;
+        }
+      }
+    } else {
+      NotificationController.isActive = false;
+    }
   }
 
   Future<void> setPrefs() async {
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    animationController.dispose();
+    timer.cancel();
+    _pageController.dispose();
   }
 
   notifInit() async {
@@ -107,6 +152,27 @@ class _LandingPageState extends State<LandingPage>
           MaterialPageRoute(
             builder: (_) => ImageUploadScreen(
               mediaInserted: _image,
+            ),
+          ));
+    }
+  }
+
+  Future<void> _getAudio() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      type: FileType.audio,
+    );
+    if (result != null) {
+      File _audio = File(result.files.single.path);
+
+      await animationController.reverse().whenComplete(() {
+        overlayVisible = false;
+        overlayEntry.remove();
+      });
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AudioUploadScreen(
+              audio: _audio,
             ),
           ));
     }
@@ -217,6 +283,26 @@ class _LandingPageState extends State<LandingPage>
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     InkWell(
+                      onTap: _getAudio,
+                      child: Column(
+                        children: [
+                          Icon(
+                            Ionicons.image_outline,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          Text(
+                            "Audio",
+                            style: GoogleFonts.raleway(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 25,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    InkWell(
                       onTap: _getImage,
                       child: Column(
                         children: [
@@ -319,7 +405,8 @@ class _LandingPageState extends State<LandingPage>
       NotificationScreen(),
     ];
     return Scaffold(
-      backgroundColor: Palette.lavender,
+      backgroundColor: Colors.white,
+      extendBody: true,
       body: WillPopScope(
         onWillPop: onBackPress,
         child: pages[_page],
@@ -347,52 +434,53 @@ class _LandingPageState extends State<LandingPage>
       // bottomNavigationBar: Container(
       //   height: 60,
       //   decoration: BoxDecoration(
-      //     color: Colors.white,
+      //     color: Colors.blue,
       //     borderRadius: BorderRadius.circular(25),
       //   ),
       // ),
+
       bottomNavigationBar: BottomAppBar(
+        color: Colors.transparent,
+        child: Container(
           // color: Colors.transparent,
-          shape: CircularNotchedRectangle(),
-          child: Container(
-            // color: Colors.transparent,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: new Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              IconButton(
+                  icon: Icon(Ionicons.home_outline,
+                      size: 25, color: Colors.black),
+                  disabledColor: Colors.green,
+                  onPressed: () => setState(() => _page = 0)),
+              IconButton(
+                  icon: Icon(Ionicons.search_outline,
+                      size: 25, color: Colors.black),
+                  disabledColor: Colors.green,
+                  onPressed: () => setState(() => _page = 1)),
+              SizedBox(
+                width: 14,
               ),
-            ),
-            child: new Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                IconButton(
-                    icon: Icon(Ionicons.home_outline,
-                        size: 25, color: Colors.black),
-                    disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 0)),
-                IconButton(
-                    icon: Icon(Ionicons.search_outline,
-                        size: 25, color: Colors.black),
-                    disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 1)),
-                SizedBox(
-                  width: 14,
-                ),
-                IconButton(
-                    icon: Icon(Ionicons.person_outline,
-                        size: 25, color: Colors.black),
-                    disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 2)),
-                IconButton(
-                    icon: Icon(Ionicons.settings_outline,
-                        size: 25, color: Colors.black),
-                    disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 3)),
-              ],
-            ),
-          )),
+              IconButton(
+                  icon: Icon(Ionicons.person_outline,
+                      size: 25, color: Colors.black),
+                  disabledColor: Colors.green,
+                  onPressed: () => setState(() => _page = 2)),
+              IconButton(
+                  icon: Icon(Ionicons.settings_outline,
+                      size: 25, color: Colors.black),
+                  disabledColor: Colors.green,
+                  onPressed: () => setState(() => _page = 3)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
