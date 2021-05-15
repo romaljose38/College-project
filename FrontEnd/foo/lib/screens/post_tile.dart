@@ -170,7 +170,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   }
 
   Container postImage() => Container(
-        height: 420,
+        height: 540,
         width: double.infinity,
         decoration: BoxDecoration(
           // boxShadow: [BoxShadow()],
@@ -216,7 +216,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   BoxDecoration cardDecorationWithShadow() {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(30.0),
+      borderRadius: BorderRadius.circular(40.0),
       boxShadow: [
         BoxShadow(
             // color: Color.fromRGBO(190, 205, 232, .5),
@@ -241,7 +241,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
     return Container(
       width: double.infinity,
       // margin: EdgeInsets.symmetric(horizontal: 5),
-      height: 420.0,
+      height: 540.0,
       // margin: EdgeInsets.symmetric(vertical: 10),
       decoration:
           widget.index == 0 ? cardDecoration() : cardDecorationWithShadow(),
@@ -292,11 +292,12 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                         ),
                       );
                     },
-                    child: CircleAvatar(
-                      child: ClipOval(
-                        child: Image(
-                          height: 50.0,
-                          width: 50.0,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        image: DecorationImage(
                           image: AssetImage(widget.post.userDpUrl),
                           fit: BoxFit.cover,
                         ),
@@ -345,42 +346,75 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                       height: 15,
                     ),
                     Row(children: [
+                      // ClipRRect(
+                      //   borderRadius: BorderRadius.circular(20),
+                      //   child: Container(
+                      //       // width: 60,
+                      //       height: 40,
+                      //       decoration: BoxDecoration(
+                      //         // color: Colors.black,
+                      //         borderRadius: BorderRadius.circular(20),
+                      //       ),
+                      //       child: BackdropFilter(
+                      //         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      //         child: Row(
+                      //           mainAxisAlignment: MainAxisAlignment.start,
+                      //           crossAxisAlignment: CrossAxisAlignment.center,
+                      //           children: [
+                      //             IconButton(
+                      //               icon: Icon(
+                      //                   hasLiked
+                      //                       ? Ionicons.heart
+                      //                       : Ionicons.heart_outline,
+                      //                   color: Colors.white),
+                      //               iconSize: 22.0,
+                      //               onPressed: likePost,
+                      //             ),
+                      //             Text(
+                      //               likeCount.toString(),
+                      //               style: TextStyle(
+                      //                 fontSize: 12.0,
+                      //                 color: Colors.white,
+                      //                 fontWeight: FontWeight.w600,
+                      //               ),
+                      //             ),
+                      //             SizedBox(width: 10),
+                      //           ],
+                      //         ),
+                      //       )),
+                      // ),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
-                            // width: 60,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              // color: Colors.black,
-                              borderRadius: BorderRadius.circular(20),
+                          constraints: BoxConstraints(maxWidth: 69),
+                          color: hasLiked
+                              ? Colors.red.shade700
+                              : Colors.transparent,
+                          height: 37,
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(
+                                sigmaX: hasLiked ? 0 : 25,
+                                sigmaY: hasLiked ? 0 : 25),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Ionicons.heart,
+                                    color: Colors.white, size: 22),
+                                SizedBox(width: 5),
+                                // SizedBox(width: 25),
+                                Text(
+                                  "342",
+                                  style: TextStyle(
+                                    fontSize: 11.0,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                        hasLiked
-                                            ? Ionicons.heart
-                                            : Ionicons.heart_outline,
-                                        color: Colors.white),
-                                    iconSize: 22.0,
-                                    onPressed: likePost,
-                                  ),
-                                  Text(
-                                    likeCount.toString(),
-                                    style: TextStyle(
-                                      fontSize: 12.0,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                ],
-                              ),
-                            )),
+                          ),
+                        ),
                       ),
                       Container(
                         width: 75,

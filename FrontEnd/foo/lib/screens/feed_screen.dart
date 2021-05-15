@@ -298,7 +298,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           opacity: Tween<double>(begin: 0, end: 1)
                               .animate(animation),
                           child: Align(
-                              heightFactor: .92,
+                              heightFactor: .94,
                               alignment: Alignment.center,
                               child: PostTile(
                                   post: postsList[index], index: index))),
