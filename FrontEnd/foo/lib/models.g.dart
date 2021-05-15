@@ -335,3 +335,86 @@ class NotificationsAdapter extends TypeAdapter<Notifications> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class StoryAdapter extends TypeAdapter<Story> {
+  @override
+  final int typeId = 7;
+
+  @override
+  Story read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Story(
+      file: fields[0] as String,
+      views: fields[1] as int,
+      time: fields[2] as DateTime,
+      viewed: fields[3] as bool,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, Story obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(0)
+      ..write(obj.file)
+      ..writeByte(1)
+      ..write(obj.views)
+      ..writeByte(2)
+      ..write(obj.time)
+      ..writeByte(3)
+      ..write(obj.viewed);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StoryAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class StoriesAdapter extends TypeAdapter<Stories> {
+  @override
+  final int typeId = 8;
+
+  @override
+  Stories read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Stories(
+      username: fields[0] as String,
+      id: fields[1] as int,
+      stories: (fields[2] as List)?.cast<Story>(),
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, Stories obj) {
+    writer
+      ..writeByte(3)
+      ..writeByte(0)
+      ..write(obj.username)
+      ..writeByte(1)
+      ..write(obj.id)
+      ..writeByte(2)
+      ..write(obj.stories);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StoriesAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}

@@ -125,10 +125,13 @@ class _StoryScreenState extends State<StoryScreen>
 
   Future<File> _getOrDownload(String url) async {
     String mediaName = _getMediaName(url);
-    if (!(await _isExistsInStorage(url))) {
-      await _downloadMedia(url);
-    }
-    return File("$storyDir/$mediaName");
+    if (await Permission.storage.request().isGranted) {
+      if (!(await _isExistsInStorage(url))) {
+        await _downloadMedia(url);
+      }
+      return File("$storyDir/$mediaName");
+    } else
+      Navigator.pop(context);
   }
 
   var a = Offset.zero;

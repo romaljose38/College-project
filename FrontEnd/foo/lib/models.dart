@@ -288,3 +288,36 @@ class Notifications extends HiveObject {
 
   Notifications({this.type, this.userName, this.userId, this.timeCreated});
 }
+
+// Story models ahead
+
+@HiveType(typeId: 7)
+class Story extends HiveObject {
+  @HiveField(0)
+  String file;
+
+  @HiveField(1)
+  int views;
+
+  @HiveField(2)
+  DateTime time;
+
+  @HiveField(3)
+  bool viewed;
+
+  Story({this.file, this.views, this.time, this.viewed});
+}
+
+@HiveType(typeId: 8)
+class Stories extends HiveObject {
+  @HiveField(0)
+  String username;
+
+  @HiveField(1)
+  int id;
+
+  @HiveField(2)
+  List<Story> stories = <Story>[];
+
+  Stories({this.username, this.id, this.stories});
+}

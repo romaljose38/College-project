@@ -143,13 +143,45 @@ class _FeedScreenState extends State<FeedScreen> {
       myStoryList = jsonDecode(response.body);
       myItemCounter = myStoryList.length + 1;
     });
-    print(myStoryList);
+    // print(myStoryList);
   }
 
   int myItemCounter = 1;
 
+  //A test function that picks up all the data concerning to stories from hive
+
+  void pickStoryFromHive() {
+    var listToPutToHive = myStoryList;
+    var box = Hive.box('MyStories');
+
+    for (int i = 0; i < listToPutToHive.length; i++) {
+      box.put(
+          listToPutToHive[i]['username'],
+          Stories(
+            username: listToPutToHive[i]['username'],
+            id: listToPutToHive[i]['id'],
+            stories: <Story>[
+              ...listToPutToHive[i]['stories']
+                  .map((story) => Story(
+                        file: story['file'],
+                        views: story['views'],
+                        time: DateTime.parse(story['time']),
+                      ))
+                  .toList()
+            ],
+          ));
+    }
+
+    if (box.containsKey('pranav')) {
+      var pranavStory = box.get('pranav');
+      print('${pranavStory.username} - ${pranavStory.stories}');
+    }
+  }
+
+  //
+
   Container _horiz() {
-    print("Is something happening?");
+    pickStoryFromHive();
     return Container(
       width: double.infinity,
       height: 100.0,
@@ -163,11 +195,11 @@ class _FeedScreenState extends State<FeedScreen> {
           }
           return GestureDetector(
             onTap: () {
-              print(
-                  "You tickled ${myStoryList[index - 1]['username']} $index times");
-              print("${myStoryList[index - 1]['stories'][0]['file']}");
-              print("$myStoryList");
-              print("${myStoryList.length}");
+              // print(
+              //     "You tickled ${myStoryList[index - 1]['username']} $index times");
+              // print("${myStoryList[index - 1]['stories'][0]['file']}");
+              // print("$myStoryList");
+              // print("${myStoryList.length}");
               Navigator.of(context).push(
                 MaterialPageRoute(
                     builder: (context) => StoryBuilder(
