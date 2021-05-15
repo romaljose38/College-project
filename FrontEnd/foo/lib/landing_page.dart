@@ -70,30 +70,34 @@ class _LandingPageState extends State<LandingPage>
   }
 
   Future<void> handleSocket() async {
-    var resp = await http.get(Uri.http(localhost, '/api/ping'));
-    print(NotificationController.isActive);
-    if (resp.statusCode == 200) {
-      if (NotificationController.isActive == false) {
-        if (!isConnected) {
-          await setPrefs();
-          String wsUrl = 'ws://$localhost/ws/chat_room/' +
-              _prefs.getString("username") +
-              "/";
-          // ignore: unused_local_variable
-          WebSocket channel = await WebSocket.connect(wsUrl);
-          NotificationController.channel = channel;
-          controller = NotificationController();
-          isConnected = true;
-        } else {
-          String wsUrl = 'ws://$localhost/ws/chat_room/' +
-              _prefs.getString("username") +
-              "/";
-          WebSocket channel = await WebSocket.connect(wsUrl);
-          NotificationController.channel = channel;
-          NotificationController.isActive = true;
+    try {
+      var resp = await http.get(Uri.http(localhost, '/api/ping'));
+      print(NotificationController.isActive);
+      if (resp.statusCode == 200) {
+        if (NotificationController.isActive == false) {
+          if (!isConnected) {
+            await setPrefs();
+            String wsUrl = 'ws://$localhost/ws/chat_room/' +
+                _prefs.getString("username") +
+                "/";
+            // ignore: unused_local_variable
+            WebSocket channel = await WebSocket.connect(wsUrl);
+            NotificationController.channel = channel;
+            controller = NotificationController();
+            isConnected = true;
+          } else {
+            String wsUrl = 'ws://$localhost/ws/chat_room/' +
+                _prefs.getString("username") +
+                "/";
+            WebSocket channel = await WebSocket.connect(wsUrl);
+            NotificationController.channel = channel;
+            NotificationController.isActive = true;
+          }
         }
+      } else {
+        NotificationController.isActive = false;
       }
-    } else {
+    } catch (e) {
       NotificationController.isActive = false;
     }
   }
