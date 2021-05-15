@@ -260,3 +260,7 @@ def get_status(request):
     except Exception as e:
         print(e)
         return Response(status=400)
+
+@api_view(['GET'])
+def ping(request):
+    return Response(status=200)

@@ -42,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Thread thread;
   SharedPreferences _prefs;
   Timer timer;
-  String userStatus = "Offline";
+  String userStatus = "";
 
   @override
   void initState() {

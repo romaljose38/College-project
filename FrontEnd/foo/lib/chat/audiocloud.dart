@@ -228,6 +228,7 @@ class _PlayerState extends State<Player> {
   //activates the player and responsible for changing the pause/play icon
   Future<void> playerStateChange() async {
     print("button click");
+    print(totalDuration);
     if ((widget.file != null) & (!hasInitialized)) {
       print("initializing");
       await player.play(widget.file.path,
