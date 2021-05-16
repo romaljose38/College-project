@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
 import 'chatcloudlist.dart';
 import 'socket.dart';
@@ -117,8 +118,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ));
       currentThread.save();
 
-      if (NotificationController.isActive) {
-        NotificationController.sendToChannel(data);
+      if (LandingPageState.isConnected) {
+        LandingPageState.sendToChannel(data);
       } else {
         print("not connected");
       }
@@ -159,7 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
         isMe: true,
       ));
       currentThread.save();
-      NotificationController.sendToChannel(data);
+      LandingPageState.channel.add(data);
     }
   }
 
