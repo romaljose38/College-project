@@ -304,21 +304,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                     key: listKey,
                     // controller: _scrollController,
                     itemBuilder: (context, index, animation) {
-                      print(index);
-                      print(currentPos);
-                      print("current offset");
-                      print(minHeight * heightFactor);
-                      print(((currentPos + 120) / (minHeight * heightFactor)));
-                      double val =
-                          ((currentPos - 120) / (minHeight * heightFactor));
-                      var dec = val;
-                      if (dec < 0) {
-                        dec = 0;
-                      } else if (dec > 1) {
-                        dec = 1;
-                      }
-
-                      print(dec);
                       return SlideTransition(
                         position: Tween<Offset>(
                                 begin: Offset(0, -.4), end: Offset(0, 0))
@@ -327,19 +312,15 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                         child: FadeTransition(
                           opacity: Tween<double>(begin: 0, end: 1)
                               .animate(animation),
-                          child: Transform(
-                            transform: Matrix4.identity()
-                              ..rotateX((math.pi / 8) * dec),
-                            child: Align(
-                              heightFactor: heightFactor,
-                              alignment: Alignment.center,
-                              child: PostTile(
-                                  post: postsList[index],
-                                  index: index,
-                                  isLast: index == (postsList.length - 1)
-                                      ? true
-                                      : false),
-                            ),
+                          child: Align(
+                            heightFactor: heightFactor,
+                            alignment: Alignment.center,
+                            child: PostTile(
+                                post: postsList[index],
+                                index: index,
+                                isLast: index == (postsList.length - 1)
+                                    ? true
+                                    : false),
                           ),
                         ),
                       );
