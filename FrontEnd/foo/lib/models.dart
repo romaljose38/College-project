@@ -303,13 +303,17 @@ class Story extends HiveObject {
   DateTime time;
 
   @HiveField(3)
-  bool viewed;
+  bool viewed = false;
 
   Story({this.file, this.views, this.time, this.viewed});
+
+  String display() {
+    return 'file: $file - seen: $viewed - time: $time';
+  }
 }
 
 @HiveType(typeId: 8)
-class Stories extends HiveObject {
+class UserStoryModel extends HiveObject {
   @HiveField(0)
   String username;
 
@@ -319,5 +323,22 @@ class Stories extends HiveObject {
   @HiveField(2)
   List<Story> stories = <Story>[];
 
-  Stories({this.username, this.id, this.stories});
+  UserStoryModel({this.username, this.id, this.stories});
+
+  List<dynamic> hasUnSeen() {
+    for (int index = stories.length - 1; index >= 0; index--) {
+      if (stories[index].viewed == null) return [true, index];
+    }
+    return [false, -1];
+  }
+
+  DateTime lastStory() {
+    return stories.last.time;
+  }
+
+  void deleteUserStoryModel(var box) {
+    box.delete(username);
+  }
+
+  void necessaryChanges(var box) {}
 }

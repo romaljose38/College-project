@@ -157,7 +157,7 @@ class _FeedScreenState extends State<FeedScreen> {
     for (int i = 0; i < listToPutToHive.length; i++) {
       box.put(
           listToPutToHive[i]['username'],
-          Stories(
+          UserStoryModel(
             username: listToPutToHive[i]['username'],
             id: listToPutToHive[i]['id'],
             stories: <Story>[
@@ -174,7 +174,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
     if (box.containsKey('pranav')) {
       var pranavStory = box.get('pranav');
-      print('${pranavStory.username} - ${pranavStory.stories}');
+      print('${pranavStory.stories[0].display()}');
     }
   }
 
@@ -288,7 +288,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var minHeight = math.min(540, MediaQuery.of(context).size.height * .7);
+    var minHeight = math.min(540.0, MediaQuery.of(context).size.height * .7);
     var heightFactor = (minHeight - 48) / minHeight;
     print(heightFactor);
     return Padding(

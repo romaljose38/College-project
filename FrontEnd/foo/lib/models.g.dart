@@ -379,17 +379,17 @@ class StoryAdapter extends TypeAdapter<Story> {
           typeId == other.typeId;
 }
 
-class StoriesAdapter extends TypeAdapter<Stories> {
+class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
   @override
   final int typeId = 8;
 
   @override
-  Stories read(BinaryReader reader) {
+  UserStoryModel read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Stories(
+    return UserStoryModel(
       username: fields[0] as String,
       id: fields[1] as int,
       stories: (fields[2] as List)?.cast<Story>(),
@@ -397,7 +397,7 @@ class StoriesAdapter extends TypeAdapter<Stories> {
   }
 
   @override
-  void write(BinaryWriter writer, Stories obj) {
+  void write(BinaryWriter writer, UserStoryModel obj) {
     writer
       ..writeByte(3)
       ..writeByte(0)
@@ -414,7 +414,7 @@ class StoriesAdapter extends TypeAdapter<Stories> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StoriesAdapter &&
+      other is UserStoryModelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

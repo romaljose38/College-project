@@ -32,7 +32,7 @@ Future<void> main() async {
   Hive.registerAdapter(PostAdapter());
   Hive.registerAdapter(NotificationTypeAdapter());
   Hive.registerAdapter(NotificationsAdapter());
-  Hive.registerAdapter(StoriesAdapter());
+  Hive.registerAdapter(UserStoryModelAdapter());
   Hive.registerAdapter(StoryAdapter());
 
   await Hive.openBox('Threads');
