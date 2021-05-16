@@ -415,73 +415,76 @@ class _LandingPageState extends State<LandingPage>
         onWillPop: onBackPress,
         child: pages[_page],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: ClipOval(
-        clipBehavior: Clip.antiAlias,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(.2),
-          ),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: IconButton(
-              icon: Icon(Ionicons.add, color: Colors.black, size: 20),
-              onPressed: () {
-                showOverlay(context);
-              },
-            ),
-          ),
-        ),
-      ),
-      // bottomNavigationBar: Container(
-      //   height: 60,
-      //   decoration: BoxDecoration(
-      //     color: Colors.blue,
-      //     borderRadius: BorderRadius.circular(25),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // floatingActionButton: ClipOval(
+      //   clipBehavior: Clip.antiAlias,
+      //   child: Container(
+      //     width: 40,
+      //     height: 40,
+      //     decoration: BoxDecoration(
+      //       color: Colors.white.withOpacity(.2),
+      //     ),
+      //     child: BackdropFilter(
+      //       filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+      //       child: IconButton(
+      //         icon: Icon(Ionicons.add, color: Colors.black, size: 20),
+      //         onPressed: () {
+      //           showOverlay(context);
+      //         },
+      //       ),
+      //     ),
       //   ),
       // ),
-
       bottomNavigationBar: BottomAppBar(
         color: Colors.transparent,
-        child: Container(
-          // color: Colors.transparent,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
           ),
-          child: new Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              IconButton(
-                  icon: Icon(Ionicons.home_outline,
-                      size: 25, color: Colors.black),
-                  disabledColor: Colors.green,
-                  onPressed: () => setState(() => _page = 0)),
-              IconButton(
-                  icon: Icon(Ionicons.search_outline,
-                      size: 25, color: Colors.black),
-                  disabledColor: Colors.green,
-                  onPressed: () => setState(() => _page = 1)),
-              SizedBox(
-                width: 14,
+          child: Container(
+            // color: Colors.transparent,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(30),
+                topRight: Radius.circular(30),
               ),
-              IconButton(
-                  icon: Icon(Ionicons.person_outline,
-                      size: 25, color: Colors.black),
-                  disabledColor: Colors.green,
-                  onPressed: () => setState(() => _page = 2)),
-              IconButton(
-                  icon: Icon(Ionicons.settings_outline,
-                      size: 25, color: Colors.black),
-                  disabledColor: Colors.green,
-                  onPressed: () => setState(() => _page = 3)),
-            ],
+            ),
+            child: new Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                IconButton(
+                    icon: Icon(Ionicons.home, size: 22, color: Colors.black),
+                    disabledColor: Colors.green,
+                    onPressed: () => setState(() => _page = 0)),
+                IconButton(
+                    icon: Icon(Ionicons.search_outline,
+                        size: 22, color: Colors.black),
+                    disabledColor: Colors.green,
+                    onPressed: () => setState(() => _page = 1)),
+                // SizedBox(
+                //   width: 14,
+                // ),
+                Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(width: 1, color: Colors.black),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Ionicons.add, size: 20, color: Colors.black)),
+                IconButton(
+                    icon: Icon(Ionicons.person_outline,
+                        size: 22, color: Colors.black),
+                    disabledColor: Colors.green,
+                    onPressed: () => setState(() => _page = 2)),
+                IconButton(
+                    icon: Icon(Ionicons.settings_outline,
+                        size: 22, color: Colors.black),
+                    disabledColor: Colors.green,
+                    onPressed: () => setState(() => _page = 3)),
+              ],
+            ),
           ),
         ),
       ),

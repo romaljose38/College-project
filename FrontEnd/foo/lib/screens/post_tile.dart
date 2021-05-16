@@ -15,12 +15,14 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'feed_icons.dart' as icons;
 import 'package:foo/models.dart';
+import 'dart:math' as math;
 
 class PostTile extends StatefulWidget {
   final Post post;
   final int index;
+  final bool isLast;
 
-  PostTile({this.post, this.index});
+  PostTile({this.post, this.index, this.isLast});
 
   @override
   _PostTileState createState() => _PostTileState();
@@ -169,12 +171,19 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
     overlayState.insert(overlayEntry);
   }
 
-  Container postImage() => Container(
-        height: 540,
+  Container postImage(height) => Container(
+        height: height,
         width: double.infinity,
         decoration: BoxDecoration(
           // boxShadow: [BoxShadow()],
-          // borderRadius: BorderRadius.circular(25),
+
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: Colors.black.withOpacity(.5),
+          //     spreadRadius: -2,
+          //     blurRadius: 7,
+          //   )
+          // ],
           image: DecorationImage(
             image: CachedNetworkImageProvider(widget.post.postUrl),
             // image: CachedNetworkImageProvider(widget.post.postUrl),
@@ -183,8 +192,8 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
         ),
       );
 
-  Container postAudio() => Container(
-        height: 420,
+  Container postAudio(height) => Container(
+        height: height,
         width: double.infinity,
         decoration: BoxDecoration(
           // boxShadow: [BoxShadow()],
@@ -199,7 +208,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
       );
 
   Container postVideo() => Container(
-        height: 420,
+        height: 540,
         width: double.infinity,
         decoration: BoxDecoration(
           // boxShadow: [BoxShadow()],
@@ -216,15 +225,15 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   BoxDecoration cardDecorationWithShadow() {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(40.0),
-      boxShadow: [
-        BoxShadow(
-            // color: Color.fromRGBO(190, 205, 232, .5),
-            color: Colors.black.withOpacity(.2),
-            blurRadius: 4,
-            spreadRadius: 2,
-            offset: Offset(0, -2)),
-      ],
+      borderRadius: BorderRadius.circular(30.0),
+      // boxShadow: [
+      //   BoxShadow(
+      //       // color: Color.fromRGBO(190, 205, 232, .5),
+      //       color: Colors.black.withOpacity(.2),
+      //       blurRadius: 10,
+      //       spreadRadius: 1,
+      //       offset: Offset(0, -2)),
+      // ],
     );
   }
 
@@ -237,12 +246,15 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    var height = math.min(540, MediaQuery.of(context).size.height * .7);
+    // var height = 440.0;
     print(widget.post.type);
     return Container(
       width: double.infinity,
       // margin: EdgeInsets.symmetric(horizontal: 5),
-      height: 540.0,
-      // margin: EdgeInsets.symmetric(vertical: 10),
+      height: height,
+
+      margin: widget.isLast ? EdgeInsets.only(bottom: 60) : EdgeInsets.all(0),
       decoration:
           widget.index == 0 ? cardDecoration() : cardDecorationWithShadow(),
       child: GestureDetector(
@@ -253,7 +265,8 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                   builder: (_) => CommentScreen(
                       postUrl: widget.post.postUrl,
                       heroIndex: widget.index,
-                      postId: widget.post.postId)
+                      postId: widget.post.postId,
+                      height: height)
                   // ViewPostScreen(post: widget.post, index: widget.index),
                   ));
           print("got back something");
@@ -274,8 +287,23 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
               tag: 'profile_${widget.index}',
               transitionOnUserGestures: true,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(25),
-                child: widget.post.type == "img" ? postImage() : postAudio(),
+                borderRadius: BorderRadius.circular(30),
+                child: widget.post.type == "img"
+                    ? postImage(height)
+                    : postAudio(height),
+              ),
+            ),
+            Container(
+              height: height,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black.withOpacity(.8), Colors.transparent],
+                  stops: [.01, .2],
+                ),
               ),
             ),
             Positioned(
@@ -325,11 +353,11 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
               ),
             ),
             Positioned(
-              bottom: 0,
+              bottom: 8,
               left: 0,
               child: Container(
                 width: MediaQuery.of(context).size.width - 20,
-                padding: EdgeInsets.fromLTRB(20, 0, 0, 20),
+                padding: EdgeInsets.fromLTRB(20, 0, 0, 25),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(25),
