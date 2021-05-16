@@ -37,7 +37,7 @@ class ChatTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(.2),
+              color: Colors.black.withOpacity(.1),
               offset: Offset(0, 0),
               blurRadius: 8,
             )
@@ -46,7 +46,7 @@ class ChatTile extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       child: ListTile(
           trailing: Container(
-            width: MediaQuery.of(context).size.width * .13,
+            width: 50,
             child: Padding(
               padding: EdgeInsets.only(top: 10),
               child: Column(
@@ -60,16 +60,16 @@ class ChatTile extends StatelessWidget {
                     height: 6,
                   ),
                   SizedBox(
-                    height: 15,
-                    child: (thread.hasUnseen > 0)
-                        ? CircleAvatar(
-                            backgroundColor: Colors.black,
-                            radius: 20,
-                            child: Text(thread.hasUnseen.toString(),
-                                style: TextStyle(fontSize: 12)),
-                          )
-                        : Container(),
-                  ),
+                      height: 15,
+                      // child: (thread.hasUnseen > 0)
+                      // ?
+                      child: CircleAvatar(
+                        backgroundColor: Colors.black,
+                        radius: 20,
+                        child: Text('32', style: TextStyle(fontSize: 11)),
+                      )
+                      // : Container(),
+                      ),
                 ],
                 mainAxisAlignment: MainAxisAlignment.start,
               ),

@@ -20,7 +20,7 @@ class FeedScreen extends StatefulWidget {
   _FeedScreenState createState() => _FeedScreenState();
 }
 
-class _FeedScreenState extends State<FeedScreen> {
+class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   // ScrollController _scrollController = ScrollController();
   // ScrollController _nestedScrollController = ScrollController();
   TrackingScrollController _scrollController = TrackingScrollController();
@@ -29,8 +29,8 @@ class _FeedScreenState extends State<FeedScreen> {
   int itemCount = 0;
   bool isConnected = false;
   GlobalKey<SliverAnimatedListState> listKey;
-
-  //
+  ScrollController _controller;
+  double currentPos = 0;
   var myStoryList = [];
   //
 
@@ -41,6 +41,13 @@ class _FeedScreenState extends State<FeedScreen> {
     _fetchStory();
     super.initState();
     // _getNewPosts();
+    _controller = ScrollController();
+    _controller.addListener(() {
+      setState(() {
+        currentPos = _controller.offset;
+      });
+      // print(currentPos);
+    });
     _scrollController
       ..addListener(() {
         // if (_scrollController.position.pixels ==
@@ -181,7 +188,10 @@ class _FeedScreenState extends State<FeedScreen> {
   //
 
   Container _horiz() {
+<<<<<<< HEAD
     pickStoryFromHive();
+=======
+>>>>>>> 1760c76499a75b57175cda9d31947f6887f53ea8
     return Container(
       width: double.infinity,
       height: 100.0,
@@ -290,7 +300,7 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     var minHeight = math.min(540.0, MediaQuery.of(context).size.height * .7);
     var heightFactor = (minHeight - 48) / minHeight;
-    print(heightFactor);
+
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(
@@ -322,14 +332,41 @@ class _FeedScreenState extends State<FeedScreen> {
                 return Future.value('nothing');
               },
               child: CustomScrollView(
+                controller: _controller,
                 slivers: [
                   SliverToBoxAdapter(child: _horiz()),
                   SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  // SliverToBoxAdapter(
+                  //     child: SizedBox(
+                  //   height: MediaQuery.of(context).size.height - 120,
+                  //   child: ListView.builder(
+                  //       controller: _controller,
+                  //       itemBuilder: (context, index) {
+                  //         print(index);
+                  //         print((currentPos / minHeight));
+                  //         return PostTile(
+                  //             post: postsList[index],
+                  //             index: index,
+                  //             isLast: index == (postsList.length - 1)
+                  //                 ? true
+                  //                 : false);
+                  //       }),
+                  // )),
+
                   SliverAnimatedList(
                     initialItemCount: itemCount,
                     key: listKey,
                     // controller: _scrollController,
                     itemBuilder: (context, index, animation) {
+                      print(index);
+                      print(currentPos);
+                      print("current offset");
+                      print(minHeight * heightFactor);
+                      print(((currentPos + 120) / (minHeight * heightFactor)));
+                      double val =
+                          ((currentPos - 120) / (minHeight * heightFactor));
+                      var dec = val - val.truncate();
+                      print(dec);
                       return SlideTransition(
                         position: Tween<Offset>(
                                 begin: Offset(0, -.4), end: Offset(0, 0))
@@ -338,15 +375,19 @@ class _FeedScreenState extends State<FeedScreen> {
                         child: FadeTransition(
                           opacity: Tween<double>(begin: 0, end: 1)
                               .animate(animation),
-                          child: Align(
-                            heightFactor: heightFactor,
-                            alignment: Alignment.center,
-                            child: PostTile(
-                                post: postsList[index],
-                                index: index,
-                                isLast: index == (postsList.length - 1)
-                                    ? true
-                                    : false),
+                          child: Transform(
+                            transform: Matrix4.identity()
+                              ..rotateX((math.pi / 16) * dec),
+                            child: Align(
+                              heightFactor: heightFactor,
+                              alignment: Alignment.center,
+                              child: PostTile(
+                                  post: postsList[index],
+                                  index: index,
+                                  isLast: index == (postsList.length - 1)
+                                      ? true
+                                      : false),
+                            ),
                           ),
                         ),
                       );
