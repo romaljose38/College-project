@@ -188,10 +188,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   //
 
   Container _horiz() {
-<<<<<<< HEAD
     pickStoryFromHive();
-=======
->>>>>>> 1760c76499a75b57175cda9d31947f6887f53ea8
     return Container(
       width: double.infinity,
       height: 100.0,
