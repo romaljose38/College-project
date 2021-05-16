@@ -60,16 +60,44 @@ class ChatTile extends StatelessWidget {
                     height: 6,
                   ),
                   SizedBox(
-                      height: 15,
-                      // child: (thread.hasUnseen > 0)
-                      // ?
-                      child: CircleAvatar(
-                        backgroundColor: Colors.black,
-                        radius: 20,
-                        child: Text('32', style: TextStyle(fontSize: 11)),
-                      )
-                      // : Container(),
-                      ),
+                    height: 20,
+                    child: (thread.hasUnseen > 0)
+                        ? Container(
+                            width: 20,
+                            height: 20,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.green.withOpacity(.6),
+                                  Colors.transparent
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  offset: Offset(2, 5),
+                                  color: Colors.black.withOpacity(.4),
+                                  spreadRadius: 1,
+                                  blurRadius: 15,
+                                ),
+                                BoxShadow(
+                                  offset: Offset(-2, -5),
+                                  color: Colors.white,
+                                  spreadRadius: 1,
+                                  blurRadius: 15,
+                                ),
+                              ],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(thread.hasUnseen.toString(),
+                                style: TextStyle(
+                                    fontSize: 8, color: Colors.white)),
+                          )
+                        : Container(),
+                  ),
                 ],
                 mainAxisAlignment: MainAxisAlignment.start,
               ),

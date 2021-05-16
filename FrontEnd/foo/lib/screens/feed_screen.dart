@@ -299,23 +299,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 slivers: [
                   SliverToBoxAdapter(child: _horiz()),
                   SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  // SliverToBoxAdapter(
-                  //     child: SizedBox(
-                  //   height: MediaQuery.of(context).size.height - 120,
-                  //   child: ListView.builder(
-                  //       controller: _controller,
-                  //       itemBuilder: (context, index) {
-                  //         print(index);
-                  //         print((currentPos / minHeight));
-                  //         return PostTile(
-                  //             post: postsList[index],
-                  //             index: index,
-                  //             isLast: index == (postsList.length - 1)
-                  //                 ? true
-                  //                 : false);
-                  //       }),
-                  // )),
-
                   SliverAnimatedList(
                     initialItemCount: itemCount,
                     key: listKey,
@@ -328,7 +311,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                       print(((currentPos + 120) / (minHeight * heightFactor)));
                       double val =
                           ((currentPos - 120) / (minHeight * heightFactor));
-                      var dec = val - val.truncate();
+                      var dec = val;
+                      if (dec < 0) {
+                        dec = 0;
+                      } else if (dec > 1) {
+                        dec = 1;
+                      }
+
                       print(dec);
                       return SlideTransition(
                         position: Tween<Offset>(
@@ -340,7 +329,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                               .animate(animation),
                           child: Transform(
                             transform: Matrix4.identity()
-                              ..rotateX((math.pi / 16) * dec),
+                              ..rotateX((math.pi / 8) * dec),
                             child: Align(
                               heightFactor: heightFactor,
                               alignment: Alignment.center,
