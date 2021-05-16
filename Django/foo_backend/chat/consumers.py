@@ -102,24 +102,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
             await self.accept()
-
-            # pending_messages = await self.get
-            # pending_messages = await self.get_pending_messages()
+            
+            pending_messages = await self.get_pending_messages()
+            pending_msg_status = await self.get_pending_notifications()
             # pending_requests = await self.get_pending_requests()
 
-            # if len(pending_messages)>0:
-            #     for msg in pending_messages:
-            #         text,snd_user,chat_id = await self.get_chat_details(msg)
+            if len(pending_messages)>0:
+                for msg in pending_messages:
+                    text,snd_user,chat_id = await self.get_chat_details(msg)
                     
-            #         msg_obj = json.dumps({
-            #             'message':{
-            #             'message':text,
-            #             'from':snd_user,
-            #             'id':chat_id,
-            #             'to':self.user.username
-            #         }})
+                    msg_obj = json.dumps({
+                        'message':{
+                        'message':text,
+                        'from':snd_user,
+                        'id':chat_id,                     
+                    }})
 
-            #         await self.send(text_data=msg_obj)
+                    await self.send(text_data=msg_obj)
+            if len(pending_msg_status)>0:
+                for msg in pending_msg_status:
+                    await self.send(text_data=json.dumps(msg))
             # if len(pending_requests)>0:
             #     for req in pending_requests:
             #         request = await self.get_request_details(req)
@@ -166,6 +168,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return FriendRequest.objects.filter(to_user=self.user, has_received=False)
 
     @database_sync_to_async
+    def get_pending_notifications(self):
+        final_list = []
+        qs = Notification.objects.filter(notif_to=self.user)
+        print(qs,"queryset")
+        for i in qs:
+            if i.notif_type=="received":
+                final_list.append({                        
+                            'received':i.chatmsg_id,
+                            'from':i.notif_from.username,
+                            'notif_id':i.id,
+                        },
+                )
+            elif i.notif_type=="seen":
+                final_list.append({                        
+                            'type':"seen_ticker",
+                            'from':i.notif_from.username,
+                            'id':i.chatmsg_id,
+                            'notif_id':i.id,
+                        }
+                )
+
+        print(final_list)
+        return final_list
+
+    @database_sync_to_async
     def get_request_details(self, request):
         return {"type":"notification","username":request.from_user.username, "user_id":request.from_user.id, "id":request.id}
 
@@ -176,31 +203,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
             print(text_data_json)
             # pass
             msg_id = int(text_data_json['received'])
-            should_inform, chat_id ,chat_user = await self.add_user_to_recipients(msg_id)
+            should_inform, chat_id ,chat_user, id = await self.add_user_to_recipients(msg_id)
             if should_inform:
                 await self.channel_layer.group_send(
                                                     chat_user.username,
                                                     {
                                                         'type':'chat_received_notif',
-                                                        'message':{
-                                                            'to':chat_user.username,
+                                                        'message':{                                                            
                                                             'received':chat_id,
                                                             'from':self.user.username,
+                                                            'notif_id':id
                                                         }
                                                     }
                                                 )
-
+        elif 'n_r' in text_data_json:
+            await self.delete_notification(text_data_json['n_r'])
         else:
             if text_data_json['type']=="seen_ticker":
                 print(text_data_json)
                 to_user, status = await self.get_user_status_from_username(text_data_json['to'])
+                notif_id = await self.create_notification_from_json(text_data_json,to_user)
+                text_data_json['notif_id']=notif_id
                 if status:
                     await self.channel_layer.group_send(
                         text_data_json['to'],
                         text_data_json
                     )
-                else:
-                    await self.create_notification_from_json(text_data_json,to_user)
+                
+                    
             elif text_data_json['type']=='typing_status':
                 text_data_json['from'] = self.room_group_name
                 to = text_data_json['to']
@@ -224,6 +254,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'message':msg,
                         'to':to,
                         'id':chat_msg_id,
+                        'time':time_str,
                         'from':self.user.username  # This line is not needed in production; only for debugging
                     }
 
@@ -255,6 +286,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'aud':aud,
                         'ext':extension,
                         'to':to,
+                        'time':time_str,
                         'id':chat_msg_id,
                         'from':self.user.username  # This line is not needed in production; only for debugging
                     }
@@ -286,6 +318,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     message = {
                         'img':img,
                         'ext':extension,
+                        'time':time_str,
                         'to':to,
                         'id':chat_msg_id,
                         'from':self.user.username  # This line is not needed in production; only for debugging
@@ -317,13 +350,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_msg.recipients.add(self.user)
         chat_msg.save()
         if (self.user != chat_msg.user):
+            notification = Notification(notif_type="received", notif_from=self.user, notif_to=chat_msg.user, chatmsg_id=chat_msg.id)
+            notification.save()
             if chat_msg.user.profile.online:
-                return True, chat_msg.id ,chat_msg.user
-            else:
-                notification = Notification(notif_type="received", notif_from=self.user, notif_to=chat_msg.user, chatmsg_id=chat_msg.id)
-                notification.save()
-            return False, None, None
-        return False, None, None
+                return True, chat_msg.id ,chat_msg.user, notification.id
+ 
+            return False, None, None, None
+        return False, None, None, None
        
 
 
@@ -332,6 +365,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def create_chat_message(self, message, to, time):
         thread = Thread.objects.get_or_new(self.user,to)
         cur_message = ChatMessage.objects.create(user=self.user, message=message, thread=thread, msg_type="msg",time_created=time)
+        cur_message.recipients.add(self.user)
         cur_message.save()
         return cur_message.id
 
@@ -340,6 +374,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def create_chat_audio(self, aud_string, to, ext, time):
         thread = Thread.objects.get_or_new(self.user,to)
         cur_message = ChatMessage.objects.create(user=self.user, base64string=aud_string, thread=thread, msg_type="aud", extension=ext, time_created=time)
+        cur_message.recipients.add(self.user)
         cur_message.save()
         return cur_message.id
 
@@ -348,6 +383,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def create_chat_image(self, img_string, to, ext, time):
         thread = Thread.objects.get_or_new(self.user,to)
         cur_message = ChatMessage.objects.create(user=self.user, base64string=img_string, thread=thread, msg_type="img", extension=ext,time_created=time)
+        cur_message.recipients.add(self.user)
         cur_message.save()
         return cur_message.id
 
@@ -360,6 +396,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def create_notification_from_json(self, obj, to_user):
         notification = Notification(chatmsg_id=obj['id'],notif_from=self.user,notif_to=to_user,notif_type="seen")
         notification.save()
+        return notification.id
+
+    @database_sync_to_async
+    def delete_notification(self, id):
+        notif = Notification.objects.get(id=id)
+        notif.delete()
 
 
 
@@ -422,7 +464,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
     async def chat_received_notif(self,event):
-        json_data = json.dumps({'received':event['message']['received'],'name':event['message']['from']})
+        json_data = json.dumps({'received':event['message']['received'],
+                                'from':event['message']['from'],
+                                'notif_id':event['message']['notif_id']})
         await self.send(text_data=json_data)
 
 

@@ -12,8 +12,8 @@ import 'package:intl/intl.dart' as intl;
 
 class AudioCloud extends StatelessWidget {
   final ChatMessage msgObj;
-  final bool needDate;
-  AudioCloud({this.msgObj, this.needDate});
+
+  AudioCloud({this.msgObj});
 
   FutureOr convertEncodedString() async {
     if ((this.msgObj.isMe == true) & (this.msgObj.filePath != null)) {
@@ -73,32 +73,10 @@ class AudioCloud extends StatelessWidget {
             ]));
   }
 
-  Row dateCloud() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 9),
-          margin: EdgeInsets.symmetric(vertical: 7),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(intl.DateFormat("d MMMM y").format(this.msgObj.time),
-              style: GoogleFonts.openSans(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600)),
-        )
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        (this.needDate == true) ? dateCloud() : Container(),
         Row(
           mainAxisAlignment: (this.msgObj.isMe == true)
               ? MainAxisAlignment.end

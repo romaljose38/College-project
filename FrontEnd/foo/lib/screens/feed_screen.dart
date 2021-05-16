@@ -327,7 +327,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                     },
                   ),
                 ],
-              )
+              ),
               // child: NestedScrollView(
               //   floatHeaderSlivers: true,
               //   controller: _scrollController,

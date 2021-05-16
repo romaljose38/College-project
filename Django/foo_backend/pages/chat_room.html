@@ -91,15 +91,23 @@ var socket = new WebSocket('ws://192.168.42.10:8000/ws/chat_room/{{user}}/');
     socket.onmessage = function(e){
         console.log(e);
         console.log(e.data);
-        var data = JSON.parse(e.data).message;
+        var data = JSON.parse(e.data);
         console.log(data);
-        var message = data.message;
-        var senderName = data.from;
+        if(data.hasOwnProperty('notif_id')){
+            socket.send(JSON.stringify(
+            {
+            'n_r':data.notif_id
+          }
+        ));
+        }
+        var msg = data.message
+        var message =msg.message;
+        var senderName = msg.from;
         var chatContainer = document.querySelector('#chats');
         chatContainer.innerHTML += `<div class="chat_message"><b>${senderName} :</b> ${message}</div>`;
         socket.send(JSON.stringify({
                 
-                    'received':data.id
+                    'received':msg.id
                 
             }));
 
@@ -108,7 +116,7 @@ var socket = new WebSocket('ws://192.168.42.10:8000/ws/chat_room/{{user}}/');
             "type": "seen_ticker",
             "from": "romal",
             "to": "deepika",
-            "id": data.id,
+            "id": msg.id,
           }
         ));
     }
@@ -134,7 +142,7 @@ var socket = new WebSocket('ws://192.168.42.10:8000/ws/chat_room/{{user}}/');
                 'to':receiverName.value,
                 'type':'msg',
                 'id':12345,
-                'time':'hiiyyah'
+                'time':'2021-05-15 07:17:34.247'
 
             }));
             messageInputDom.value = '';

@@ -5,8 +5,8 @@ import 'package:foo/models.dart';
 
 class ChatCloud extends StatelessWidget {
   final ChatMessage msgObj;
-  final bool needDate;
-  ChatCloud({this.msgObj, this.needDate});
+  
+  ChatCloud({this.msgObj});
 
   String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
 
@@ -110,34 +110,14 @@ class ChatCloud extends StatelessWidget {
         ]);
   }
 
-  Row dateCloud() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 9),
-          margin: EdgeInsets.symmetric(vertical: 7),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(intl.DateFormat("d MMMM y").format(this.msgObj.time),
-              style: GoogleFonts.openSans(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600)),
-        )
-      ],
-    );
-  }
-
+ 
   @override
   Widget build(BuildContext context) {
     print(msgObj.hasSeen);
     print("has seen");
     return Column(
       children: [
-        (needDate == true) ? dateCloud() : Container(),
+        
         cloudContent(context)
       ],
     );
