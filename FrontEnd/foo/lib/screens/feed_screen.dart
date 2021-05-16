@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../test_cred.dart';
-
+import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 
 import 'models/post_model.dart' as pst;
@@ -288,103 +288,118 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // backgroundColor: Color.fromRGBO(24, 4, 29, 1),
-      // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
-      // floatingActionButton: TextButton(
-      //   child: Text(
-      //     "A",
-      //     style: TextStyle(color: Colors.black),
-      //   ),
-      //   onPressed: () {
-      //     listKey.currentState.insertItem(0);
-      //     var feedBox = Hive.box("Feed");
-      //     var feed = feedBox.get('feed');
-      //     postsList.insert(0, feed.posts[0]);
-      //   },
-      // ),
-      backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.only(bottom: 40),
-        child: RefreshIndicator(
-            triggerMode: RefreshIndicatorTriggerMode.anywhere,
-            onRefresh: () {
-              _getNewPosts();
-              _fetchStory();
-              return Future.value('nothing');
-            },
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: _horiz()),
-                SliverToBoxAdapter(child: SizedBox(height: 20)),
-                SliverAnimatedList(
-                  initialItemCount: itemCount,
-                  key: listKey,
-                  // controller: _scrollController,
-                  itemBuilder: (context, index, animation) {
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                              begin: Offset(0, -.4), end: Offset(0, 0))
-                          .animate(CurvedAnimation(
-                              parent: animation, curve: Curves.easeInOut)),
-                      child: FadeTransition(
+    var minHeight = math.min(540, MediaQuery.of(context).size.height * .7);
+    var heightFactor = (minHeight - 48) / minHeight;
+    print(heightFactor);
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        extendBody: true,
+        // backgroundColor: Color.fromRGBO(24, 4, 29, 1),
+        // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
+        floatingActionButton: TextButton(
+          child: Text(
+            "A",
+            style: TextStyle(color: Colors.black),
+          ),
+          onPressed: () {
+            listKey.currentState.insertItem(0);
+            var feedBox = Hive.box("Feed");
+            var feed = feedBox.get('feed');
+            postsList.insert(0, feed.posts[0]);
+          },
+        ),
+        backgroundColor: Colors.white,
+        body: Container(
+          // margin: EdgeInsets.only(bottom: 40),
+          // padding: const EdgeInsets.only(bottom: 40),
+          child: RefreshIndicator(
+              triggerMode: RefreshIndicatorTriggerMode.anywhere,
+              onRefresh: () {
+                _getNewPosts();
+                _fetchStory();
+                return Future.value('nothing');
+              },
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(child: _horiz()),
+                  SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  SliverAnimatedList(
+                    initialItemCount: itemCount,
+                    key: listKey,
+                    // controller: _scrollController,
+                    itemBuilder: (context, index, animation) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                                begin: Offset(0, -.4), end: Offset(0, 0))
+                            .animate(CurvedAnimation(
+                                parent: animation, curve: Curves.easeInOut)),
+                        child: FadeTransition(
                           opacity: Tween<double>(begin: 0, end: 1)
                               .animate(animation),
                           child: Align(
-                              heightFactor: .94,
-                              alignment: Alignment.center,
-                              child: PostTile(
-                                  post: postsList[index], index: index))),
-                    );
-                  },
-                ),
-              ],
-            )
-            // child: NestedScrollView(
-            //   floatHeaderSlivers: true,
-            //   controller: _scrollController,
-            //   headerSliverBuilder: (ctx, val) {
-            //     print(val);
-            //     return [];
-            //   },
-            //   body: AnimatedList(
-            //     initialItemCount: itemCount,
-            //     key: listKey,
-            //     controller: _scrollController,
-            //     itemBuilder: (context, index, animation) {
-            //       return SlideTransition(
-            //         position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
-            //             .animate(animation),
-            //         child: PostTile(post: postsList[index], index: index),
-            //       );
-            //     },
-            //   ),
-            // ),
-            // child: AnimatedList(
-            //   initialItemCount: 1,
-            //   key: listKey,
-            //   controller: _scrollController,
-            //   itemBuilder: (context, index, animation) {
-            //     return SlideTransition(
-            //       position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
-            //           .animate(animation),
-            //       child: (index == 0)
-            //           ?
-            //           : PostTile(post: postsList[index - 1], index: index - 1),
-            //     );
-            //   },
-            // )
-            // child: ListView.builder(
-            //     cacheExtent: 200,
-            //     controller: _scrollController,
-            //     itemCount: itemCount + 1,
-            //     itemBuilder: (context, index) {
-            //       if (index == 0) {
-            //         return _horiz();
-            //       }
-            //       return PostTile(post: postsList[index - 1], index: index - 1);
-            //     }),
-            ),
+                            heightFactor: heightFactor,
+                            alignment: Alignment.center,
+                            child: PostTile(
+                                post: postsList[index],
+                                index: index,
+                                isLast: index == (postsList.length - 1)
+                                    ? true
+                                    : false),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              )
+              // child: NestedScrollView(
+              //   floatHeaderSlivers: true,
+              //   controller: _scrollController,
+              //   headerSliverBuilder: (ctx, val) {
+              //     print(val);
+              //     return [];
+              //   },
+              //   body: AnimatedList(
+              //     initialItemCount: itemCount,
+              //     key: listKey,
+              //     controller: _scrollController,
+              //     itemBuilder: (context, index, animation) {
+              //       return SlideTransition(
+              //         position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
+              //             .animate(animation),
+              //         child: PostTile(post: postsList[index], index: index),
+              //       );
+              //     },
+              //   ),
+              // ),
+              // child: AnimatedList(
+              //   initialItemCount: 1,
+              //   key: listKey,
+              //   controller: _scrollController,
+              //   itemBuilder: (context, index, animation) {
+              //     return SlideTransition(
+              //       position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
+              //           .animate(animation),
+              //       child: (index == 0)
+              //           ?
+              //           : PostTile(post: postsList[index - 1], index: index - 1),
+              //     );
+              //   },
+              // )
+              // child: ListView.builder(
+              //     cacheExtent: 200,
+              //     controller: _scrollController,
+              //     itemCount: itemCount + 1,
+              //     itemBuilder: (context, index) {
+              //       if (index == 0) {
+              //         return _horiz();
+              //       }
+              //       return PostTile(post: postsList[index - 1], index: index - 1);
+              //     }),
+              ),
+        ),
       ),
     );
   }

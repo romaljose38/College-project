@@ -14,7 +14,8 @@ class CommentScreen extends StatefulWidget {
   final String postUrl;
   final int postId;
   final int heroIndex;
-  CommentScreen({this.postUrl, this.postId, this.heroIndex});
+  final double height;
+  CommentScreen({this.postUrl, this.postId, this.heroIndex, this.height});
 
   @override
   _CommentScreenState createState() => _CommentScreenState();
@@ -153,11 +154,10 @@ class _CommentScreenState extends State<CommentScreen>
           alignment: Alignment.topCenter,
           children: [
             Container(
-              height: 440,
+              height: widget.height,
               width: double.infinity,
               // margin: EdgeInsets.symmetric(horizontal: 5),
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(30.0),
                 image: DecorationImage(
                   image: CachedNetworkImageProvider(widget.postUrl),
@@ -211,7 +211,7 @@ class _CommentScreenState extends State<CommentScreen>
               ),
             ),
             Positioned(
-              bottom: MediaQuery.of(context).size.height - 490,
+              bottom: MediaQuery.of(context).size.height - (widget.height + 50),
               left: 0,
               child: Container(
                 width: MediaQuery.of(context).size.width - 10,
@@ -362,14 +362,14 @@ class _CommentScreenState extends State<CommentScreen>
             ),
             AnimatedBuilder(
                 animation: _controller,
-                builder: (context, widget) {
+                builder: (context, child) {
                   var val;
 
                   val = _controller.value;
 
                   print(val);
                   return Positioned(
-                    top: 440 - (408 * val),
+                    top: widget.height - ((widget.height - 32) * val),
                     // top: val == 1
                     //     ? hasExpanded
                     //         ? 30
@@ -450,13 +450,13 @@ class CommentTile extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black45,
-                offset: Offset(0, 2),
-                blurRadius: 6.0,
-              ),
-            ],
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: Colors.black45,
+            //     offset: Offset(0, 2),
+            //     blurRadius: 6.0,
+            //   ),
+            // ],
             image: DecorationImage(
               image: AssetImage("assets/images/user4.png"),
               fit: BoxFit.cover,

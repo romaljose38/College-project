@@ -263,6 +263,7 @@ class NotificationController {
           existingThread.hasUnseen = 1;
         }
       }
+
       // else{
       //   existingThread.hasUnseen=true;
       // }

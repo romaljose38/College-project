@@ -69,7 +69,7 @@ class _ChatCloudListState extends State<ChatCloudList> {
             "type": "seen_ticker",
             "from": widget.curUser,
             "to": widget.otherUser,
-            "id": id,
+            "id": widget.chatList.last.id,
           };
           NotificationController.sendToChannel(jsonEncode(data));
           _prefs.setInt("lastSeenId", widget.chatList.last.id);
