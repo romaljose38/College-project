@@ -239,5 +239,4 @@ class StoryNotification(models.Model):
 
     story = models.ForeignKey(Story, on_delete=models.CASCADE)
     to_user = models.ForeignKey(User, on_delete=models.CASCADE)
-    notif_type = models.CharField(max_length=15)
-    
+    notif_type = models.CharField(max_length=15,choices=STORY_NOTIF_TYPES)
