@@ -6,7 +6,8 @@ from .models import (
     Profile,
     ChatMessage,
     FriendRequest,
-    Notification
+    Notification,
+    StoryNotification
 )
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -218,6 +219,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                                 )
         elif 'n_r' in text_data_json:
             await self.delete_notification(text_data_json['n_r'])
+        elif 's_r' in text_data_json:
+            await self.delete_story_notification(text_data_json['s_r'])
         else:
             if text_data_json['type']=="seen_ticker":
                 print(text_data_json)
@@ -403,6 +406,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         notif = Notification.objects.get(id=id)
         notif.delete()
 
+    @database_sync_to_async
+    def delete_story_notification(self, id):
+        notif = StoryNotification.objects.get(id=id)
+        notif.delete()
+
 
 
     async def chat_message(self,event):
@@ -472,4 +480,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def typing_status(self,event):
         print("reached here")
+        await self.send(text_data=json.dumps(event))
+
+    async def story_add(self,event):
+        print(event)
+        print(self.room_group_name)
         await self.send(text_data=json.dumps(event))

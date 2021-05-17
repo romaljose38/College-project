@@ -233,3 +233,11 @@ class Story(models.Model):
     file = models.FileField(upload_to=user_story_directory_path)
     time_created = models.DateTimeField(auto_now_add=True)
     views = models.ManyToManyField(User, related_name="story_views")
+
+class StoryNotification(models.Model):
+    STORY_NOTIF_TYPES = (('story_add','story_add'),('story_del','story_del'))
+
+    story = models.ForeignKey(Story, on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    notif_type = models.CharField(max_length=15)
+    
