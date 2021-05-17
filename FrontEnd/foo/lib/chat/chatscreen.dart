@@ -222,7 +222,7 @@ class _ChatScreenState extends State<ChatScreen> {
         return true;
       },
       child: Scaffold(
-        extendBodyBehindAppBar: true,
+        extendBodyBehindAppBar: false,
         backgroundColor: Color.fromRGBO(240, 247, 255, 1),
         appBar: PreferredSize(
             preferredSize: Size(double.infinity, 100),

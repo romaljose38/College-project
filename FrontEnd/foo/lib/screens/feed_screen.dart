@@ -189,7 +189,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   //
 
   Container _horiz() {
-    pickStoryFromHive();
+    //pickStoryFromHive();
     return Container(
       width: double.infinity,
       height: 100.0,
@@ -213,6 +213,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                       builder: (context) => StoryBuilder(
                             myStoryList: myStoryList,
                             initialPage: index - 1,
+                            profilePic: pst.stories,
                           )),
                 );
               },
@@ -246,8 +247,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             color: Colors.black,
                             borderRadius: BorderRadius.circular(23),
                             image: DecorationImage(
-                              image: NetworkImage(
-                                  'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                              image: AssetImage(pst.stories[index - 1]),
+                              // image: NetworkImage(
+                              //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
                               fit: BoxFit.cover,
                             )),
                       ),

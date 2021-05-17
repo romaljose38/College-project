@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:foo/stories/story.dart';
 
-import 'package:permission_handler/permission_handler.dart';
 import 'package:wakelock/wakelock.dart';
 
 // // ignore: must_be_immutable
@@ -70,51 +69,63 @@ class _StoryBuilderState extends State<StoryBuilder> {
     if (!(await Wakelock.enabled)) Wakelock.enable();
   }
 
+  Future<void> disableWakeLock() async {
+    if (await Wakelock.enabled) Wakelock.disable();
+  }
+
   @override
   Widget build(BuildContext context) {
     enableWakeLock();
-    return PageView.builder(
-      controller: storyBuildController,
-      //itemCount: storyList.length,
-      itemCount: widget.myStoryList.length,
-      itemBuilder: (context, index) {
-        if (index == currentPageValue.floor()) {
-          return Transform(
-            transform: Matrix4.identity()
-              ..rotateY(currentPageValue - index)
-              ..rotateZ(currentPageValue - index),
-            child: StoryScreen(
-              storyObject: widget.myStoryList[index],
-              storyBuilderController: storyBuildController,
-              userCount: widget.myStoryList.length,
-              profilePic: widget.profilePic[index],
-            ),
-          );
-        } else if (index == currentPageValue.floor() + 1) {
-          return Transform(
-            transform: Matrix4.identity()
-              ..rotateY(storyBuildController.page - index)
-              ..rotateZ(storyBuildController.page - index),
-            child: StoryScreen(
-              storyObject: widget.myStoryList[index],
-              storyBuilderController: storyBuildController,
-              userCount: widget.myStoryList.length,
-              profilePic: widget.profilePic[index],
-            ),
-          );
-        } else {
-          return StoryScreen(
-            storyObject: widget.myStoryList[index],
-            storyBuilderController: storyBuildController,
-            userCount: widget.myStoryList.length,
-            profilePic: widget.profilePic[index],
-          );
-        }
-        // return StoryScreen(
-        //   storyObject: myStoryList[index],
-        //   storyBuilderController: storyBuildController,
-        // );
+    return WillPopScope(
+      onWillPop: () {
+        disableWakeLock();
+        Navigator.pop(context);
+
+        return Future.value(false);
       },
+      child: PageView.builder(
+        controller: storyBuildController,
+        //itemCount: storyList.length,
+        itemCount: widget.myStoryList.length,
+        itemBuilder: (context, index) {
+          if (index == currentPageValue.floor()) {
+            return Transform(
+              transform: Matrix4.identity()
+                ..rotateY(currentPageValue - index)
+                ..rotateZ(currentPageValue - index),
+              child: StoryScreen(
+                storyObject: widget.myStoryList[index],
+                storyBuilderController: storyBuildController,
+                userCount: widget.myStoryList.length,
+                profilePic: widget.profilePic[index],
+              ),
+            );
+          } else if (index == currentPageValue.floor() + 1) {
+            return Transform(
+              transform: Matrix4.identity()
+                ..rotateY(storyBuildController.page - index)
+                ..rotateZ(storyBuildController.page - index),
+              child: StoryScreen(
+                storyObject: widget.myStoryList[index],
+                storyBuilderController: storyBuildController,
+                userCount: widget.myStoryList.length,
+                profilePic: widget.profilePic[index],
+              ),
+            );
+          } else {
+            return StoryScreen(
+              storyObject: widget.myStoryList[index],
+              storyBuilderController: storyBuildController,
+              userCount: widget.myStoryList.length,
+              profilePic: widget.profilePic[index],
+            );
+          }
+          // return StoryScreen(
+          //   storyObject: myStoryList[index],
+          //   storyBuilderController: storyBuildController,
+          // );
+        },
+      ),
     );
   }
 }
