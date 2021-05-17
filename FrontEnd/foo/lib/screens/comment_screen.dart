@@ -15,7 +15,16 @@ class CommentScreen extends StatefulWidget {
   final int postId;
   final int heroIndex;
   final double height;
-  CommentScreen({this.postUrl, this.postId, this.heroIndex, this.height});
+  final int likeCount;
+  final int commentCount;
+
+  CommentScreen(
+      {this.postUrl,
+      this.postId,
+      this.heroIndex,
+      this.height,
+      this.likeCount,
+      this.commentCount});
 
   @override
   _CommentScreenState createState() => _CommentScreenState();
@@ -235,7 +244,7 @@ class _CommentScreenState extends State<CommentScreen>
                                 SizedBox(width: 5),
                                 // SizedBox(width: 25),
                                 Text(
-                                  "342",
+                                  widget.likeCount.toString(),
                                   style: TextStyle(
                                     fontSize: 11.0,
                                     color: Colors.white,
@@ -264,7 +273,7 @@ class _CommentScreenState extends State<CommentScreen>
                               onPressed: () {},
                             ),
                             Text(
-                              "2342",
+                              widget.commentCount.toString(),
                               style: TextStyle(
                                 fontSize: 12.0,
                                 color: Colors.white,

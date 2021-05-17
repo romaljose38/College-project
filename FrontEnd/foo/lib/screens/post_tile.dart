@@ -262,12 +262,14 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
               context,
               MaterialPageRoute(
                   builder: (_) => CommentScreen(
-                      postUrl: widget.post.postUrl,
-                      heroIndex: widget.index,
-                      postId: widget.post.postId,
-                      height: height)
-                  // ViewPostScreen(post: widget.post, index: widget.index),
-                  ));
+                        postUrl: widget.post.postUrl,
+                        heroIndex: widget.index,
+                        postId: widget.post.postId,
+                        height: height,
+                        likeCount: widget.post.likeCount,
+                        commentCount: widget.post.commentCount,
+                        // ViewPostScreen(post: widget.post, index: widget.index),
+                      )));
           print("got back something");
           print(result);
         },
