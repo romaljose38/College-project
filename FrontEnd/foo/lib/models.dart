@@ -298,3 +298,56 @@ class Notifications extends HiveObject {
 
   Notifications({this.type, this.userName, this.userId, this.timeCreated});
 }
+
+// Story models ahead
+
+@HiveType(typeId: 7)
+class Story extends HiveObject {
+  @HiveField(0)
+  String file;
+
+  @HiveField(1)
+  int views;
+
+  @HiveField(2)
+  DateTime time;
+
+  @HiveField(3)
+  bool viewed;
+
+  Story({this.file, this.views, this.time, this.viewed});
+
+  String display() {
+    return 'file: $file - seen: $viewed - time: $time';
+  }
+}
+
+@HiveType(typeId: 8)
+class UserStoryModel extends HiveObject {
+  @HiveField(0)
+  String username;
+
+  @HiveField(1)
+  int id;
+
+  @HiveField(2)
+  List<Story> stories = <Story>[];
+
+  UserStoryModel({this.username, this.id, this.stories});
+
+  int hasUnSeen() {
+    //If the userstorymodel has a story that is unseen it returns the index of that story or otherwise return -1
+    for (int index = 0; index >= stories.length - 1; index++) {
+      if (stories[index].viewed == null) return index;
+    }
+    return -1;
+  }
+
+  void addStory(Story story) {
+    if (stories.contains(story))
+      return;
+    else {
+      stories.add(story);
+    }
+  }
+}

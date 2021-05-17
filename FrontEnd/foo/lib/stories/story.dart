@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:foo/test_cred.dart';
 
@@ -21,11 +22,12 @@ class StoryScreen extends StatefulWidget {
   StoryScreen(
       {@required this.storyObject,
       @required this.storyBuilderController,
-      @required this.userCount}) {
+      @required this.userCount,
+      @required this.profilePic}) {
     username = storyObject['username'];
     stories = storyObject['stories'];
-    profilePic =
-        'https://cdn.britannica.com/s:300x169,c:crop/15/153115-050-9C83E2C3/Steve-Jobs-computer-Apple-II-1977.jpg';
+    // profilePic =
+    //     'https://cdn.britannica.com/s:300x169,c:crop/15/153115-050-9C83E2C3/Steve-Jobs-computer-Apple-II-1977.jpg';
   }
 
   @override
@@ -65,6 +67,7 @@ class _StoryScreenState extends State<StoryScreen>
                 curve: Curves.linear,
               );
             } else {
+              disableWakeLock();
               Navigator.pop(context);
             }
           }
@@ -80,6 +83,10 @@ class _StoryScreenState extends State<StoryScreen>
     _animController.dispose();
     transformationController.dispose();
     super.dispose();
+  }
+
+  Future<void> disableWakeLock() async {
+    if (await Wakelock.enabled) Wakelock.disable();
   }
 
   String _getTypeOf(String url) {
@@ -124,10 +131,15 @@ class _StoryScreenState extends State<StoryScreen>
 
   Future<File> _getOrDownload(String url) async {
     String mediaName = _getMediaName(url);
-    if (!(await _isExistsInStorage(url))) {
-      await _downloadMedia(url);
+    if (await Permission.storage.request().isGranted) {
+      if (!(await _isExistsInStorage(url))) {
+        await _downloadMedia(url);
+      }
+      return File("$storyDir/$mediaName");
+    } else {
+      disableWakeLock();
+      Navigator.pop(context);
     }
-    return File("$storyDir/$mediaName");
   }
 
   var a = Offset.zero;
@@ -258,6 +270,7 @@ class _StoryScreenState extends State<StoryScreen>
               curve: Curves.linear,
             );
           } else {
+            disableWakeLock();
             Navigator.pop(context);
           }
         }
@@ -277,6 +290,7 @@ class _StoryScreenState extends State<StoryScreen>
               curve: Curves.linear,
             );
           } else {
+            disableWakeLock();
             Navigator.pop(context);
           }
         }
@@ -377,13 +391,14 @@ class UserInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        // CircleAvatar(
-        //   radius: 20.0,
-        //   backgroundColor: Colors.grey[300],
-        //   backgroundImage: CachedNetworkImageProvider(
-        //     profilePic,
-        //   ),
-        // ),
+        CircleAvatar(
+          radius: 20.0,
+          backgroundColor: Colors.grey[300],
+          // backgroundImage: CachedNetworkImageProvider(
+          //   profilePic,
+          // ),
+          backgroundImage: AssetImage(profilePic),
+        ),
         const SizedBox(width: 10.0),
         Expanded(
           child: Wrap(

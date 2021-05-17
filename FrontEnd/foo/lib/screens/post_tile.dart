@@ -246,7 +246,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    var height = math.min(540, MediaQuery.of(context).size.height * .7);
+    var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
     // var height = 440.0;
 
     return Container(

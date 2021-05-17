@@ -117,7 +117,7 @@ class ChatTile extends StatelessWidget {
               Text(
                 (thread.chatList.length != 0)
                     ? ((thread.chatList.last.msgType == "txt")
-                        ? "text"
+                        ? thread.chatList.last.message //"text"
                         : "media")
                     : "",
                 overflow: TextOverflow.ellipsis,

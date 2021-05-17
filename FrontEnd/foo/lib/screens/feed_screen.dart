@@ -151,12 +151,45 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       myStoryList = jsonDecode(response.body);
       myItemCounter = myStoryList.length + 1;
     });
-    print(myStoryList);
+    // print(myStoryList);
   }
 
   int myItemCounter = 1;
 
+  //A test function that picks up all the data concerning to stories from hive
+
+  void pickStoryFromHive() {
+    var listToPutToHive = myStoryList;
+    var box = Hive.box('MyStories');
+
+    for (int i = 0; i < listToPutToHive.length; i++) {
+      box.put(
+          listToPutToHive[i]['username'],
+          UserStoryModel(
+            username: listToPutToHive[i]['username'],
+            id: listToPutToHive[i]['id'],
+            stories: <Story>[
+              ...listToPutToHive[i]['stories']
+                  .map((story) => Story(
+                        file: story['file'],
+                        views: story['views'],
+                        time: DateTime.parse(story['time']),
+                      ))
+                  .toList()
+            ],
+          ));
+    }
+
+    if (box.containsKey('pranav')) {
+      var pranavStory = box.get('pranav');
+      print('${pranavStory.stories[0].display()}');
+    }
+  }
+
+  //
+
   Container _horiz() {
+    //pickStoryFromHive();
     return Container(
       width: double.infinity,
       height: 100.0,
@@ -180,6 +213,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                       builder: (context) => StoryBuilder(
                             myStoryList: myStoryList,
                             initialPage: index - 1,
+                            profilePic: pst.stories,
                           )),
                 );
               },
@@ -213,8 +247,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             color: Colors.black,
                             borderRadius: BorderRadius.circular(23),
                             image: DecorationImage(
-                              image: NetworkImage(
-                                  'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                              image: AssetImage(pst.stories[index - 1]),
+                              // image: NetworkImage(
+                              //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
                               fit: BoxFit.cover,
                             )),
                       ),
