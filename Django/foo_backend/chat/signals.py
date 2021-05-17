@@ -1,5 +1,11 @@
 from django.db.models.signals import post_save, m2m_changed
-from .models import Profile, ChatMessage, FriendRequest
+from .models import (
+    Profile, 
+    ChatMessage, 
+    FriendRequest, 
+    Story,
+    StoryNotification,
+    )
 from django.conf import settings
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
@@ -36,6 +42,32 @@ def send_request(sender, instance, created, **kwargs):
                 })
 
 
+@receiver(post_save, sender=Story)
+def story_created_notif(sender, instance, created, **kwargs):
+    friends_qs = instance.user.profile.friends.all()
+    channel_layer = get_channel_layer()
+    test=[]
+    for user in friends_qs:
+        notification = StoryNotification.objects.create(story=instance,notif_type="story_add",to_user=user)
+        notification.save()
+        if user.profile.online:
+            print(user.username)
+            _dict = {
+                'type':'story_add',
+                'u':instance.user.username,
+                'u_id':instance.user.id,
+                's_id':instance.id,
+                'url':instance.file.url,
+                'n_id':notification.id,
+                'time':instance.time_created.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            test.append(_dict)
+            async_to_sync(channel_layer.group_send)(user.username,_dict)
+    print(test)
+
+
+
+    
 # @database_sync_to_async
 # def get_user_status(user):
 #     return user.profile.online

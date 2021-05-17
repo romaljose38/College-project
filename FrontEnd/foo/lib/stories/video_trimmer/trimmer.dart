@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_crop/image_crop.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:video_trimmer/video_trimmer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
@@ -71,41 +72,64 @@ class StoryUploadPick extends StatelessWidget {
         }
       },
       child: Container(
-        margin: EdgeInsets.all(10.0),
-        width: 80.0,
-        height: 45.0,
+        margin: EdgeInsets.only(left: 20, top: 10, bottom: 10, right: 5),
+        height: 50,
+        width: 80,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(35),
-          border: Border.all(color: Colors.pink.shade400, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black45.withOpacity(.2),
-              offset: Offset(0, 2),
-              spreadRadius: 1,
-              blurRadius: 6.0,
-            ),
-          ],
+          borderRadius: BorderRadius.circular(30),
+          color: Color.fromRGBO(203, 212, 217, 1),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(3.0),
+          padding: EdgeInsets.all(3),
           child: Container(
-            width: 80,
-            height: 40,
             decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                // shape: BoxShape.circle,
-                image: DecorationImage(
-                  //image: AssetImage(pst.stories[index - 1]),
-                  image: NetworkImage(
-                      'https://vz.cnwimg.com/thumb-1200x/wp-content/uploads/2020/04/hj.jpg'),
-                  fit: BoxFit.cover,
-                )),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(26),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(2),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(23),
+                ),
+                child: Center(
+                  child: plusButton(),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+Container plusButton() => Container(
+      width: 50,
+      height: 50,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: 15,
+            width: 3,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          Container(
+            width: 15,
+            height: 3,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          )
+        ],
+      ),
+    );
 
 class TrimmerView extends StatefulWidget {
   final Trimmer _trimmer;

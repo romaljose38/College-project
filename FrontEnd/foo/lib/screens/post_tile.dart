@@ -86,19 +86,6 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
       }
       updatePostInHive(postId, false);
     } else {
-      setState(() {
-        hasTapped = true;
-      });
-      _animController.forward().whenComplete(
-            () => Future.delayed(Duration(milliseconds: 800), () {
-              _animController.reverse().whenComplete(() {
-                setState(() {
-                  hasTapped = false;
-                });
-              });
-            }),
-          );
-
       var response = await http.get(Uri.http(localhost, '/api/add_like', {
         'username': userName,
         'id': postId.toString(),
@@ -109,8 +96,21 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
           likeCount += 1;
         });
       }
+
       updatePostInHive(postId, true);
     }
+    setState(() {
+      hasTapped = true;
+    });
+    _animController.forward().whenComplete(
+          () => Future.delayed(Duration(milliseconds: 800), () {
+            _animController.reverse().whenComplete(() {
+              setState(() {
+                hasTapped = false;
+              });
+            });
+          }),
+        );
   }
 
   void updatePostInHive(int id, bool status) {
@@ -225,7 +225,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   BoxDecoration cardDecorationWithShadow() {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(30.0),
+      borderRadius: BorderRadius.circular(20.0),
       // boxShadow: [
       //   BoxShadow(
       //       // color: Color.fromRGBO(190, 205, 232, .5),
@@ -251,10 +251,9 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
 
     return Container(
       width: double.infinity,
-      // margin: EdgeInsets.symmetric(horizontal: 5),
+      margin: EdgeInsets.symmetric(horizontal: 3, vertical: 4),
       height: height,
 
-      margin: widget.isLast ? EdgeInsets.only(bottom: 60) : EdgeInsets.all(0),
       decoration:
           widget.index == 0 ? cardDecoration() : cardDecorationWithShadow(),
       child: GestureDetector(
@@ -287,23 +286,10 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
               tag: 'profile_${widget.index}',
               transitionOnUserGestures: true,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: BorderRadius.circular(20),
                 child: widget.post.type == "img"
                     ? postImage(height)
                     : postAudio(height),
-              ),
-            ),
-            Container(
-              height: height,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(.8), Colors.transparent],
-                  stops: [.01, .2],
-                ),
               ),
             ),
             Positioned(
@@ -411,35 +397,38 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                       //         ),
                       //       )),
                       // ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          constraints: BoxConstraints(maxWidth: 69),
-                          color: hasLiked
-                              ? Colors.red.shade700
-                              : Colors.transparent,
-                          height: 37,
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(
-                                sigmaX: hasLiked ? 0 : 25,
-                                sigmaY: hasLiked ? 0 : 25),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(Ionicons.heart,
-                                    color: Colors.white, size: 22),
-                                SizedBox(width: 5),
-                                // SizedBox(width: 25),
-                                Text(
-                                  "342",
-                                  style: TextStyle(
-                                    fontSize: 11.0,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
+                      GestureDetector(
+                        onTap: likePost,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            constraints: BoxConstraints(maxWidth: 69),
+                            color: hasLiked
+                                ? Colors.red.shade700
+                                : Colors.transparent,
+                            height: 37,
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(
+                                  sigmaX: hasLiked ? 0 : 25,
+                                  sigmaY: hasLiked ? 0 : 25),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Ionicons.heart,
+                                      color: Colors.white, size: 22),
+                                  SizedBox(width: 5),
+                                  // SizedBox(width: 25),
+                                  Text(
+                                    widget.post.likeCount.toString(),
+                                    style: TextStyle(
+                                      fontSize: 11.0,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -510,7 +499,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                                 }));
                       },
                       child: Container(
-                        height: 420,
+                        // height: 420,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: Colors.transparent,
@@ -520,7 +509,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                         child: Center(
                           child: IconButton(
                             icon: Icon(Ionicons.heart, color: Colors.white),
-                            iconSize: 50.0,
+                            iconSize: 60.0,
                             onPressed: () {},
                           ),
                         ),

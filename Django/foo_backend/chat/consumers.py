@@ -6,7 +6,8 @@ from .models import (
     Profile,
     ChatMessage,
     FriendRequest,
-    Notification
+    Notification,
+    StoryNotification
 )
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -106,6 +107,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             pending_messages = await self.get_pending_messages()
             pending_msg_status = await self.get_pending_notifications()
             # pending_requests = await self.get_pending_requests()
+            pending_story_notifs = await self.get_pending_story_notifications()
 
             if len(pending_messages)>0:
                 for msg in pending_messages:
@@ -121,6 +123,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.send(text_data=msg_obj)
             if len(pending_msg_status)>0:
                 for msg in pending_msg_status:
+                    await self.send(text_data=json.dumps(msg))
+
+            if len(pending_story_notifs)>0:
+                for msg in pending_story_notifs:
                     await self.send(text_data=json.dumps(msg))
             # if len(pending_requests)>0:
             #     for req in pending_requests:
@@ -193,6 +199,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return final_list
 
     @database_sync_to_async
+    def get_pending_story_notifications(self):
+        final_list = []
+        qs = StoryNotification.objects.filter(to_user=self.user)
+        print(qs,"queryset")
+        for notif in qs:
+            if notif.notif_type=="story_add":
+                final_list.append({                        
+                            'type':'story_add',
+                            'u':notif.story.user.username,
+                            'u_id':notif.story.user.id,
+                            's_id':notif.story.id,
+                            'url':notif.story.file.url,
+                            'n_id':notif.id,
+                            'time':notif.story.time_created.strftime("%Y-%m-%d %H:%M:%S"),
+                        },
+                )
+           
+
+        print(final_list)
+        return final_list
+
+    @database_sync_to_async
     def get_request_details(self, request):
         return {"type":"notification","username":request.from_user.username, "user_id":request.from_user.id, "id":request.id}
 
@@ -218,6 +246,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                                 )
         elif 'n_r' in text_data_json:
             await self.delete_notification(text_data_json['n_r'])
+        elif 's_r' in text_data_json:
+            await self.delete_story_notification(text_data_json['s_r'])
         else:
             if text_data_json['type']=="seen_ticker":
                 print(text_data_json)
@@ -403,6 +433,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         notif = Notification.objects.get(id=id)
         notif.delete()
 
+    @database_sync_to_async
+    def delete_story_notification(self, id):
+        notif = StoryNotification.objects.get(id=id)
+        notif.delete()
+
 
 
     async def chat_message(self,event):
@@ -472,4 +507,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def typing_status(self,event):
         print("reached here")
+        await self.send(text_data=json.dumps(event))
+
+    async def story_add(self,event):
+        print(event)
+        print(self.room_group_name)
         await self.send(text_data=json.dumps(event))

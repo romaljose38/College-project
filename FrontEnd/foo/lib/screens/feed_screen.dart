@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:data_connection_checker/data_connection_checker.dart';
+import 'package:foo/colour_palette.dart';
 import 'package:foo/models.dart';
 import 'package:foo/screens/post_tile.dart';
 import 'package:flutter/material.dart';
@@ -201,55 +202,108 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             return StoryUploadPick();
           }
           return GestureDetector(
-            onTap: () {
-              // print(
-              //     "You tickled ${myStoryList[index - 1]['username']} $index times");
-              // print("${myStoryList[index - 1]['stories'][0]['file']}");
-              // print("$myStoryList");
-              // print("${myStoryList.length}");
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (context) => StoryBuilder(
-                          myStoryList: myStoryList,
-                          initialPage: index - 1,
-                          profilePic: pst.stories,
-                        )),
-              );
-            },
-            child: Container(
-              margin: EdgeInsets.all(10.0),
-              width: 80.0,
-              height: 45.0,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(35),
-                border: Border.all(color: Colors.pink.shade400, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black45.withOpacity(.2),
-                    offset: Offset(0, 2),
-                    spreadRadius: 1,
-                    blurRadius: 6.0,
+              onTap: () {
+                print(
+                    "You tickled ${myStoryList[index - 1]['username']} $index times");
+                print("${myStoryList[index - 1]['stories'][0]['file']}");
+                print("$myStoryList");
+                print("${myStoryList.length}");
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => StoryBuilder(
+                            myStoryList: myStoryList,
+                            initialPage: index - 1,
+                          )),
+                );
+              },
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                height: 50,
+                width: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color.fromRGBO(250, 87, 142, 1),
+                      Color.fromRGBO(202, 136, 18, 1),
+                      Color.fromRGBO(253, 167, 142, 1),
+                    ],
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(3.0),
-                child: Container(
-                  width: 80,
-                  height: 40,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      // shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: AssetImage(pst.stories[index - 1]),
-                        // image: NetworkImage(
-                        //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
-                        fit: BoxFit.cover,
-                      )),
                 ),
-              ),
-            ),
-          );
+                child: Padding(
+                  padding: EdgeInsets.all(3),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(2),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(23),
+                            image: DecorationImage(
+                              image: NetworkImage(
+                                  'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                              fit: BoxFit.cover,
+                            )),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              // child: Container(
+              //   margin: EdgeInsets.all(10.0),
+              //   // width: 80.0,
+              //   // height: 45.0,
+              //   decoration: BoxDecoration(
+              //       borderRadius: BorderRadius.circular(35),
+              //       gradient: LinearGradient(
+              //           begin: Alignment.topLeft,
+              //           end: Alignment.bottomRight,
+              //           colors: [
+              //             Color.fromRGBO(250, 87, 142, 1),
+              //             Palette.lightSalmon,
+              //           ])
+              //       // boxShadow: [
+              //       //   BoxShadow(
+              //       //     color: Colors.black45.withOpacity(.2),
+              //       //     offset: Offset(0, 2),
+              //       //     spreadRadius: 1,
+              //       //     blurRadius: 6.0,
+              //       //   ),
+              //       // ],
+              //       ),
+              //   child: Padding(
+              //     padding: const EdgeInsets.all(2.0),
+              //     child: Container(
+              //       decoration: BoxDecoration(
+              //         color: Colors.white,
+              //         borderRadius: BorderRadius.circular(30),
+              //       ),
+              //       child: Padding(
+              //         padding: EdgeInsets.all(1),
+              //         child: Container(
+              //           width: 70,
+              //           height: 40,
+              //           decoration: BoxDecoration(
+              //               borderRadius: BorderRadius.circular(30),
+              //               // shape: BoxShape.circle,
+              //               image: DecorationImage(
+              //                 //image: AssetImage(pst.stories[index - 1]),
+              //                 image: NetworkImage(
+              //                     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+              //                 fit: BoxFit.cover,
+              //               )),
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              );
         },
       ),
     );
@@ -295,9 +349,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    var minHeight = math.min(540.0, MediaQuery.of(context).size.height * .7);
-    var heightFactor = (minHeight - 48) / minHeight;
-
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(
@@ -322,91 +373,86 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           // margin: EdgeInsets.only(bottom: 40),
           // padding: const EdgeInsets.only(bottom: 40),
           child: RefreshIndicator(
-              triggerMode: RefreshIndicatorTriggerMode.anywhere,
-              onRefresh: () {
-                _getNewPosts();
-                _fetchStory();
-                return Future.value('nothing');
-              },
-              child: CustomScrollView(
-                controller: _controller,
-                slivers: [
-                  SliverToBoxAdapter(child: _horiz()),
-                  SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  SliverAnimatedList(
-                    initialItemCount: itemCount,
-                    key: listKey,
-                    // controller: _scrollController,
-                    itemBuilder: (context, index, animation) {
-                      return SlideTransition(
-                        position: Tween<Offset>(
-                                begin: Offset(0, -.4), end: Offset(0, 0))
-                            .animate(CurvedAnimation(
-                                parent: animation, curve: Curves.easeInOut)),
-                        child: FadeTransition(
-                          opacity: Tween<double>(begin: 0, end: 1)
-                              .animate(animation),
-                          child: Align(
-                            heightFactor: heightFactor,
-                            alignment: Alignment.center,
-                            child: PostTile(
-                                post: postsList[index],
-                                index: index,
-                                isLast: index == (postsList.length - 1)
-                                    ? true
-                                    : false),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              // child: NestedScrollView(
-              //   floatHeaderSlivers: true,
-              //   controller: _scrollController,
-              //   headerSliverBuilder: (ctx, val) {
-              //     print(val);
-              //     return [];
-              //   },
-              //   body: AnimatedList(
-              //     initialItemCount: itemCount,
-              //     key: listKey,
-              //     controller: _scrollController,
-              //     itemBuilder: (context, index, animation) {
-              //       return SlideTransition(
-              //         position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
-              //             .animate(animation),
-              //         child: PostTile(post: postsList[index], index: index),
-              //       );
-              //     },
-              //   ),
-              // ),
-              // child: AnimatedList(
-              //   initialItemCount: 1,
-              //   key: listKey,
-              //   controller: _scrollController,
-              //   itemBuilder: (context, index, animation) {
-              //     return SlideTransition(
-              //       position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
-              //           .animate(animation),
-              //       child: (index == 0)
-              //           ?
-              //           : PostTile(post: postsList[index - 1], index: index - 1),
-              //     );
-              //   },
-              // )
-              // child: ListView.builder(
-              //     cacheExtent: 200,
-              //     controller: _scrollController,
-              //     itemCount: itemCount + 1,
-              //     itemBuilder: (context, index) {
-              //       if (index == 0) {
-              //         return _horiz();
-              //       }
-              //       return PostTile(post: postsList[index - 1], index: index - 1);
-              //     }),
-              ),
+            triggerMode: RefreshIndicatorTriggerMode.anywhere,
+            onRefresh: () {
+              _getNewPosts();
+              _fetchStory();
+              return Future.value('nothing');
+            },
+            child: CustomScrollView(
+              controller: _controller,
+              slivers: [
+                SliverToBoxAdapter(child: _horiz()),
+                SliverToBoxAdapter(child: SizedBox(height: 20)),
+                SliverAnimatedList(
+                  initialItemCount: itemCount,
+                  key: listKey,
+                  // controller: _scrollController,
+                  itemBuilder: (context, index, animation) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                              begin: Offset(0, -.4), end: Offset(0, 0))
+                          .animate(CurvedAnimation(
+                              parent: animation, curve: Curves.easeInOut)),
+                      child: FadeTransition(
+                        opacity:
+                            Tween<double>(begin: 0, end: 1).animate(animation),
+                        child: PostTile(
+                            post: postsList[index],
+                            index: index,
+                            isLast:
+                                index == (postsList.length - 1) ? true : false),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            // child: NestedScrollView(
+            //   floatHeaderSlivers: true,
+            //   controller: _scrollController,
+            //   headerSliverBuilder: (ctx, val) {
+            //     print(val);
+            //     return [];
+            //   },
+            //   body: AnimatedList(
+            //     initialItemCount: itemCount,
+            //     key: listKey,
+            //     controller: _scrollController,
+            //     itemBuilder: (context, index, animation) {
+            //       return SlideTransition(
+            //         position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
+            //             .animate(animation),
+            //         child: PostTile(post: postsList[index], index: index),
+            //       );
+            //     },
+            //   ),
+            // ),
+            // child: AnimatedList(
+            //   initialItemCount: 1,
+            //   key: listKey,
+            //   controller: _scrollController,
+            //   itemBuilder: (context, index, animation) {
+            //     return SlideTransition(
+            //       position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
+            //           .animate(animation),
+            //       child: (index == 0)
+            //           ?
+            //           : PostTile(post: postsList[index - 1], index: index - 1),
+            //     );
+            //   },
+            // )
+            // child: ListView.builder(
+            //     cacheExtent: 200,
+            //     controller: _scrollController,
+            //     itemCount: itemCount + 1,
+            //     itemBuilder: (context, index) {
+            //       if (index == 0) {
+            //         return _horiz();
+            //       }
+            //       return PostTile(post: postsList[index - 1], index: index - 1);
+            //     }),
+          ),
         ),
       ),
     );

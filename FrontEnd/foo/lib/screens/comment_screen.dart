@@ -23,38 +23,21 @@ class CommentScreen extends StatefulWidget {
 
 class _CommentScreenState extends State<CommentScreen>
     with TickerProviderStateMixin {
-  double positionedTopVal = 430;
-  double containerHeight = 1000;
-  AnimationController _controller;
-  bool hasExpanded = false;
-  bool isExpanded = false;
+  bool hasCommentExpanded = false;
+  bool hasTextExpanded = false;
   GlobalKey _txtKey = GlobalKey();
-  bool overflow = true;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 500),
-    );
+
     // detectHeight();
   }
 
   resizeContainer() {
-    // _controller.isDismissed ? _controller.forward() : _controller.reverse();
-    if (!hasExpanded) {
-      print("not expanded");
-      _controller.forward().whenComplete(() {
-        setState(() {
-          hasExpanded = true;
-        });
-      });
-    } else {
-      _controller.reverse().whenComplete(() => setState(() {
-            hasExpanded = false;
-          }));
-    }
+    setState(() {
+      hasCommentExpanded = !hasCommentExpanded;
+    });
   }
 
   Container _commentField() => Container(
@@ -182,11 +165,12 @@ class _CommentScreenState extends State<CommentScreen>
                         ),
                       );
                     },
-                    child: CircleAvatar(
-                      child: ClipOval(
-                        child: Image(
-                          height: 50.0,
-                          width: 50.0,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        image: DecorationImage(
                           image: AssetImage("assets/images/user3.png"),
                           fit: BoxFit.cover,
                         ),
@@ -213,8 +197,10 @@ class _CommentScreenState extends State<CommentScreen>
                 ],
               ),
             ),
-            Positioned(
-              bottom: MediaQuery.of(context).size.height - (widget.height + 50),
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 100),
+              height: 200,
+              top: widget.height - (hasTextExpanded ? 120 : 90),
               left: 0,
               child: Container(
                 width: MediaQuery.of(context).size.width - 10,
@@ -302,23 +288,23 @@ class _CommentScreenState extends State<CommentScreen>
                                 vsync: this,
                                 duration: const Duration(milliseconds: 100),
                                 child: GestureDetector(
-                                  onTap: isExpanded
+                                  onTap: hasTextExpanded
                                       ? () => setState(() {
-                                            isExpanded = false;
+                                            hasTextExpanded = false;
                                           })
                                       : () {},
                                   child: new Container(
-                                      constraints: isExpanded
-                                          ? new BoxConstraints()
+                                      constraints: hasTextExpanded
+                                          ? new BoxConstraints(maxHeight: 38)
                                           : new BoxConstraints(
                                               maxHeight: 20.0,
                                             ),
                                       child: new Text(
-                                        "It is good to love god sake of loving, but it is more important to liv ",
+                                        "It is good to love god sake of loving, but it is more important to liv t is good to love god for the sake of loving, but it is more i",
                                         softWrap: true,
                                         key: _txtKey,
                                         style: TextStyle(color: Colors.white),
-                                        overflow: isExpanded
+                                        overflow: hasTextExpanded
                                             ? TextOverflow.visible
                                             : TextOverflow.fade,
                                       )),
@@ -327,34 +313,27 @@ class _CommentScreenState extends State<CommentScreen>
                             //   "It is good to love god for the sake of loving, but it is more important to liv ",
                             // ),
                           ),
-                          !isExpanded
-                              ? overflow
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        final RenderBox renderBoxRed = _txtKey
-                                            .currentContext
-                                            .findRenderObject();
-                                        final sizeRed = renderBoxRed.size;
-                                        print("SIZE of Red: $sizeRed");
-                                        // setState(() => isExpanded = !isExpanded);
-                                      },
-                                      child: Container(
-                                        height: 30,
-                                        width: 50,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Text("More",
-                                            style: GoogleFonts.lato(
-                                              color: Colors.black,
-                                              fontSize: 11,
-                                            )),
-                                      ),
-                                    )
-                                  : Container()
+                          !hasTextExpanded
+                              ? GestureDetector(
+                                  onTap: () {
+                                    setState(() =>
+                                        hasTextExpanded = !hasTextExpanded);
+                                  },
+                                  child: Container(
+                                    height: 30,
+                                    width: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text("More",
+                                        style: GoogleFonts.lato(
+                                          color: Colors.black,
+                                          fontSize: 11,
+                                        )),
+                                  ),
+                                )
                               : Container(),
                         ],
                       ),
@@ -363,75 +342,63 @@ class _CommentScreenState extends State<CommentScreen>
                 ),
               ),
             ),
-            AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  var val;
 
-                  val = _controller.value;
-
-                  print(val);
-                  return Positioned(
-                    top: widget.height - ((widget.height - 32) * val),
-                    // top: val == 1
-                    //     ? hasExpanded
-                    //         ? 30
-                    //         : 430
-                    //     : 430 - (400 * val),
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * .9,
-                      width: MediaQuery.of(context).size.width,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white,
-                            Color.fromRGBO(226, 235, 243, 1)
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 200),
+              top: hasCommentExpanded ? 34 : widget.height,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                height: MediaQuery.of(context).size.height * .9,
+                width: MediaQuery.of(context).size.width,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.white, Color.fromRGBO(226, 235, 243, 1)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderRadius:
+                      BorderRadius.circular(hasCommentExpanded ? 30 : 0),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 20,
+                      child: Align(
+                        heightFactor: .4,
+                        alignment: Alignment.topCenter,
+                        child: IconButton(
+                          icon: Icon(hasCommentExpanded
+                              ? Icons.arrow_drop_down_rounded
+                              : Icons.arrow_drop_up_rounded),
+                          onPressed: resizeContainer,
                         ),
-                        borderRadius: BorderRadius.circular(val * 30),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: 20,
-                            child: Align(
-                              heightFactor: .4,
-                              alignment: Alignment.topCenter,
-                              child: IconButton(
-                                icon: Icon(hasExpanded
-                                    ? Icons.arrow_drop_down_rounded
-                                    : Icons.arrow_drop_up_rounded),
-                                onPressed: resizeContainer,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                  CommentTile(),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
-                  );
-                }),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                            CommentTile(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // }),
             Positioned(bottom: 0, child: _commentField()),
           ],
         ),
@@ -520,7 +487,7 @@ class _ExpandableTextState extends State<ExpandableText>
     return new Stack(children: <Widget>[
       Positioned(
           right: 5,
-          top: -14,
+          // top: -14,
           child: Container(
             height: 30,
             width: 50,
