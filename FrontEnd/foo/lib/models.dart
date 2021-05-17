@@ -311,7 +311,7 @@ class Story extends HiveObject {
   DateTime time;
 
   @HiveField(3)
-  bool viewed = false;
+  bool viewed;
 
   Story({this.file, this.views, this.time, this.viewed});
 
@@ -333,20 +333,19 @@ class UserStoryModel extends HiveObject {
 
   UserStoryModel({this.username, this.id, this.stories});
 
-  List<dynamic> hasUnSeen() {
-    for (int index = stories.length - 1; index >= 0; index--) {
-      if (stories[index].viewed == null) return [true, index];
+  int hasUnSeen() {
+    //If the userstorymodel has a story that is unseen it returns the index of that story or otherwise return -1
+    for (int index = 0; index >= stories.length - 1; index++) {
+      if (stories[index].viewed == null) return index;
     }
-    return [false, -1];
+    return -1;
   }
 
-  DateTime lastStory() {
-    return stories.last.time;
+  void addStory(Story story) {
+    if (stories.contains(story))
+      return;
+    else {
+      stories.add(story);
+    }
   }
-
-  void deleteUserStoryModel(var box) {
-    box.delete(username);
-  }
-
-  void necessaryChanges(var box) {}
 }

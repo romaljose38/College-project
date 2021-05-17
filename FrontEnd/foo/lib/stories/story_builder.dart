@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:foo/stories/story.dart';
 
 import 'package:permission_handler/permission_handler.dart';
+import 'package:wakelock/wakelock.dart';
 
 // // ignore: must_be_immutable
 // class StoryBuilder extends StatelessWidget {
@@ -65,8 +66,13 @@ class _StoryBuilderState extends State<StoryBuilder> {
     super.dispose();
   }
 
+  Future<void> enableWakeLock() async {
+    if (!(await Wakelock.enabled)) Wakelock.enable();
+  }
+
   @override
   Widget build(BuildContext context) {
+    enableWakeLock();
     return PageView.builder(
       controller: storyBuildController,
       //itemCount: storyList.length,

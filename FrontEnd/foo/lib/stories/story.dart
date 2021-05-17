@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:foo/test_cred.dart';
 
@@ -66,6 +67,7 @@ class _StoryScreenState extends State<StoryScreen>
                 curve: Curves.linear,
               );
             } else {
+              disableWakeLock();
               Navigator.pop(context);
             }
           }
@@ -81,6 +83,10 @@ class _StoryScreenState extends State<StoryScreen>
     _animController.dispose();
     transformationController.dispose();
     super.dispose();
+  }
+
+  Future<void> disableWakeLock() async {
+    if (await Wakelock.enabled) Wakelock.disable();
   }
 
   String _getTypeOf(String url) {
@@ -130,8 +136,10 @@ class _StoryScreenState extends State<StoryScreen>
         await _downloadMedia(url);
       }
       return File("$storyDir/$mediaName");
-    } else
+    } else {
+      disableWakeLock();
       Navigator.pop(context);
+    }
   }
 
   var a = Offset.zero;
@@ -262,6 +270,7 @@ class _StoryScreenState extends State<StoryScreen>
               curve: Curves.linear,
             );
           } else {
+            disableWakeLock();
             Navigator.pop(context);
           }
         }
@@ -281,6 +290,7 @@ class _StoryScreenState extends State<StoryScreen>
               curve: Curves.linear,
             );
           } else {
+            disableWakeLock();
             Navigator.pop(context);
           }
         }
