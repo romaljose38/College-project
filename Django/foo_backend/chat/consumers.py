@@ -218,7 +218,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
            
 
         print(final_list)
-        # return final_list
+        return final_list
 
     @database_sync_to_async
     def get_request_details(self, request):
