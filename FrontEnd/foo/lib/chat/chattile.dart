@@ -71,25 +71,11 @@ class ChatTile extends StatelessWidget {
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.green.withOpacity(.6),
-                                  Colors.transparent
+                                  Colors.green.withOpacity(.2),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  offset: Offset(2, 5),
-                                  color: Colors.black.withOpacity(.4),
-                                  spreadRadius: 1,
-                                  blurRadius: 15,
-                                ),
-                                BoxShadow(
-                                  offset: Offset(-2, -5),
-                                  color: Colors.white,
-                                  spreadRadius: 1,
-                                  blurRadius: 15,
-                                ),
-                              ],
                               shape: BoxShape.circle,
                             ),
                             child: Text(thread.hasUnseen.toString(),

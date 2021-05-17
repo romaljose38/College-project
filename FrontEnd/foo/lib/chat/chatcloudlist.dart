@@ -2,7 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:foo/chat/socket.dart';
+import 'package:foo/models.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'audiocloud.dart';
 import 'chatcloud.dart';
@@ -56,7 +59,6 @@ class _ChatCloudListState extends State<ChatCloudList> {
           id = widget.chatList.last.id;
           var data = {
             "type": "seen_ticker",
-            "from": widget.curUser,
             "to": widget.otherUser,
             "id": id,
           };
@@ -67,7 +69,6 @@ class _ChatCloudListState extends State<ChatCloudList> {
           print("ayakkanam");
           var data = {
             "type": "seen_ticker",
-            "from": widget.curUser,
             "to": widget.otherUser,
             "id": widget.chatList.last.id,
           };
@@ -116,35 +117,21 @@ class _ChatCloudListState extends State<ChatCloudList> {
         itemCount: widget.chatList.length ?? 0,
         itemBuilder: (context, index) {
           final reversedIndex = widget.chatList.length - 1 - index;
-          bool needDay = false;
-          if (day == null) {
-            day = widget.chatList[reversedIndex].time.day;
-            needDay = true;
-          }
-          if (reversedIndex >= 1) {
-            if (widget.chatList[reversedIndex - 1].time.day !=
-                widget.chatList[reversedIndex].time.day) {
-              print("yep we need it");
-              // day=widget.chatList[reversedIndex].time.day;
-              needDay = true;
-            }
-          } else {
-            needDay = false;
-          }
 
           if (widget.chatList[reversedIndex].msgType == "txt") {
             return ChatCloud(
               msgObj: widget.chatList[reversedIndex],
-              needDate: needDay,
             );
           } else if (widget.chatList[reversedIndex].msgType == "aud") {
             return AudioCloud(
               msgObj: widget.chatList[reversedIndex],
-              needDate: needDay,
+            );
+          } else if (widget.chatList[reversedIndex].msgType == "date") {
+            return DateCloud(
+              msgObj: widget.chatList[reversedIndex],
             );
           } else {
-            return MediaCloud(
-                msgObj: widget.chatList[reversedIndex], needDate: needDay);
+            return MediaCloud(msgObj: widget.chatList[reversedIndex]);
           }
         });
   }
@@ -153,5 +140,46 @@ class _ChatCloudListState extends State<ChatCloudList> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+}
+
+class DateCloud extends StatelessWidget {
+  ChatMessage msgObj;
+  DateCloud({this.msgObj});
+
+  String getDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final dateToCheck = DateTime(date.year, date.month, date.day);
+    print(date.toString());
+    if (dateToCheck == today) {
+      return "Today";
+    } else if (dateToCheck == yesterday) {
+      return "Yesterday";
+    }
+    return DateFormat("LLL d").format(date);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 9),
+          margin: EdgeInsets.symmetric(vertical: 7),
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(getDate(this.msgObj.time),
+              style: GoogleFonts.openSans(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600)),
+        )
+      ],
+    );
   }
 }

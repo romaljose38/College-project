@@ -88,6 +88,14 @@ class Thread extends HiveObject {
   Thread({this.first, this.second});
 
   void addChat(chat) {
+    final now = DateTime.now();
+    final lastDay = DateTime(this.chatList.last.time.year,
+        this.chatList.last.time.month, this.chatList.last.time.day);
+    final dateToCheck =
+        DateTime(chat.time.year, chat.time.month, chat.time.day);
+    if (dateToCheck != lastDay) {
+      this.chatList.add(ChatMessage(msgType: "date", time: chat.time));
+    }
     this.chatList.add(chat);
     this.lastAccessed = chat.time;
   }

@@ -544,7 +544,7 @@ class LandingPageState extends State<LandingPage>
 
   dataHandler(data) {
     if (data.containsKey('received')) {
-      _updateChatStatus(data['received'], data['name']);
+      _updateChatStatus(data);
     } else if (data.containsKey("r_s")) {
       _updateReachedServerStatus(
           id: data['r_s']['id'],
@@ -555,12 +555,11 @@ class LandingPageState extends State<LandingPage>
               (_prefs.getInt('lastMsgId') != data['message']['id'])) |
           !_prefs.containsKey('lastMsgId')) {
         _prefs.setInt("lastMsgId", data['message']['id']);
-        if (data['message']['to'] == _prefs.getString('username')) {
-          print(data['message']['id']);
 
-          _createThread(data);
-          sendToChannel(jsonEncode({'received': data['message']['id']}));
-        }
+        print(data['message']['id']);
+
+        _createThread(data);
+        sendToChannel(jsonEncode({'received': data['message']['id']}));
       }
     } else if (data['type'] == 'notification') {
       addNotification(data);
@@ -593,6 +592,7 @@ class LandingPageState extends State<LandingPage>
     var existingThread = threadBox.get(threadName);
     existingThread.updateChatSeenStatus(data['id']);
     existingThread.save();
+    sendToChannel(jsonEncode({'n_r': data['notif_id']}));
   }
 
   void addNotification(data) async {
@@ -621,13 +621,16 @@ class LandingPageState extends State<LandingPage>
     existingThread.save();
   }
 
-  void _updateChatStatus(int id, String name) {
+  void _updateChatStatus(data) {
+    int id = data['received'];
+    String name = data['from'];
     String me = _prefs.getString('username');
     String threadName = me + '_' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     existingThread.updateChatStatus(id);
     existingThread.save();
+    sendToChannel(jsonEncode({'n_r': data['notif_id']}));
   }
 
   _chicanery(threadName, thread, data) async {
@@ -640,7 +643,7 @@ class LandingPageState extends State<LandingPage>
       thread.addChat(ChatMessage(
         message: data['message']['message'],
         senderName: data['message']['from'],
-        time: DateTime.now(),
+        time: DateTime.parse(data['message']['time']),
         isMe: false,
         msgType: 'txt',
         id: data['message']['id'],
@@ -650,7 +653,7 @@ class LandingPageState extends State<LandingPage>
         base64string: data['message']['img'],
         senderName: data['message']['from'],
         msgType: 'img',
-        time: DateTime.now(),
+        time: DateTime.parse(data['message']['time']),
         isMe: false,
         id: data['message']['id'],
       ));
@@ -659,7 +662,7 @@ class LandingPageState extends State<LandingPage>
         base64string: data['message']['aud'],
         senderName: data['message']['from'],
         msgType: 'aud',
-        time: DateTime.now(),
+        time: DateTime.parse(data['message']['time']),
         isMe: false,
         id: data['message']['id'],
       ));
@@ -712,7 +715,7 @@ class LandingPageState extends State<LandingPage>
         existingThread.addChat(ChatMessage(
           message: data['message']['message'],
           senderName: data['message']['from'],
-          time: DateTime.now(),
+          time: DateTime.parse(data['message']['time']),
           isMe: false,
           msgType: "txt",
           id: data['message']['id'],
@@ -721,7 +724,7 @@ class LandingPageState extends State<LandingPage>
         existingThread.addChat(ChatMessage(
           base64string: data['message']['aud'],
           senderName: data['message']['from'],
-          time: DateTime.now(),
+          time: DateTime.parse(data['message']['time']),
           ext: data['message']['ext'],
           msgType: "aud",
           isMe: false,
@@ -731,7 +734,7 @@ class LandingPageState extends State<LandingPage>
         existingThread.addChat(ChatMessage(
           base64string: data['message']['img'],
           senderName: data['message']['from'],
-          time: DateTime.now(),
+          time: DateTime.parse(data['message']['time']),
           ext: data['message']['ext'],
           msgType: "img",
           isMe: false,

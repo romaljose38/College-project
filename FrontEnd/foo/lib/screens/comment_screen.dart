@@ -153,15 +153,18 @@ class _CommentScreenState extends State<CommentScreen>
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
-            Container(
-              height: widget.height,
-              width: double.infinity,
-              // margin: EdgeInsets.symmetric(horizontal: 5),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30.0),
-                image: DecorationImage(
-                  image: CachedNetworkImageProvider(widget.postUrl),
-                  fit: BoxFit.cover,
+            Hero(
+              tag: "profile_${widget.heroIndex}",
+              child: Container(
+                height: widget.height,
+                width: double.infinity,
+                // margin: EdgeInsets.symmetric(horizontal: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30.0),
+                  image: DecorationImage(
+                    image: CachedNetworkImageProvider(widget.postUrl),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
