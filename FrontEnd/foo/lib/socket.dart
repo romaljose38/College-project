@@ -280,6 +280,7 @@ class SocketChannel {
         };
         sendToChannel(jsonEncode(seenTicker));
         _prefs.setInt("lastSeenId", data['message']['id']);
+        _prefs.setBool("${data['message']['from']}_hasNew", true);
       }
 
       // else{
