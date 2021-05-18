@@ -131,6 +131,37 @@ class SocketChannel {
       updateMsgSeenStatus(data);
     } else if (data['type'] == 'typing_status') {
       updateTypingStatus(data);
+    } else if (data['type'] == 'story_add') {
+      addNewStory(data);
+    }
+  }
+
+  void addNewStory(data) {
+    var storyBox = Hive.box('MyStories');
+    print(data);
+
+    if (storyBox.containsKey(data['u'])) {
+      var userStory = storyBox.get(data['u']);
+      userStory.addStory(Story(
+        file: data['url'],
+        time: DateTime.parse(data['time']),
+        storyId: data['s_id'],
+        notificationId: data['n_id'],
+      ));
+      userStory.save();
+    } else {
+      UserStoryModel newUser = UserStoryModel()
+        ..username = data['u']
+        ..userId = data['u_id']
+        ..stories = <Story>[];
+      newUser.addStory(Story(
+        file: data['url'],
+        time: DateTime.parse(data['time']),
+        storyId: data['s_id'],
+        notificationId: data['n_id'],
+      ));
+
+      storyBox.put(data['u'], newUser);
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:foo/models.dart';
 import 'package:foo/screens/post_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../test_cred.dart';
 import 'dart:math' as math;
@@ -39,7 +40,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   initState() {
     listKey = GlobalKey<SliverAnimatedListState>();
     setInitialData();
-    _fetchStory();
+    //_fetchStory();
     super.initState();
     // _getNewPosts();
     _controller = ScrollController();
@@ -147,172 +148,218 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   List postsList = [];
 
-  Future<void> _fetchStory() async {
-    await _checkConnectionStatus();
-    var response = await http.get(Uri.http(localhost, '/api/get_stories'));
-    setState(() {
-      myStoryList = jsonDecode(response.body);
-      myItemCounter = myStoryList.length + 1;
-    });
-    // print(myStoryList);
-  }
+  // Future<void> _fetchStory() async {
+  //   await _checkConnectionStatus();
+  //   var response = await http.get(Uri.http(localhost, '/api/get_stories'));
+  //   setState(() {
+  //     myStoryList = jsonDecode(response.body);
+  //     myItemCounter = myStoryList.length + 1;
+  //   });
+  //   // print(myStoryList);
+  // }
 
-  int myItemCounter = 1;
+  //int myItemCounter = 1;
 
-  //A test function that picks up all the data concerning to stories from hive
+  //The widget to display the stories which fetches data using the websocket
 
-  void pickStoryFromHive() {
-    var listToPutToHive = myStoryList;
-    var box = Hive.box('MyStories');
-
-    for (int i = 0; i < listToPutToHive.length; i++) {
-      box.put(
-          listToPutToHive[i]['username'],
-          UserStoryModel(
-            username: listToPutToHive[i]['username'],
-            id: listToPutToHive[i]['id'],
-            stories: <Story>[
-              ...listToPutToHive[i]['stories']
-                  .map((story) => Story(
-                        file: story['file'],
-                        views: story['views'],
-                        time: DateTime.parse(story['time']),
-                      ))
-                  .toList()
-            ],
-          ));
-    }
-
-    if (box.containsKey('pranav')) {
-      var pranavStory = box.get('pranav');
-      print('${pranavStory.stories[0].display()}');
-    }
+  Widget _newHoriz() {
+    return ValueListenableBuilder(
+        valueListenable: Hive.box('MyStories').listenable(),
+        builder: (context, box, widget) {
+          myStoryList = box.values.toList();
+          myStoryList
+              .sort((a, b) => b.timeOfLastStory.compareTo(a.timeOfLastStory));
+          return Container(
+            width: double.infinity,
+            height: 100.0,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              //itemCount: pst.stories.length + 1,
+              itemCount: myStoryList.length + 1, //myStoryList.length + 1,
+              itemBuilder: (BuildContext context, int index) {
+                if (index == 0) {
+                  return StoryUploadPick();
+                }
+                return GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => StoryBuilder(
+                                  myStoryList: myStoryList,
+                                  initialPage: index - 1,
+                                  profilePic: pst.stories,
+                                )),
+                      );
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                      height: 50,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.fromRGBO(250, 87, 142, 1),
+                            Color.fromRGBO(202, 136, 18, 1),
+                            Color.fromRGBO(253, 167, 142, 1),
+                          ],
+                        ),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(3),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(2),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(23),
+                                  image: DecorationImage(
+                                    image: AssetImage(pst.stories[index - 1]),
+                                    // image: NetworkImage(
+                                    //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                                    fit: BoxFit.cover,
+                                  )),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ));
+              },
+            ),
+          );
+        });
   }
 
   //
 
-  Container _horiz() {
-    //pickStoryFromHive();
-    return Container(
-      width: double.infinity,
-      height: 100.0,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        //itemCount: pst.stories.length + 1,
-        itemCount: myItemCounter, //myStoryList.length + 1,
-        itemBuilder: (BuildContext context, int index) {
-          if (index == 0) {
-            return StoryUploadPick();
-          }
-          return GestureDetector(
-              onTap: () {
-                print(
-                    "You tickled ${myStoryList[index - 1]['username']} $index times");
-                print("${myStoryList[index - 1]['stories'][0]['file']}");
-                print("$myStoryList");
-                print("${myStoryList.length}");
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => StoryBuilder(
-                            myStoryList: myStoryList,
-                            initialPage: index - 1,
-                            profilePic: pst.stories,
-                          )),
-                );
-              },
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                height: 50,
-                width: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color.fromRGBO(250, 87, 142, 1),
-                      Color.fromRGBO(202, 136, 18, 1),
-                      Color.fromRGBO(253, 167, 142, 1),
-                    ],
-                  ),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(3),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(2),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(23),
-                            image: DecorationImage(
-                              image: AssetImage(pst.stories[index - 1]),
-                              // image: NetworkImage(
-                              //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
-                              fit: BoxFit.cover,
-                            )),
-                      ),
-                    ),
-                  ),
-                ),
-              )
-              // child: Container(
-              //   margin: EdgeInsets.all(10.0),
-              //   // width: 80.0,
-              //   // height: 45.0,
-              //   decoration: BoxDecoration(
-              //       borderRadius: BorderRadius.circular(35),
-              //       gradient: LinearGradient(
-              //           begin: Alignment.topLeft,
-              //           end: Alignment.bottomRight,
-              //           colors: [
-              //             Color.fromRGBO(250, 87, 142, 1),
-              //             Palette.lightSalmon,
-              //           ])
-              //       // boxShadow: [
-              //       //   BoxShadow(
-              //       //     color: Colors.black45.withOpacity(.2),
-              //       //     offset: Offset(0, 2),
-              //       //     spreadRadius: 1,
-              //       //     blurRadius: 6.0,
-              //       //   ),
-              //       // ],
-              //       ),
-              //   child: Padding(
-              //     padding: const EdgeInsets.all(2.0),
-              //     child: Container(
-              //       decoration: BoxDecoration(
-              //         color: Colors.white,
-              //         borderRadius: BorderRadius.circular(30),
-              //       ),
-              //       child: Padding(
-              //         padding: EdgeInsets.all(1),
-              //         child: Container(
-              //           width: 70,
-              //           height: 40,
-              //           decoration: BoxDecoration(
-              //               borderRadius: BorderRadius.circular(30),
-              //               // shape: BoxShape.circle,
-              //               image: DecorationImage(
-              //                 //image: AssetImage(pst.stories[index - 1]),
-              //                 image: NetworkImage(
-              //                     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
-              //                 fit: BoxFit.cover,
-              //               )),
-              //         ),
-              //       ),
-              //     ),
-              //   ),
-              // ),
-              );
-        },
-      ),
-    );
-  }
+  // Container _horiz() {
+  //   return Container(
+  //     width: double.infinity,
+  //     height: 100.0,
+  //     child: ListView.builder(
+  //       scrollDirection: Axis.horizontal,
+  //       //itemCount: pst.stories.length + 1,
+  //       itemCount: myItemCounter, //myStoryList.length + 1,
+  //       itemBuilder: (BuildContext context, int index) {
+  //         if (index == 0) {
+  //           return StoryUploadPick();
+  //         }
+  //         return GestureDetector(
+  //             onTap: () {
+  //               print(
+  //                   "You tickled ${myStoryList[index - 1]['username']} $index times");
+  //               print("${myStoryList[index - 1]['stories'][0]['file']}");
+  //               print("$myStoryList");
+  //               print("${myStoryList.length}");
+  //               Navigator.of(context).push(
+  //                 MaterialPageRoute(
+  //                     builder: (context) => StoryBuilder(
+  //                           myStoryList: myStoryList,
+  //                           initialPage: index - 1,
+  //                           profilePic: pst.stories,
+  //                         )),
+  //               );
+  //             },
+  //             child: Container(
+  //               margin: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+  //               height: 50,
+  //               width: 80,
+  //               decoration: BoxDecoration(
+  //                 borderRadius: BorderRadius.circular(30),
+  //                 gradient: LinearGradient(
+  //                   begin: Alignment.topLeft,
+  //                   end: Alignment.bottomRight,
+  //                   colors: [
+  //                     Color.fromRGBO(250, 87, 142, 1),
+  //                     Color.fromRGBO(202, 136, 18, 1),
+  //                     Color.fromRGBO(253, 167, 142, 1),
+  //                   ],
+  //                 ),
+  //               ),
+  //               child: Padding(
+  //                 padding: EdgeInsets.all(3),
+  //                 child: Container(
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.white,
+  //                     borderRadius: BorderRadius.circular(26),
+  //                   ),
+  //                   child: Padding(
+  //                     padding: EdgeInsets.all(2),
+  //                     child: Container(
+  //                       decoration: BoxDecoration(
+  //                           color: Colors.black,
+  //                           borderRadius: BorderRadius.circular(23),
+  //                           image: DecorationImage(
+  //                             image: AssetImage(pst.stories[index - 1]),
+  //                             // image: NetworkImage(
+  //                             //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+  //                             fit: BoxFit.cover,
+  //                           )),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //             )
+  //             // child: Container(
+  //             //   margin: EdgeInsets.all(10.0),
+  //             //   // width: 80.0,
+  //             //   // height: 45.0,
+  //             //   decoration: BoxDecoration(
+  //             //       borderRadius: BorderRadius.circular(35),
+  //             //       gradient: LinearGradient(
+  //             //           begin: Alignment.topLeft,
+  //             //           end: Alignment.bottomRight,
+  //             //           colors: [
+  //             //             Color.fromRGBO(250, 87, 142, 1),
+  //             //             Palette.lightSalmon,
+  //             //           ])
+  //             //       // boxShadow: [
+  //             //       //   BoxShadow(
+  //             //       //     color: Colors.black45.withOpacity(.2),
+  //             //       //     offset: Offset(0, 2),
+  //             //       //     spreadRadius: 1,
+  //             //       //     blurRadius: 6.0,
+  //             //       //   ),
+  //             //       // ],
+  //             //       ),
+  //             //   child: Padding(
+  //             //     padding: const EdgeInsets.all(2.0),
+  //             //     child: Container(
+  //             //       decoration: BoxDecoration(
+  //             //         color: Colors.white,
+  //             //         borderRadius: BorderRadius.circular(30),
+  //             //       ),
+  //             //       child: Padding(
+  //             //         padding: EdgeInsets.all(1),
+  //             //         child: Container(
+  //             //           width: 70,
+  //             //           height: 40,
+  //             //           decoration: BoxDecoration(
+  //             //               borderRadius: BorderRadius.circular(30),
+  //             //               // shape: BoxShape.circle,
+  //             //               image: DecorationImage(
+  //             //                 //image: AssetImage(pst.stories[index - 1]),
+  //             //                 image: NetworkImage(
+  //             //                     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+  //             //                 fit: BoxFit.cover,
+  //             //               )),
+  //             //         ),
+  //             //       ),
+  //             //     ),
+  //             //   ),
+  //             // ),
+  //             );
+  //       },
+  //     ),
+  //   );
+  // }
 
   Future<void> _getNewPosts() async {
     var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
@@ -381,13 +428,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             triggerMode: RefreshIndicatorTriggerMode.anywhere,
             onRefresh: () {
               _getNewPosts();
-              _fetchStory();
+              //_fetchStory();
               return Future.value('nothing');
             },
             child: CustomScrollView(
               controller: _controller,
               slivers: [
-                SliverToBoxAdapter(child: _horiz()),
+                //SliverToBoxAdapter(child: _horiz()),
+                SliverToBoxAdapter(child: _newHoriz()),
                 SliverToBoxAdapter(child: SizedBox(height: 20)),
                 SliverAnimatedList(
                   initialItemCount: itemCount,

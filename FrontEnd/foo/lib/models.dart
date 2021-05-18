@@ -332,7 +332,19 @@ class Story extends HiveObject {
   @HiveField(3)
   bool viewed;
 
-  Story({this.file, this.views, this.time, this.viewed});
+  @HiveField(4)
+  int storyId;
+
+  @HiveField(5)
+  int notificationId;
+
+  Story(
+      {this.file,
+      this.views,
+      this.time,
+      this.viewed,
+      this.storyId,
+      this.notificationId});
 
   String display() {
     return 'file: $file - seen: $viewed - time: $time';
@@ -345,12 +357,15 @@ class UserStoryModel extends HiveObject {
   String username;
 
   @HiveField(1)
-  int id;
+  int userId;
 
   @HiveField(2)
   List<Story> stories = <Story>[];
 
-  UserStoryModel({this.username, this.id, this.stories});
+  @HiveField(3)
+  DateTime timeOfLastStory;
+
+  UserStoryModel({this.username, this.userId, this.stories});
 
   int hasUnSeen() {
     //If the userstorymodel has a story that is unseen it returns the index of that story or otherwise return -1
@@ -361,10 +376,12 @@ class UserStoryModel extends HiveObject {
   }
 
   void addStory(Story story) {
-    if (stories.contains(story))
+    if (stories.where((x) => x.storyId == story.storyId).length >
+        0) //ie, if element already exists
       return;
     else {
       stories.add(story);
+      timeOfLastStory = story.time;
     }
   }
 }

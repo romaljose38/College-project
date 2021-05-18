@@ -6,16 +6,17 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:foo/test_cred.dart';
+import 'package:foo/models.dart';
 
 import 'dart:io';
 import 'dart:async';
 
 // ignore: must_be_immutable
 class StoryScreen extends StatefulWidget {
-  final storyObject;
+  UserStoryModel storyObject;
   final storyBuilderController;
   String username;
-  var stories;
+  List<Story> stories;
   String profilePic;
   int userCount;
 
@@ -24,8 +25,8 @@ class StoryScreen extends StatefulWidget {
       @required this.storyBuilderController,
       @required this.userCount,
       @required this.profilePic}) {
-    username = storyObject['username'];
-    stories = storyObject['stories'];
+    username = storyObject.username; //storyObject['username'];
+    stories = storyObject.stories; //storyObject['stories'];
     // profilePic =
     //     'https://cdn.britannica.com/s:300x169,c:crop/15/153115-050-9C83E2C3/Steve-Jobs-computer-Apple-II-1977.jpg';
   }
@@ -149,7 +150,7 @@ class _StoryScreenState extends State<StoryScreen>
   @override
   Widget build(BuildContext context) {
     final story = widget.stories[_currentIndex];
-    timeUploaded = _formatTime(story['time']);
+    timeUploaded = _formatTime('${story.time}');
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -160,13 +161,14 @@ class _StoryScreenState extends State<StoryScreen>
             itemCount: widget.stories.length,
             itemBuilder: (context, i) {
               final story = widget.stories[i];
-              timeUploaded = _formatTime(story['time']);
+              timeUploaded =
+                  _formatTime('${story.time}'); //_formatTime(story['time']);
 
               return FutureBuilder(
-                  future: _getOrDownload('http://$localhost${story['file']}'),
+                  future: _getOrDownload('http://$localhost${story.file}'),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.done) {
-                      switch (_getTypeOf(story['file'])) {
+                      switch (_getTypeOf(story.file)) {
                         case 'image':
                           {
                             _animController.forward();
@@ -298,10 +300,10 @@ class _StoryScreenState extends State<StoryScreen>
     }
   }
 
-  void _loadStory({Map story, bool animateToPage = true}) {
+  void _loadStory({Story story, bool animateToPage = true}) {
     _animController.stop();
     _animController.reset();
-    if (_getTypeOf(story['file']) == 'image') //story['type'], == 'image')
+    if (_getTypeOf(story.file) == 'image') //story['type'], == 'image')
       _animController.duration = const Duration(seconds: 10);
     if (animateToPage) {
       _pageController.animateToPage(
