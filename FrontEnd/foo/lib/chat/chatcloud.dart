@@ -5,7 +5,7 @@ import 'package:foo/models.dart';
 
 class ChatCloud extends StatelessWidget {
   final ChatMessage msgObj;
-  
+
   ChatCloud({this.msgObj});
 
   String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
@@ -110,16 +110,10 @@ class ChatCloud extends StatelessWidget {
         ]);
   }
 
- 
   @override
   Widget build(BuildContext context) {
-    print(msgObj.hasSeen);
-    print("has seen");
     return Column(
-      children: [
-        
-        cloudContent(context)
-      ],
+      children: [cloudContent(context)],
     );
   }
 }

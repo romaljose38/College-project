@@ -24,9 +24,10 @@ import 'package:timeago/timeago.dart' as timeago;
 class ChatScreen extends StatefulWidget {
   // final SocketChannel controller;
   final Thread thread;
-
+  final SharedPreferences prefs;
   ChatScreen(
       {Key key,
+      this.prefs,
       // this.controller,
       this.thread})
       : super(key: key);
@@ -40,28 +41,36 @@ class _ChatScreenState extends State<ChatScreen> {
   String otherUser;
   String threadName;
   TextEditingController _chatController = TextEditingController();
+  ScrollController _scrollController = ScrollController();
   Thread thread;
   SharedPreferences _prefs;
   Timer timer;
   String userStatus = "";
-
+  bool justGotIn = true;
+  bool overlayVisible = false;
+  OverlayEntry entry;
   @override
   void initState() {
+    _getUserName();
     super.initState();
+    _prefs = widget.prefs;
     otherUser = widget.thread.second.name;
     curUser = widget.thread.first.name;
+
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     thread = Hive.box('threads').get(threadName);
     sendSeenTickerIfNeeded();
-    _getUserName();
+
     obtainStatus();
+    updateLastChatMsgStatus();
     timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
   }
 
   void sendSeenTickerIfNeeded() async {
     _prefs = await SharedPreferences.getInstance();
-    if (thread.chatList.length > 0 &&
+    if ((thread.chatList != null) &&
+        thread.chatList.length > 0 &&
         thread.chatList.last.isMe != true &&
         (thread.chatList.last.id != _prefs.getInt("lastSeenId"))) {
       var seenTicker = {
@@ -75,11 +84,27 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void updateLastChatMsgStatus() {
+    if (thread.chatList != null) {
+      if (thread.chatList.length > 0) {
+        if (thread.chatList.last.isMe != true) {
+          var threadBox = Hive.box("Threads");
+          var thread = threadBox.get(curUser + '_' + otherUser);
+          if (thread.hasUnseen > 0) {
+            thread.hasUnseen = 0;
+            thread.save();
+          }
+        }
+      }
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
     timer.cancel();
     _chatController.dispose();
+    _scrollController.dispose();
   }
 
   Future<void> obtainStatus() async {
@@ -95,7 +120,6 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       } else {
         DateTime time = DateTime.parse(body['status']);
-        print(time.toString());
         setState(() {
           userStatus = timeago.format(time);
         });
@@ -231,6 +255,36 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void showOverlay() {
+    overlayVisible = true;
+    OverlayState state = Overlay.of(context);
+    entry = OverlayEntry(builder: (context) {
+      return Positioned(
+          bottom: 10,
+          left: 10,
+          child: GestureDetector(
+              onTap: () {
+                _prefs.setBool("${otherUser}_hasNew", false);
+                overlayVisible = false;
+                _scrollController.animateTo(
+                    _scrollController.position.minScrollExtent,
+                    duration: Duration(milliseconds: 100),
+                    curve: Curves.easeIn);
+                entry.remove();
+              },
+              child: Container(width: 30, height: 30, color: Colors.black)));
+    });
+    Future.delayed(Duration(seconds: 2), () {
+      state.insert(entry);
+    });
+    // Future.delayed(Duration(seconds: 10), () {
+    //   _prefs.setBool("${otherUser}_hasNew", false);
+    //   print(_scrollController.offset);
+    //   entry.remove();
+    // });
+    // Timer(Duration(se))
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -313,23 +367,42 @@ class _ChatScreenState extends State<ChatScreen> {
                         ]),
                   )),
             )),
+        floatingActionButton: FloatingActionButton(
+          child: Text("A", style: TextStyle(color: Colors.black)),
+          onPressed: showOverlay,
+        ),
         body: Padding(
           padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
           child: Column(children: <Widget>[
             Expanded(
               child: ValueListenableBuilder(
-                valueListenable: Hive.box("Threads").listenable(),
+                valueListenable:
+                    Hive.box("Threads").listenable(keys: [threadName]),
+                child: ChatCloudList(
+                  chatList: thread.chatList,
+                  curUser: curUser,
+                  otherUser: otherUser,
+                  prefs: _prefs,
+                  scrollController: _scrollController,
+                ),
                 builder: (context, box, widget) {
                   var thread = box.get(threadName);
 
                   List __chatList = thread.chatList ?? [];
 
+                  if (_prefs.containsKey("${otherUser}_hasNew") &&
+                      _prefs.getBool("${otherUser}_hasNew") &&
+                      !overlayVisible &&
+                      _scrollController.offset > 300) {
+                    showOverlay();
+                  }
+                  print("rerender");
                   return ChatCloudList(
                       chatList: __chatList,
-                      needScroll: (__chatList.length == 0) ? false : true,
                       curUser: curUser,
                       otherUser: otherUser,
-                      prefs: _prefs);
+                      prefs: _prefs,
+                      scrollController: _scrollController);
                 },
               ),
             ),

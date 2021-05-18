@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'chatscreen.dart';
 import 'package:foo/models.dart';
 import 'package:intl/intl.dart';
@@ -24,6 +25,10 @@ class ChatTile extends StatelessWidget {
       return "Yesterday";
     }
     return DateFormat("LLL d").format(date);
+  }
+
+  getPrefs() async {
+    return await SharedPreferences.getInstance();
   }
 
   @override
@@ -90,10 +95,12 @@ class ChatTile extends StatelessWidget {
             ),
           ),
           onTap: () async {
+            var prefs = await getPrefs();
             Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (context) => ChatScreen(
+                        prefs: prefs,
                         // controller:this.controller,
                         thread: this.thread)));
           },
