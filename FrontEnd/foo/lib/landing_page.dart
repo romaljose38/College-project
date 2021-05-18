@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:foo/chat/listscreen.dart';
-import 'package:foo/chat/socket.dart';
 import 'package:foo/colour_palette.dart';
 import 'package:foo/models.dart';
 import 'package:foo/notification_handler.dart';
@@ -16,6 +15,7 @@ import 'package:foo/notifications/notification_screen.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/search_screen.dart';
+import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
 import 'package:foo/upload_screens/audio_upoad_screen.dart';
 import 'package:foo/upload_screens/image_upload_screen.dart';
@@ -56,12 +56,15 @@ class LandingPageState extends State<LandingPage>
   SharedPreferences _prefs;
   Timer timer;
   static bool isConnected = false;
+  SocketChannel socket;
+
   // NotificationController controller;
 
   @override
   void initState() {
     notifInit();
     super.initState();
+    checkSocket();
     setPrefs();
     _pageController = PageController(initialPage: widget.index);
     animationController = AnimationController(
@@ -70,7 +73,14 @@ class LandingPageState extends State<LandingPage>
     );
     animation =
         Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
-    timer = Timer.periodic(Duration(seconds: 10), (Timer t) => handleSocket());
+    // timer = Timer.periodic(Duration(seconds: 10), (Timer t) => handleSocket());
+  }
+
+  checkSocket() {
+    if (!SocketChannel.isConnected) {
+      socket = SocketChannel();
+      print("in landing page");
+    }
   }
 
   Future<void> setPrefs() async {

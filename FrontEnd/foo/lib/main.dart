@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/chat/listscreen.dart';
 import 'package:foo/notification_handler.dart';
+import 'package:foo/socket.dart';
 import 'package:intl/intl.dart' as intl;
 import 'initialscreen.dart';
 import 'router.dart';
@@ -13,11 +14,6 @@ import 'package:hive/hive.dart';
 import 'package:foo/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-Future<dynamic> handleEntry(String payload) async {
-  await MyApp._key.currentState
-      .push(MaterialPageRoute(builder: (context) => ChatListScreen()));
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +37,11 @@ Future<void> main() async {
   await Hive.openBox('MyStories');
   SharedPreferences prefs = await SharedPreferences.getInstance();
   prefs.setString("curUser", "");
+  SocketChannel socket;
+  if (prefs.containsKey('username')) {
+    print("in main");
+    socket = SocketChannel();
+  }
   await Firebase.initializeApp();
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     print(message.data);

@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:foo/landing_page.dart';
+import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
 import 'chatcloudlist.dart';
-import 'socket.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +22,7 @@ import 'package:http/http.dart' as http;
 import 'package:timeago/timeago.dart' as timeago;
 
 class ChatScreen extends StatefulWidget {
-  // final NotificationController controller;
+  // final SocketChannel controller;
   final Thread thread;
 
   ChatScreen(
@@ -53,9 +53,20 @@ class _ChatScreenState extends State<ChatScreen> {
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     thread = Hive.box('threads').get(threadName);
-
+    sendSeenTickerIfNeeded();
     _getUserName();
     timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
+  }
+
+  void sendSeenTickerIfNeeded() {
+    if (thread.chatList.length > 0 && thread.chatList.last.isMe != true) {
+      var seenTicker = {
+        "type": "seen_ticker",
+        "to": otherUser,
+        "id": thread.chatList.last.id,
+      };
+      SocketChannel.sendToChannel(jsonEncode(seenTicker));
+    }
   }
 
   @override
@@ -118,8 +129,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ));
       currentThread.save();
 
-      if (LandingPageState.isConnected) {
-        LandingPageState.sendToChannel(data);
+      if (SocketChannel.isConnected) {
+        SocketChannel.sendToChannel(data);
       } else {
         print("not connected");
       }
@@ -146,7 +157,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'time': curTime.toString(),
     });
     print(data);
-    if (NotificationController.isActive) {
+    if (SocketChannel.isConnected) {
       var threadBox = Hive.box('Threads');
 
       Thread currentThread = threadBox.get(threadName);
@@ -196,7 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'time': curTime.toString(),
     });
     print(data);
-    if (NotificationController.isActive) {
+    if (SocketChannel.isConnected) {
       var threadBox = Hive.box('Threads');
 
       Thread currentThread = threadBox.get(threadName);
@@ -210,7 +221,7 @@ class _ChatScreenState extends State<ChatScreen> {
         isMe: true,
       ));
       currentThread.save();
-      NotificationController.sendToChannel(data);
+      SocketChannel.sendToChannel(data);
     }
   }
 
@@ -405,7 +416,7 @@ class _RecordAppState extends State<RecordApp>
       'status': 'typing',
     };
 
-    NotificationController.sendToChannel(jsonEncode(data));
+    SocketChannel.sendToChannel(jsonEncode(data));
   }
 
   void sendTypingStopped() {
@@ -415,7 +426,7 @@ class _RecordAppState extends State<RecordApp>
       'status': 'stopped',
     };
 
-    NotificationController.sendToChannel(jsonEncode(data));
+    SocketChannel.sendToChannel(jsonEncode(data));
   }
 
   void animateMicColor() {

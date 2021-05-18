@@ -118,8 +118,11 @@ class Thread extends HiveObject {
 
   bool updateChatSeenStatus(id) {
     for (int i = 0; i < chatList.length; i++) {
-      if (chatList[chatList.length - 1 - i].id == id) {
-        chatList[chatList.length - 1 - i].hasSeen = true;
+      var index = chatList.length - 1 - i;
+      if (chatList[index].id <= id) {
+        if (chatList[index].hasSeen != true) {
+          chatList[index].hasSeen = true;
+        }
         return true;
       }
     }

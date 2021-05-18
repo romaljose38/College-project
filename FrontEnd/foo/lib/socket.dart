@@ -1,57 +1,65 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:async';
-
 import 'package:foo/models.dart';
+import 'package:foo/test_cred.dart';
+import 'package:http/http.dart' as http;
 import 'package:foo/notification_handler.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:foo/test_cred.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
-class NotificationController {
-  static final NotificationController _singleton =
-      new NotificationController._internal();
+class SocketChannel {
+  static final SocketChannel socket = SocketChannel._internal();
 
-  static StreamController streamController =
-      new StreamController.broadcast(sync: true);
-
-  String wsUrl = 'ws://$localhost/ws/chat_room/';
-
-  String username;
-  SharedPreferences prefs;
-  LocalNotificationHandler _handler = LocalNotificationHandler();
   static WebSocket channel;
-  static bool isActive = false;
+  LocalNotificationHandler _handler = LocalNotificationHandler();
+  String username;
+  Timer _timer;
+  SharedPreferences _prefs;
+  static bool isConnected = false;
 
-  factory NotificationController() {
-    return _singleton;
+  factory SocketChannel() {
+    return socket;
   }
 
-  NotificationController._internal() {
-    initWebSocketConnection();
+  SocketChannel._internal() {
+    setPrefs();
+    _timer = Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
   }
 
-  getUserName() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    this.prefs = prefs;
-    this.username = prefs.getString('username');
+  Future<void> setPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<void> handleSocket() async {
+    try {
+      var resp = await http.get(Uri.http(localhost, '/api/ping'));
+      if (resp.statusCode == 200) {
+        if (!isConnected) {
+          await setPrefs();
+          String wsUrl = 'ws://$localhost/ws/chat_room/' +
+              _prefs.getString("username") +
+              "/";
+          // ignore: unused_local_variable
+          channel = await WebSocket.connect(wsUrl);
+          initWebSocketConnection();
+        }
+      } else {
+        isConnected = false;
+      }
+    } catch (e) {
+      isConnected = false;
+    }
   }
 
   initWebSocketConnection() async {
-    await getUserName();
     print("connected.");
-    // if (NotificationController.isActive == false) {
-    // channel = await connectWs();
-
-    NotificationController.isActive = true;
+    isConnected = true;
     print("socket connection initializied");
     channel.done.then((dynamic _) => _onDisconnected());
-    // channel.stream.handleError();
+
     getPendingMessages();
     broadcastNotifications();
-    // }
   }
 
   getPendingMessages() {
@@ -74,7 +82,7 @@ class NotificationController {
               'message': e.message,
               'id': e.id,
               'time': e.time.toString(),
-              'from': username,
+              'from': _prefs.getString("username"),
               'to': senderName,
               'type': 'msg',
             });
@@ -90,36 +98,32 @@ class NotificationController {
     channel.listen((streamData) {
       print(streamData);
       dataHandler(jsonDecode(streamData));
-      print(jsonDecode(streamData).runtimeType);
-      streamController.add(streamData);
     }, onDone: () {
-      NotificationController.isActive = false;
+      isConnected = false;
       print("conecting aborted");
     }, onError: (e) {
-      NotificationController.isActive = false;
+      isConnected = false;
       print('Server error: $e');
     });
   }
 
   dataHandler(data) {
     if (data.containsKey('received')) {
-      _updateChatStatus(data['received'], data['name']);
+      _updateChatStatus(data);
     } else if (data.containsKey("r_s")) {
       _updateReachedServerStatus(
           id: data['r_s']['id'],
           newId: data['r_s']['n_id'],
           name: data['r_s']['to']);
     } else if (data['type'] == 'chat_message') {
-      if ((prefs.containsKey('lastMsgId') &
-              (prefs.getInt('lastMsgId') != data['message']['id'])) |
-          !prefs.containsKey('lastMsgId')) {
-        prefs.setInt("lastMsgId", data['message']['id']);
-        if (data['message']['to'] == prefs.getString('username')) {
-          print(data['message']['id']);
+      if ((_prefs.containsKey('lastMsgId') &&
+              (_prefs.getInt('lastMsgId') != data['message']['id'])) ||
+          !_prefs.containsKey('lastMsgId')) {
+        _prefs.setInt("lastMsgId", data['message']['id']);
 
-          _createThread(data);
-          sendToChannel(jsonEncode({'received': data['message']['id']}));
-        }
+        print(data['message']['id']);
+        sendToChannel(jsonEncode({'received': data['message']['id']}));
+        _createThread(data);
       }
     } else if (data['type'] == 'notification') {
       addNotification(data);
@@ -131,7 +135,7 @@ class NotificationController {
   }
 
   void updateTypingStatus(data) {
-    String me = prefs.getString('username');
+    String me = _prefs.getString('username');
     String threadName = me + '_' + data['from'];
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
@@ -145,20 +149,20 @@ class NotificationController {
   }
 
   void updateMsgSeenStatus(data) {
-    print("in messaeg seen status");
-    String me = prefs.getString('username');
+    String me = _prefs.getString('username');
     String threadName = me + '_' + data['from'];
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     existingThread.updateChatSeenStatus(data['id']);
     existingThread.save();
+    sendToChannel(jsonEncode({'n_r': data['notif_id']}));
   }
 
   void addNotification(data) async {
-    if ((prefs.containsKey('lastNotifId') &
-            (prefs.getInt('lastNotifId') != data['id'])) |
-        !prefs.containsKey('lastNotifId')) {
-      prefs.setInt("lastNotifId", data['id']);
+    if ((_prefs.containsKey('lastNotifId') &
+            (_prefs.getInt('lastNotifId') != data['id'])) |
+        !_prefs.containsKey('lastNotifId')) {
+      _prefs.setInt("lastNotifId", data['id']);
       DateTime curTime = DateTime.now();
       _handler.friendRequestNotif(data['username']);
       var notif = Notifications(
@@ -172,7 +176,7 @@ class NotificationController {
   }
 
   void _updateReachedServerStatus({id, newId, name}) {
-    String me = prefs.getString('username');
+    String me = _prefs.getString('username');
     String threadName = me + '_' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
@@ -180,13 +184,16 @@ class NotificationController {
     existingThread.save();
   }
 
-  void _updateChatStatus(int id, String name) {
-    String me = prefs.getString('username');
+  void _updateChatStatus(data) {
+    int id = data['received'];
+    String name = data['from'];
+    String me = _prefs.getString('username');
     String threadName = me + '_' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     existingThread.updateChatStatus(id);
     existingThread.save();
+    sendToChannel(jsonEncode({'n_r': data['notif_id']}));
   }
 
   _chicanery(threadName, thread, data) async {
@@ -199,7 +206,7 @@ class NotificationController {
       thread.addChat(ChatMessage(
         message: data['message']['message'],
         senderName: data['message']['from'],
-        time: DateTime.now(),
+        time: DateTime.parse(data['message']['time']),
         isMe: false,
         msgType: 'txt',
         id: data['message']['id'],
@@ -209,7 +216,7 @@ class NotificationController {
         base64string: data['message']['img'],
         senderName: data['message']['from'],
         msgType: 'img',
-        time: DateTime.now(),
+        time: DateTime.parse(data['message']['time']),
         isMe: false,
         id: data['message']['id'],
       ));
@@ -218,7 +225,7 @@ class NotificationController {
         base64string: data['message']['aud'],
         senderName: data['message']['from'],
         msgType: 'aud',
-        time: DateTime.now(),
+        time: DateTime.parse(data['message']['time']),
         isMe: false,
         id: data['message']['id'],
       ));
@@ -237,7 +244,7 @@ class NotificationController {
       return null;
     }
     var threadBox = Hive.box('Threads');
-    var me = prefs.getString('username');
+    var me = _prefs.getString('username');
 
     //Creating thread with the given data
     var thread = Thread(
@@ -255,13 +262,23 @@ class NotificationController {
     } else {
       var existingThread = threadBox.get(threadName);
 
-      if (prefs.getString("curUser") != data['message']['from']) {
+      String currentUser = _prefs.getString("curUser");
+
+      if (currentUser != data['message']['from']) {
         _handler.chatNotif(data['message']['from'], data['message']['message']);
         if (existingThread.hasUnseen != null) {
           existingThread.hasUnseen += 1;
         } else {
           existingThread.hasUnseen = 1;
         }
+      } else if (currentUser == data['message']['from']) {
+        print("here");
+        var seenTicker = {
+          "type": "seen_ticker",
+          "to": data['message']['from'],
+          "id": data['message']['id'],
+        };
+        sendToChannel(jsonEncode(seenTicker));
       }
 
       // else{
@@ -271,7 +288,7 @@ class NotificationController {
         existingThread.addChat(ChatMessage(
           message: data['message']['message'],
           senderName: data['message']['from'],
-          time: DateTime.now(),
+          time: DateTime.parse(data['message']['time']),
           isMe: false,
           msgType: "txt",
           id: data['message']['id'],
@@ -280,7 +297,7 @@ class NotificationController {
         existingThread.addChat(ChatMessage(
           base64string: data['message']['aud'],
           senderName: data['message']['from'],
-          time: DateTime.now(),
+          time: DateTime.parse(data['message']['time']),
           ext: data['message']['ext'],
           msgType: "aud",
           isMe: false,
@@ -290,7 +307,7 @@ class NotificationController {
         existingThread.addChat(ChatMessage(
           base64string: data['message']['img'],
           senderName: data['message']['from'],
-          time: DateTime.now(),
+          time: DateTime.parse(data['message']['time']),
           ext: data['message']['ext'],
           msgType: "img",
           isMe: false,
@@ -303,7 +320,7 @@ class NotificationController {
   }
 
   static sendToChannel(data) {
-    if (NotificationController.isActive == true) {
+    if (isConnected) {
       if (channel != null) {
         channel.add(data);
       }
@@ -312,19 +329,7 @@ class NotificationController {
     }
   }
 
-  // connectWs() async {
-  //   await getUserName();
-  //   try {
-  //     return WebSocket.connect(wsUrl + this.username + '/');
-  //   } catch (e) {
-  //     NotificationController.isActive = false;
-  //     print("Error! can not connect WS connectWs " + e.toString());
-  //     // await Future.delayed(Duration(milliseconds: 10000));
-  //     // return await connectWs();
-  //   }
-  // }
-
   void _onDisconnected() {
-    NotificationController.isActive = false;
+    isConnected = false;
   }
 }

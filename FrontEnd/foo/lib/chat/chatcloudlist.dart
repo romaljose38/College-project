@@ -1,8 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:foo/chat/socket.dart';
+// import 'package:foo/chat/socket.dart';
 import 'package:foo/models.dart';
+import 'package:foo/socket.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
@@ -48,35 +49,35 @@ class _ChatCloudListState extends State<ChatCloudList> {
   }
 
   Future<void> sendReadTicket() async {
-    if (widget.chatList.length != 0) {
-      if (widget.chatList.last.isMe == false) {
-        var id;
-        await initSharePrefs();
-        if (_prefs.containsKey("lastSeenId")) {
-          id = _prefs.getInt("lastSeenId");
-          print("pazhee id");
-        } else {
-          id = widget.chatList.last.id;
-          var data = {
-            "type": "seen_ticker",
-            "to": widget.otherUser,
-            "id": id,
-          };
-          NotificationController.sendToChannel(jsonEncode(data));
-          _prefs.setInt('lastSeenId', id);
-        }
-        if (id != widget.chatList.last.id) {
-          print("ayakkanam");
-          var data = {
-            "type": "seen_ticker",
-            "to": widget.otherUser,
-            "id": widget.chatList.last.id,
-          };
-          NotificationController.sendToChannel(jsonEncode(data));
-          _prefs.setInt("lastSeenId", widget.chatList.last.id);
-        }
-      }
-    }
+    // if (widget.chatList.length != 0) {
+    //   if (widget.chatList.last.isMe == false) {
+    //     var id;
+    //     await initSharePrefs();
+    //     if (_prefs.containsKey("lastSeenId")) {
+    //       id = _prefs.getInt("lastSeenId");
+    //       print("pazhee id");
+    //     } else {
+    //       id = widget.chatList.last.id;
+    //       var data = {
+    //         "type": "seen_ticker",
+    //         "to": widget.otherUser,
+    //         "id": id,
+    //       };
+    //       SocketChannel.sendToChannel(jsonEncode(data));
+    //       _prefs.setInt('lastSeenId', id);
+    //     }
+    //     if (id != widget.chatList.last.id) {
+    //       print("ayakkanam");
+    //       var data = {
+    //         "type": "seen_ticker",
+    //         "to": widget.otherUser,
+    //         "id": widget.chatList.last.id,
+    //       };
+    //       SocketChannel.sendToChannel(jsonEncode(data));
+    //       _prefs.setInt("lastSeenId", widget.chatList.last.id);
+    //     }
+    //   }
+    // }
   }
 
   void _scrollToEnd() async {
