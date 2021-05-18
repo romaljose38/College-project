@@ -104,23 +104,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             await self.accept()
             
-            pending_messages = await self.get_pending_messages()
+            await self.send_pending_messages()
+
             pending_msg_status = await self.get_pending_notifications()
             # pending_requests = await self.get_pending_requests()
             pending_story_notifs = await self.get_pending_story_notifications()
-
-            if len(pending_messages)>0:
-                for msg in pending_messages:
-                    text,snd_user,chat_id = await self.get_chat_details(msg)
-                    
-                    msg_obj = json.dumps({
-                        'message':{
-                        'message':text,
-                        'from':snd_user,
-                        'id':chat_id,                     
-                    }})
-
-                    await self.send(text_data=msg_obj)
+            
             if len(pending_msg_status)>0:
                 for msg in pending_msg_status:
                     await self.send(text_data=json.dumps(msg))
@@ -136,6 +125,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             #         await self.send(text_data=msg_obj)
                     
+
+    async def send_pending_messages(self):
+        pending_messages = await self.get_pending_messages()
+        if len(pending_messages)>0:
+                for msg in pending_messages:
+                    text,snd_user,chat_id,time = await self.get_chat_details(msg)
+                    
+                    msg_obj = json.dumps({
+                        'message':{
+                        'message':text,
+                        'from':snd_user,
+                        'time':time,
+                        'id':chat_id,                     
+                    },
+                    'msg_type':'txt',
+                    'type':'chat_message'})
+                    
+                    await self.send(text_data=msg_obj)
+
+
 
     @database_sync_to_async
     def update_user_online(self, user):
@@ -167,7 +176,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_chat_details(self, chat_message):
-        return chat_message.message, chat_message.user.username, chat_message.id
+        return chat_message.message, chat_message.user.username, chat_message.id, chat_message.time_created
 
     @database_sync_to_async
     def get_pending_requests(self):
@@ -430,13 +439,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def delete_notification(self, id):
-        notif = Notification.objects.get(id=id)
-        notif.delete()
+        try:
+            notif = Notification.objects.get(id=id)
+            notif.delete()
+        except Exception as e:
+            print(e)
 
     @database_sync_to_async
     def delete_story_notification(self, id):
-        notif = StoryNotification.objects.get(id=id)
-        notif.delete()
+        try:
+            notif = StoryNotification.objects.get(id=id)
+            notif.delete()
+        except Exception as e:
+            print(e)
 
 
 

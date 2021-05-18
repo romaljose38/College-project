@@ -229,9 +229,23 @@ class Feed extends HiveObject {
 
   void addPost(Post post) {
     if (this.posts.length == 10) {
+      for (int i = 0; i < this.posts.length; i++) {
+        if (this.posts[i].postId == post.postId) {
+          this.posts.removeAt(i);
+          this.posts.insert(i, post);
+          return;
+        }
+      }
       posts.insert(0, post);
       posts.removeLast();
     } else {
+      for (int i = 0; i < this.posts.length; i++) {
+        if (this.posts[i].postId == post.postId) {
+          this.posts.removeAt(i);
+          this.posts.insert(i, post);
+          return;
+        }
+      }
       posts.insert(0, post);
     }
   }

@@ -293,21 +293,30 @@ class _CommentScreenState extends State<CommentScreen>
                       child: Row(
                         children: [
                           Expanded(
-                            child: AnimatedSize(
-                                vsync: this,
-                                duration: const Duration(milliseconds: 100),
-                                child: GestureDetector(
-                                  onTap: hasTextExpanded
-                                      ? () => setState(() {
-                                            hasTextExpanded = false;
-                                          })
-                                      : () {},
-                                  child: new Container(
-                                      constraints: hasTextExpanded
-                                          ? new BoxConstraints(maxHeight: 38)
-                                          : new BoxConstraints(
-                                              maxHeight: 20.0,
-                                            ),
+                            child: GestureDetector(
+                              onTap: hasTextExpanded
+                                  ? () => setState(() {
+                                        hasTextExpanded = false;
+                                      })
+                                  : () {},
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: new AnimatedContainer(
+                                    duration: Duration(milliseconds: 200),
+                                    padding: hasTextExpanded
+                                        ? EdgeInsets.all(5)
+                                        : EdgeInsets.symmetric(horizontal: 5),
+                                    constraints: hasTextExpanded
+                                        ? new BoxConstraints(maxHeight: 58)
+                                        : new BoxConstraints(
+                                            maxHeight: 20.0,
+                                          ),
+                                    child: BackdropFilter(
+                                      filter: hasTextExpanded
+                                          ? ImageFilter.blur(
+                                              sigmaX: 15, sigmaY: 15)
+                                          : ImageFilter.blur(
+                                              sigmaX: 0, sigmaY: 0),
                                       child: new Text(
                                         "It is good to love god sake of loving, but it is more important to liv t is good to love god for the sake of loving, but it is more i",
                                         softWrap: true,
@@ -315,9 +324,11 @@ class _CommentScreenState extends State<CommentScreen>
                                         style: TextStyle(color: Colors.white),
                                         overflow: hasTextExpanded
                                             ? TextOverflow.visible
-                                            : TextOverflow.fade,
-                                      )),
-                                )),
+                                            : TextOverflow.ellipsis,
+                                      ),
+                                    )),
+                              ),
+                            ),
                             // child: ExpandableText(
                             //   "It is good to love god for the sake of loving, but it is more important to liv ",
                             // ),

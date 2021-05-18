@@ -96,7 +96,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     if (feedBox.containsKey("feed")) {
       feed = feedBox.get("feed");
 
-      for (int i = 0; i < feed.posts.length; i++) {
+      for (int i = feed.posts.length - 1; i >= 0; i--) {
         listKey.currentState
             .insertItem(0, duration: Duration(milliseconds: 200));
         postsList.insert(0, feed.posts[i]);
@@ -116,18 +116,18 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
       if (response.statusCode == 200) {
         respJson.forEach((e) {
+          Post post = Post(
+              username: e['user']['username'],
+              postUrl: 'http://' + localhost + e['file'],
+              userDpUrl: 'assets/images/user0.png',
+              postId: e['id'],
+              commentCount: e['comment_count'],
+              caption: e['caption'],
+              userId: e['user']['id'],
+              likeCount: e['likeCount'],
+              haveLiked: e['hasLiked'],
+              type: e['post_type']);
           if (feed.isNew(e['id'])) {
-            Post post = Post(
-                username: e['user']['username'],
-                postUrl: 'http://' + localhost + e['file'],
-                userDpUrl: 'assets/images/user0.png',
-                postId: e['id'],
-                commentCount: e['comment_count'],
-                caption: e['caption'],
-                userId: e['user']['id'],
-                likeCount: e['likeCount'],
-                haveLiked: e['hasLiked'],
-                type: e['post_type']);
             listKey.currentState.insertItem(0);
             postsList.insert(0, post);
             feed.addPost(post);
@@ -135,6 +135,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               itemCount += 1;
               // postsList = postsList;
             });
+            feed.save();
+          } else {
+            feed.addPost(post);
             feed.save();
           }
         });

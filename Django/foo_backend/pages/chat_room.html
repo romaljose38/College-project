@@ -62,6 +62,9 @@
     button:active{
         transform:translateY(2px);
     }
+    i{
+        font-size: 12;
+    }
 </style>
 <body>
 
@@ -100,11 +103,15 @@ var socket = new WebSocket('ws://192.168.42.10:8000/ws/chat_room/{{user}}/');
           }
         ));
         }
+        if(data.type=="seen_ticker"){
+            let elem = document.getElementById("${data.id}");
+            elem.innerHTML+="<i> seen</i>"
+        }
         var msg = data.message
         var message =msg.message;
         var senderName = msg.from;
         var chatContainer = document.querySelector('#chats');
-        chatContainer.innerHTML += `<div class="chat_message"><b>${senderName} :</b> ${message}</div>`;
+        chatContainer.innerHTML += `<div class="chat_message" id="${msg.id}"><b>${senderName} :</b> ${message}</div>`;
         socket.send(JSON.stringify({
                 
                     'received':msg.id

@@ -55,17 +55,23 @@ class _ChatScreenState extends State<ChatScreen> {
     thread = Hive.box('threads').get(threadName);
     sendSeenTickerIfNeeded();
     _getUserName();
+    obtainStatus();
     timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
   }
 
-  void sendSeenTickerIfNeeded() {
-    if (thread.chatList.length > 0 && thread.chatList.last.isMe != true) {
+  void sendSeenTickerIfNeeded() async {
+    _prefs = await SharedPreferences.getInstance();
+    if (thread.chatList.length > 0 &&
+        thread.chatList.last.isMe != true &&
+        (thread.chatList.last.id != _prefs.getInt("lastSeenId"))) {
       var seenTicker = {
         "type": "seen_ticker",
         "to": otherUser,
         "id": thread.chatList.last.id,
       };
+
       SocketChannel.sendToChannel(jsonEncode(seenTicker));
+      _prefs.setInt("lastSeenId", thread.chatList.last.id);
     }
   }
 

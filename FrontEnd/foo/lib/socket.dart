@@ -279,6 +279,7 @@ class SocketChannel {
           "id": data['message']['id'],
         };
         sendToChannel(jsonEncode(seenTicker));
+        _prefs.setInt("lastSeenId", data['message']['id']);
       }
 
       // else{
