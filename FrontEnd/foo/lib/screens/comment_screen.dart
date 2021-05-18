@@ -311,6 +311,11 @@ class _CommentScreenState extends State<CommentScreen>
                                         : new BoxConstraints(
                                             maxHeight: 20.0,
                                           ),
+                                    decoration: BoxDecoration(
+                                      color: hasTextExpanded
+                                          ? Colors.black.withOpacity(.2)
+                                          : Colors.transparent,
+                                    ),
                                     child: BackdropFilter(
                                       filter: hasTextExpanded
                                           ? ImageFilter.blur(
