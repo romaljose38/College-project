@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +8,13 @@ import 'package:foo/screens/feed_icons.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/models/post_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
 import '../test_cred.dart';
 
 class VideoUploadScreen extends StatefulWidget {
@@ -26,6 +31,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   SharedPreferences prefs;
   VideoPlayerController _controller1;
   VideoPlayerController _controller2;
+  File _thumbnail;
+  File _generatedThumbnail;
   bool uploading = false;
 
   @override
@@ -33,6 +40,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     super.initState();
     _controller1 = VideoPlayerController.file(widget.mediaInserted)
       ..initialize().then((_) {
+        _generateThumbnail();
         // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
         setState(() {});
       })
@@ -51,6 +59,40 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     _controller2.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _generateThumbnail() async {
+    final Duration duration = _controller1.value.duration;
+    final int timeOfMiddleThumbnail = duration.inMilliseconds ~/ 2;
+    final fileName = await VideoThumbnail.thumbnailFile(
+      video: widget.mediaInserted.path,
+      thumbnailPath: (await getApplicationDocumentsDirectory()).path,
+      imageFormat: ImageFormat.JPEG,
+      timeMs: timeOfMiddleThumbnail,
+      quality: 75,
+    );
+
+    setState(() {
+      _generatedThumbnail = File(fileName);
+    });
+  }
+
+  Future<void> _uploadThumbnail() async {
+    if (await Permission.storage.request().isGranted) {
+      FilePickerResult result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+      );
+
+      setState(() {
+        _thumbnail = File(result.files.single.path);
+      });
+    }
+  }
+
+  void _revertToGeneratedThumbnail() async {
+    setState(() {
+      _thumbnail = null;
+    });
   }
 
   Future<void> _upload(BuildContext context) async {
@@ -212,6 +254,75 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
               ),
               SizedBox(
                 height: 20,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black26, width: 1),
+                        //borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextField(
+                        controller: captionController,
+                        maxLength: 30,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        decoration: InputDecoration(
+                          hintText: "Describe your video",
+                          contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black26, width: 1),
+                      ),
+                      child: Stack(
+                        children: [
+                          _generatedThumbnail != null
+                              ? Center(
+                                  child: Image(
+                                      image: FileImage(_thumbnail == null
+                                          ? _generatedThumbnail
+                                          : _thumbnail),
+                                      fit: BoxFit.cover),
+                                )
+                              : CircularProgressIndicator(),
+                          Positioned(
+                              left: 0,
+                              bottom: 0,
+                              height: 20,
+                              width: 100,
+                              child: GestureDetector(
+                                onTap: () {
+                                  print("Change Thumbnail");
+                                },
+                                child: ClipRRect(
+                                  child: BackdropFilter(
+                                    filter:
+                                        ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                    child: Container(
+                                      color: Colors.black.withOpacity(0.4),
+                                      child: Center(
+                                        child: Text("Select cover",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ))
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               Padding(
                 padding:
