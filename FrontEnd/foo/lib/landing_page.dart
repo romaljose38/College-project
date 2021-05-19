@@ -17,7 +17,7 @@ import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/search_screen.dart';
 import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
-import 'package:foo/upload_screens/audio_upoad_screen.dart';
+import 'package:foo/upload_screens/audio_upload_screen.dart';
 import 'package:foo/upload_screens/image_upload_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
@@ -128,10 +128,10 @@ class LandingPageState extends State<LandingPage>
     if (result != null) {
       File _image = File(result.files.single.path);
 
-      await animationController.reverse().whenComplete(() {
-        overlayVisible = false;
-        overlayEntry.remove();
-      });
+      // await animationController.reverse().whenComplete(() {
+      //   overlayVisible = false;
+      //   overlayEntry.remove();
+      // });
       Navigator.push(
           context,
           MaterialPageRoute(
@@ -149,10 +149,10 @@ class LandingPageState extends State<LandingPage>
     if (result != null) {
       File _audio = File(result.files.single.path);
 
-      await animationController.reverse().whenComplete(() {
-        overlayVisible = false;
-        overlayEntry.remove();
-      });
+      // await animationController.reverse().whenComplete(() {
+      //   overlayVisible = false;
+      //   overlayEntry.remove();
+      // });
       Navigator.push(
           context,
           MaterialPageRoute(
@@ -173,10 +173,10 @@ class LandingPageState extends State<LandingPage>
     if (result != null) {
       File _video = File(result.files.single.path);
 
-      animationController.reverse().whenComplete(() {
-        overlayVisible = false;
-        overlayEntry.remove();
-      });
+      // animationController.reverse().whenComplete(() {
+      //   overlayVisible = false;
+      //   overlayEntry.remove();
+      // });
 
       Navigator.push(
           context,
@@ -198,10 +198,10 @@ class LandingPageState extends State<LandingPage>
     _image = File(pickedFile.path);
 
     if (_image != null) {
-      animationController.reverse().whenComplete(() {
-        overlayVisible = false;
-        overlayEntry.remove();
-      });
+      // animationController.reverse().whenComplete(() {
+      //   overlayVisible = false;
+      //   overlayEntry.remove();
+      // });
 
       Navigator.push(
           context,
@@ -245,122 +245,231 @@ class LandingPageState extends State<LandingPage>
 
   int _page = 0;
 
-  showOverlay(BuildContext context) {
-    overlayVisible = true;
-    OverlayState overlayState = Overlay.of(context);
-    overlayEntry = OverlayEntry(
-      builder: (context) => Scaffold(
-        backgroundColor: Colors.black.withOpacity(.3),
-        body: FadeTransition(
-          opacity: animation,
-          child: GestureDetector(
-            onTap: () {
-              animationController
-                  .reverse()
-                  .whenComplete(() => {overlayEntry.remove()});
-            },
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.transparent,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    InkWell(
-                      onTap: _getAudio,
-                      child: Column(
-                        children: [
-                          Icon(
-                            Ionicons.image_outline,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                          Text(
-                            "Audio",
-                            style: GoogleFonts.raleway(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 25,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: _getImage,
-                      child: Column(
-                        children: [
-                          Icon(
-                            Ionicons.image_outline,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                          Text(
-                            "Image",
-                            style: GoogleFonts.raleway(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 25,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: _getVideo,
-                      splashFactory: InkRipple.splashFactory,
-                      child: Column(
-                        children: [
-                          Icon(
-                            Ionicons.videocam_outline,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                          Text(
-                            "Video",
-                            style: GoogleFonts.raleway(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 25,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: _takePic,
-                      child: Column(
-                        children: [
-                          Icon(
-                            Ionicons.camera_outline,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                          Text(
-                            "Camera",
-                            style: GoogleFonts.raleway(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 25,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+  GestureDetector bottomSheetTile(
+          String type, Color color, IconData icon, Function onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              height: 70,
+              width: 70,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey.shade600,
+                size: 30,
               ),
             ),
+            SizedBox(height: 8),
+            Text(
+              type,
+              style: GoogleFonts.raleway(
+                color: Color.fromRGBO(176, 183, 194, 1),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  showOverlay() {
+    showModalBottomSheet(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
           ),
         ),
-      ),
-    );
-    animationController.addListener(() {
-      overlayState.setState(() {});
-    });
-    animationController.forward();
-    overlayState.insert(overlayEntry);
+        context: context,
+        builder: (context) {
+          return Container(
+            height: 300,
+            margin: EdgeInsets.fromLTRB(10, 20, 10, 0),
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Create new post",
+                        style: GoogleFonts.lato(
+                            fontSize: 20, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                SizedBox(height: 30),
+                Expanded(
+                  child: Container(
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Spacer(),
+                              bottomSheetTile(
+                                  "Camera",
+                                  Color.fromRGBO(232, 252, 246, 1),
+                                  Ionicons.camera_outline,
+                                  _takePic),
+                              Spacer(),
+                              bottomSheetTile(
+                                  "Image",
+                                  Color.fromRGBO(235, 221, 217, 1),
+                                  Ionicons.image_outline,
+                                  _getImage),
+                              Spacer(),
+                            ],
+                          ),
+                          SizedBox(height: 18),
+                          Row(
+                            children: [
+                              Spacer(),
+                              bottomSheetTile(
+                                  "Audio",
+                                  Color.fromRGBO(211, 224, 240, 1),
+                                  Ionicons.mic_circle_outline,
+                                  _getAudio),
+                              Spacer(),
+                              bottomSheetTile(
+                                  "Video",
+                                  Color.fromRGBO(250, 236, 255, 1),
+                                  Ionicons.videocam_outline,
+                                  _getVideo),
+                              Spacer(),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+    // overlayVisible = true;
+    // OverlayState overlayState = Overlay.of(context);
+    // overlayEntry = OverlayEntry(
+    //   builder: (context) => Scaffold(
+    //     backgroundColor: Colors.black.withOpacity(.3),
+    //     body: FadeTransition(
+    //       opacity: animation,
+    //       child: GestureDetector(
+    //         onTap: () {
+    //           animationController
+    //               .reverse()
+    //               .whenComplete(() => {overlayEntry.remove()});
+    //         },
+    //         child: Container(
+    //           width: double.infinity,
+    //           height: double.infinity,
+    //           color: Colors.transparent,
+    //           child: Center(
+    //             child: Column(
+    //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    //               children: [
+    //                 InkWell(
+    //                   onTap: _getAudio,
+    //                   child: Column(
+    //                     children: [
+    //                       Icon(
+    //                         Ionicons.image_outline,
+    //                         color: Colors.white,
+    //                         size: 30,
+    //                       ),
+    //                       Text(
+    //                         "Audio",
+    //                         style: GoogleFonts.raleway(
+    //                           color: Colors.white,
+    //                           fontWeight: FontWeight.w600,
+    //                           fontSize: 25,
+    //                         ),
+    //                       ),
+    //                     ],
+    //                   ),
+    //                 ),
+    //                 InkWell(
+    //                   onTap: _getImage,
+    //                   child: Column(
+    //                     children: [
+    //                       Icon(
+    //                         Ionicons.image_outline,
+    //                         color: Colors.white,
+    //                         size: 30,
+    //                       ),
+    //                       Text(
+    //                         "Image",
+    //                         style: GoogleFonts.raleway(
+    //                           color: Colors.white,
+    //                           fontWeight: FontWeight.w600,
+    //                           fontSize: 25,
+    //                         ),
+    //                       ),
+    //                     ],
+    //                   ),
+    //                 ),
+    //                 InkWell(
+    //                   onTap: _getVideo,
+    //                   splashFactory: InkRipple.splashFactory,
+    //                   child: Column(
+    //                     children: [
+    //                       Icon(
+    //                         Ionicons.videocam_outline,
+    //                         color: Colors.white,
+    //                         size: 30,
+    //                       ),
+    //                       Text(
+    //                         "Video",
+    //                         style: GoogleFonts.raleway(
+    //                           color: Colors.white,
+    //                           fontWeight: FontWeight.w600,
+    //                           fontSize: 25,
+    //                         ),
+    //                       ),
+    //                     ],
+    //                   ),
+    //                 ),
+    //                 InkWell(
+    //                   onTap: _takePic,
+    //                   child: Column(
+    //                     children: [
+    //                       Icon(
+    //                         Ionicons.camera_outline,
+    //                         color: Colors.white,
+    //                         size: 30,
+    //                       ),
+    //                       Text(
+    //                         "Camera",
+    //                         style: GoogleFonts.raleway(
+    //                           color: Colors.white,
+    //                           fontWeight: FontWeight.w600,
+    //                           fontSize: 25,
+    //                         ),
+    //                       ),
+    //                     ],
+    //                   ),
+    //                 ),
+    //               ],
+    //             ),
+    //           ),
+    //         ),
+    //       ),
+    //     ),
+    //   ),
+    // );
+    // animationController.addListener(() {
+    //   overlayState.setState(() {});
+    // });
+    // animationController.forward();
+    // overlayState.insert(overlayEntry);
   }
 
   @override
@@ -448,12 +557,15 @@ class LandingPageState extends State<LandingPage>
                 // SizedBox(
                 //   width: 14,
                 // ),
-                Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(width: 1, color: Colors.black),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Ionicons.add, size: 20, color: Colors.black)),
+                GestureDetector(
+                  onTap: showOverlay,
+                  child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 1, color: Colors.black),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Ionicons.add, size: 20, color: Colors.black)),
+                ),
                 IconButton(
                     icon: Icon(Ionicons.person_outline,
                         size: 22, color: Colors.black),

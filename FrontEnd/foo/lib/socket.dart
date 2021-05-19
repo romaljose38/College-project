@@ -163,6 +163,7 @@ class SocketChannel {
 
       storyBox.put(data['u'], newUser);
     }
+    sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }
 
   void updateTypingStatus(data) {

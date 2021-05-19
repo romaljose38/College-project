@@ -46,9 +46,12 @@ class _ChatScreenState extends State<ChatScreen> {
   SharedPreferences _prefs;
   Timer timer;
   String userStatus = "";
-  bool justGotIn = true;
+  bool keyboardUp;
   bool overlayVisible = false;
+  bool isTyping = false;
   OverlayEntry entry;
+  StreamSubscription test;
+
   @override
   void initState() {
     _getUserName();
@@ -56,16 +59,37 @@ class _ChatScreenState extends State<ChatScreen> {
     _prefs = widget.prefs;
     otherUser = widget.thread.second.name;
     curUser = widget.thread.first.name;
-
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     thread = Hive.box('threads').get(threadName);
     sendSeenTickerIfNeeded();
-
+    listenToHive();
     obtainStatus();
     updateLastChatMsgStatus();
     timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
+    test = Hive.box('threads').watch(key: threadName).listen((BoxEvent event) {
+      print("hive listen");
+
+      Thread existingThread = Hive.box('threads').get(threadName);
+      if (existingThread.isTyping) {
+        if (mounted) {
+          setState(() {
+            isTyping = true;
+          });
+        }
+      } else if (existingThread.isTyping == false) {
+        if (mounted) {
+          setState(() {
+            isTyping = false;
+          });
+        }
+      }
+    }, onDone: () {
+      print('done');
+    });
   }
+
+  void listenToHive() {}
 
   void sendSeenTickerIfNeeded() async {
     _prefs = await SharedPreferences.getInstance();
@@ -103,6 +127,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     super.dispose();
     timer.cancel();
+    print("dispose");
     _chatController.dispose();
     _scrollController.dispose();
   }
@@ -260,21 +285,43 @@ class _ChatScreenState extends State<ChatScreen> {
     OverlayState state = Overlay.of(context);
     entry = OverlayEntry(builder: (context) {
       return Positioned(
-          bottom: 10,
-          left: 10,
-          child: GestureDetector(
-              onTap: () {
-                _prefs.setBool("${otherUser}_hasNew", false);
-                overlayVisible = false;
-                _scrollController.animateTo(
-                    _scrollController.position.minScrollExtent,
-                    duration: Duration(milliseconds: 100),
-                    curve: Curves.easeIn);
-                entry.remove();
-              },
-              child: Container(width: 30, height: 30, color: Colors.black)));
+        bottom: 100,
+        right: 30,
+        child: GestureDetector(
+          onTap: () {
+            _prefs.setBool("${otherUser}_hasNew", false);
+            overlayVisible = false;
+            _scrollController.animateTo(
+                _scrollController.position.minScrollExtent,
+                duration: Duration(milliseconds: 100),
+                curve: Curves.easeIn);
+            entry.remove();
+          },
+          child: Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(.3),
+                  offset: Offset(2, 5),
+                  blurRadius: 10,
+                )
+              ],
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.arrow_drop_down_sharp,
+              size: 30,
+              color: Colors.pink[700],
+            ),
+          ),
+        ),
+      );
     });
-    Future.delayed(Duration(seconds: 2), () {
+    Future.delayed(Duration(milliseconds: 200), () {
       state.insert(entry);
     });
     // Future.delayed(Duration(seconds: 10), () {
@@ -285,8 +332,45 @@ class _ChatScreenState extends State<ChatScreen> {
     // Timer(Duration(se))
   }
 
+  void sendTypingStarted() {
+    var data = {
+      'to': otherUser,
+      'type': 'typing_status',
+      'status': 'typing',
+    };
+
+    SocketChannel.sendToChannel(jsonEncode(data));
+  }
+
+  void sendTypingStopped() {
+    var data = {
+      'to': otherUser,
+      'type': 'typing_status',
+      'status': 'stopped',
+    };
+
+    SocketChannel.sendToChannel(jsonEncode(data));
+  }
+
+  void checkAndSendKeyboardStatus() {
+    if (MediaQuery.of(context).viewInsets.bottom != 0) {
+      if ((keyboardUp == false) || (keyboardUp == null)) {
+        print("keyboard up");
+        keyboardUp = true;
+        sendTypingStarted();
+      }
+    } else {
+      if (keyboardUp == true) {
+        print("keyboard down");
+        keyboardUp = false;
+        sendTypingStopped();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    checkAndSendKeyboardStatus();
     return WillPopScope(
       onWillPop: () async {
         _prefs.setString("curUser", "");
@@ -332,22 +416,30 @@ class _ChatScreenState extends State<ChatScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                ValueListenableBuilder(
-                                    valueListenable: Hive.box("Threads")
-                                        .listenable(keys: [threadName]),
-                                    builder: (context, box, widget) {
-                                      var existingThread = box.get(threadName);
+                                // ValueListenableBuilder(
+                                //     valueListenable: Hive.box("Threads")
+                                //         .listenable(keys: [threadName]),
+                                //     builder: (context, box, widget) {
+                                //       print("value listenable chck");
+                                //       var existingThread = box.get(threadName);
 
-                                      return Text(
-                                        existingThread.isTyping == true
-                                            ? "typing..."
-                                            : userStatus,
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            color: Color.fromRGBO(
-                                                180, 190, 255, 1)),
-                                      );
-                                    }),
+                                //       return Text(
+                                //         existingThread.isTyping == true
+                                //             ? "typing..."
+                                //             : "hello",
+                                //         style: TextStyle(
+                                //             fontSize: 15,
+                                //             color: Color.fromRGBO(
+                                //                 180, 190, 255, 1)),
+                                //       );
+                                //     }),
+                                Text(
+                                  isTyping ? "typing.." : userStatus,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Color.fromRGBO(180, 190, 255, 1),
+                                  ),
+                                ),
                                 SizedBox(height: 7),
                                 Text(widget.thread.second.name,
                                     style: TextStyle(
@@ -367,53 +459,46 @@ class _ChatScreenState extends State<ChatScreen> {
                         ]),
                   )),
             )),
-        floatingActionButton: FloatingActionButton(
-          child: Text("A", style: TextStyle(color: Colors.black)),
-          onPressed: showOverlay,
-        ),
-        body: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-          child: Column(children: <Widget>[
-            Expanded(
-              child: ValueListenableBuilder(
-                valueListenable:
-                    Hive.box("Threads").listenable(keys: [threadName]),
-                child: ChatCloudList(
-                  chatList: thread.chatList,
-                  curUser: curUser,
-                  otherUser: otherUser,
-                  prefs: _prefs,
-                  scrollController: _scrollController,
-                ),
-                builder: (context, box, widget) {
-                  var thread = box.get(threadName);
+        body: Column(children: <Widget>[
+          Expanded(
+            child: ValueListenableBuilder(
+              valueListenable:
+                  Hive.box("Threads").listenable(keys: [threadName]),
+              // child: ChatCloudList(
+              //   chatList: thread.chatList,
+              //   curUser: curUser,
+              //   otherUser: otherUser,
+              //   prefs: _prefs,
+              //   scrollController: _scrollController,
+              // ),
+              builder: (context, box, widget) {
+                var thread = box.get(threadName);
 
-                  List __chatList = thread.chatList ?? [];
+                List __chatList = thread.chatList ?? [];
 
-                  if (_prefs.containsKey("${otherUser}_hasNew") &&
-                      _prefs.getBool("${otherUser}_hasNew") &&
-                      !overlayVisible &&
-                      _scrollController.offset > 300) {
+                if (_prefs.containsKey("${otherUser}_hasNew") &&
+                    _prefs.getBool("${otherUser}_hasNew") &&
+                    !overlayVisible) {
+                  if (_scrollController.offset > 300) {
                     showOverlay();
                   }
-                  print("rerender");
-                  return ChatCloudList(
-                      chatList: __chatList,
-                      curUser: curUser,
-                      otherUser: otherUser,
-                      prefs: _prefs,
-                      scrollController: _scrollController);
-                },
-              ),
+                }
+                print("rerender");
+                return ChatCloudList(
+                    chatList: __chatList,
+                    curUser: curUser,
+                    otherUser: otherUser,
+                    prefs: _prefs,
+                    scrollController: _scrollController);
+              },
             ),
-            RecordApp(
-              sendMessage: _sendMessage,
-              sendImage: _sendImage,
-              sendAudio: _sendAudio,
-              otherUser: otherUser,
-            ),
-          ]),
-        ),
+          ),
+          RecordApp(
+            sendMessage: _sendMessage,
+            sendImage: _sendImage,
+            sendAudio: _sendAudio,
+          ),
+        ]),
       ),
     );
   }
@@ -423,9 +508,8 @@ class RecordApp extends StatefulWidget {
   final Function sendMessage;
   final Function sendImage;
   final Function sendAudio;
-  final String otherUser;
 
-  RecordApp({this.sendMessage, this.sendImage, this.sendAudio, this.otherUser});
+  RecordApp({this.sendMessage, this.sendImage, this.sendAudio});
 
   @override
   _RecordAppState createState() => _RecordAppState();
@@ -473,39 +557,13 @@ class _RecordAppState extends State<RecordApp>
     _keyboardVisibilityController = KeyboardVisibilityController()
       ..onChange.listen((bool _keyboardVisible) {
         this._keyboardVisible = _keyboardVisible;
-        if (_keyboardVisible) {
-          sendTypingStarted();
-          print("typing thudangi");
-        } else {
-          sendTypingStopped();
-          print("typing theernnu");
-        }
+
         if (_keyboardVisible && _emojiVisible) {
           setState(() {
             _emojiVisible = false;
           });
         }
       });
-  }
-
-  void sendTypingStarted() {
-    var data = {
-      'to': widget.otherUser,
-      'type': 'typing_status',
-      'status': 'typing',
-    };
-
-    SocketChannel.sendToChannel(jsonEncode(data));
-  }
-
-  void sendTypingStopped() {
-    var data = {
-      'to': widget.otherUser,
-      'type': 'typing_status',
-      'status': 'stopped',
-    };
-
-    SocketChannel.sendToChannel(jsonEncode(data));
   }
 
   void animateMicColor() {
