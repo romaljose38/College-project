@@ -71,7 +71,7 @@ class MyApp extends StatelessWidget {
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
       home: Renderer(prefs: prefs),
-      // home: CalendarBackground(),
+      // home: CurvedBackground(),
     );
   }
 }
@@ -277,5 +277,64 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
         ),
       ),
     );
+  }
+}
+
+class CurvedBackground extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
+    return Scaffold(
+        body: Stack(
+      children: [
+        // Container(
+        //     height: size.height * .3,
+        //     width: size.width,
+        //     color: Color.fromRGBO(0, 1, 25, 1)),
+        // Positioned(
+        //   top: size.height * .3,
+        //   child: Container(
+        //     height: size.height * .7,
+        //     width: size.width,
+        //     color: Colors.white,
+        //   ),
+        // ),
+        Row(
+          children: [
+            Container(
+                height: size.height,
+                width: size.width * .5,
+                color: Color.fromRGBO(0, 1, 25, 1)),
+            Container(
+              height: size.height,
+              width: size.width * .5,
+            )
+          ],
+        ),
+        Positioned(
+            top: 0,
+            left: 0,
+            child: Container(
+                height: size.height * .3,
+                width: size.width,
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(0, 1, 25, 1),
+                  borderRadius: BorderRadius.only(
+                    bottomRight: Radius.circular(70),
+                  ),
+                ))),
+        Positioned(
+            top: size.height * .3,
+            child: Container(
+                height: size.height * .7,
+                width: size.width,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(70),
+                  ),
+                ))),
+      ],
+    ));
   }
 }
