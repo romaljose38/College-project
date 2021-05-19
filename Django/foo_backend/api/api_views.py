@@ -81,7 +81,21 @@ def get_user_list(request):
 def get_posts(request, username):
     try:
         user = User.objects.get(username=username)
-        qs = Post.objects.order_by("time_created")
+        qs = Post.objects.order_by("-id")[:10]
+        serialized = PostSerializer(qs, many=True, context={"user": user})
+        print(serialized.data)
+        return Response(status=200, data=serialized.data)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+@api_view(['GET'])
+def get_previous_posts(request,username):
+    try:
+        user = User.objects.get(username=username)
+        id=request.query_params['id']
+        qs = Post.objects.filter(id__lt=int(id)).order_by('id')[int(id)-6:]
+        print(qs)
         serialized = PostSerializer(qs, many=True, context={"user": user})
         print(serialized.data)
         return Response(status=200, data=serialized.data)

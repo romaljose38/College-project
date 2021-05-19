@@ -25,14 +25,15 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   // ScrollController _scrollController = ScrollController();
   // ScrollController _nestedScrollController = ScrollController();
-  TrackingScrollController _scrollController = TrackingScrollController();
+  ScrollController _scrollController = ScrollController();
   SharedPreferences prefs;
   String curUser;
   int itemCount = 0;
   bool isConnected = false;
   GlobalKey<SliverAnimatedListState> listKey;
-  ScrollController _controller;
+
   double currentPos = 0;
+  List<Post> postsList = <Post>[];
   var myStoryList = [];
   //
 
@@ -43,28 +44,45 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     //_fetchStory();
     super.initState();
     // _getNewPosts();
-    _controller = ScrollController();
-    _controller.addListener(() {
-      setState(() {
-        currentPos = _controller.offset;
-      });
-      // print(currentPos);
-    });
+
     _scrollController
       ..addListener(() {
-        // if (_scrollController.position.pixels ==
-        //     _scrollController.position.maxScrollExtent) {
-        //   print("max max max");
-        //   postsList.add(Post(
-        //     username: 'Sam Martin',
-        //     userDpUrl: 'assets/images/user0.png',
-        //     postUrl: 'assets/images/post0.jpg',
-        //   ));
-        //   setState(() {
-        //     itemCount += 1;
-        //   });
-        // }
+        if (_scrollController.position.pixels ==
+            _scrollController.position.maxScrollExtent) {
+          print("max max max");
+          getPreviousPosts();
+        }
       });
+  }
+
+  getPreviousPosts() async {
+    print(postsList);
+    var response = await http.get(Uri.http(
+        localhost,
+        '/api/$curUser/get_previous_posts',
+        {'id': postsList.last.postId.toString()}));
+    var respJson = jsonDecode(response.body);
+
+    respJson.forEach((e) {
+      Post post = Post(
+          username: e['user']['username'],
+          postUrl: 'http://' + localhost + e['file'],
+          userDpUrl: 'assets/images/user0.png',
+          postId: e['id'],
+          userId: e['user']['id'],
+          commentCount: e['comment_count'],
+          caption: e['caption'],
+          likeCount: e['likeCount'],
+          haveLiked: e['hasLiked'],
+          type: e['post_type']);
+      int index = postsList.length - 1;
+      listKey.currentState.insertItem(index);
+      postsList.add(post);
+      setState(() {
+        itemCount += 1;
+        // postsList = postsList;
+      });
+    });
   }
 
   @override
@@ -94,7 +112,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     curUser = prefs.getString("username");
     var feedBox = Hive.box("Feed");
     Feed feed;
-    if (feedBox.containsKey("feed")) {
+    if (feedBox.containsKey("feed") && feedBox.get("feed").posts != null) {
       feed = feedBox.get("feed");
 
       for (int i = feed.posts.length - 1; i >= 0; i--) {
@@ -128,25 +146,24 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               likeCount: e['likeCount'],
               haveLiked: e['hasLiked'],
               type: e['post_type']);
+          feed.addPost(post);
+          feed.save();
           if (feed.isNew(e['id'])) {
             listKey.currentState.insertItem(0);
             postsList.insert(0, post);
-            feed.addPost(post);
+
             setState(() {
               itemCount += 1;
               // postsList = postsList;
             });
-            feed.save();
           } else {
-            feed.addPost(post);
-            feed.save();
+            // feed.addPost(post);
+            // feed.save();
           }
         });
       }
     }
   }
-
-  List postsList = [];
 
   // Future<void> _fetchStory() async {
   //   await _checkConnectionStatus();
@@ -432,7 +449,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               return Future.value('nothing');
             },
             child: CustomScrollView(
-              controller: _controller,
+              controller: _scrollController,
               slivers: [
                 //SliverToBoxAdapter(child: _horiz()),
                 SliverToBoxAdapter(child: _newHoriz()),
