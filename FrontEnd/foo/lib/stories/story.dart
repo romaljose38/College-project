@@ -20,11 +20,12 @@ class StoryScreen extends StatefulWidget {
   String profilePic;
   int userCount;
 
-  StoryScreen(
-      {@required this.storyObject,
-      @required this.storyBuilderController,
-      @required this.userCount,
-      @required this.profilePic}) {
+  StoryScreen({
+    @required this.storyObject,
+    @required this.storyBuilderController,
+    @required this.userCount,
+    @required this.profilePic,
+  }) {
     username = storyObject.username; //storyObject['username'];
     stories = storyObject.stories; //storyObject['stories'];
     // profilePic =
@@ -40,15 +41,21 @@ class _StoryScreenState extends State<StoryScreen>
   AnimationController _animController;
   PageController _pageController;
   TransformationController transformationController;
-  int _currentIndex = 0;
+  int _currentIndex;
+  int otherIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _currentIndex = widget.storyObject.hasUnSeen();
+    _currentIndex = (_currentIndex == -1) ? 0 : _currentIndex;
+    _pageController = PageController(initialPage: _currentIndex);
     _animController = AnimationController(vsync: this);
+    print('hasUnseen - ${widget.storyObject.hasUnSeen()}');
+    print('otherIndex - $_currentIndex');
 
-    final firstStory = widget.stories.first;
+    // final firstStory = widget.stories.first;
+    final firstStory = widget.stories[_currentIndex];
     _loadStory(story: firstStory, animateToPage: false);
     _animController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -131,16 +138,24 @@ class _StoryScreenState extends State<StoryScreen>
   }
 
   Future<File> _getOrDownload(String url) async {
+    // String url = 'http://$localhost${story.file}';
     String mediaName = _getMediaName(url);
     if (await Permission.storage.request().isGranted) {
       if (!(await _isExistsInStorage(url))) {
         await _downloadMedia(url);
       }
+      // if (story.viewed == null) {
+      //   setState(() {
+      //     story.viewed = true;
+      //     story.save();
+      //   });
+      // }
       return File("$storyDir/$mediaName");
     } else {
       disableWakeLock();
       Navigator.pop(context);
     }
+    return File(''); // just to avoid the return type warning
   }
 
   var a = Offset.zero;
@@ -168,6 +183,14 @@ class _StoryScreenState extends State<StoryScreen>
                   future: _getOrDownload('http://$localhost${story.file}'),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.done) {
+                      print(story.viewed);
+                      if (story.viewed == null) {
+                        widget.storyObject.stories[_currentIndex].viewed = true;
+                        widget.storyObject.save();
+                        // story.viewed = true;
+                        // story.save();
+                      }
+                      print(story.viewed);
                       switch (_getTypeOf(story.file)) {
                         case 'image':
                           {

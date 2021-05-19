@@ -369,7 +369,7 @@ class UserStoryModel extends HiveObject {
 
   int hasUnSeen() {
     //If the userstorymodel has a story that is unseen it returns the index of that story or otherwise return -1
-    for (int index = 0; index >= stories.length - 1; index++) {
+    for (int index = 0; index < stories.length; index++) {
       if (stories[index].viewed == null) return index;
     }
     return -1;

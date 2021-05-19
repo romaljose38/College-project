@@ -128,18 +128,15 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               likeCount: e['likeCount'],
               haveLiked: e['hasLiked'],
               type: e['post_type']);
+          feed.addPost(post);
+          feed.save();
           if (feed.isNew(e['id'])) {
             listKey.currentState.insertItem(0);
             postsList.insert(0, post);
-            feed.addPost(post);
+            //feed.addPost(post);
             setState(() {
               itemCount += 1;
-              // postsList = postsList;
             });
-            feed.save();
-          } else {
-            feed.addPost(post);
-            feed.save();
           }
         });
       }
@@ -200,11 +197,16 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color.fromRGBO(250, 87, 142, 1),
-                            Color.fromRGBO(202, 136, 18, 1),
-                            Color.fromRGBO(253, 167, 142, 1),
-                          ],
+                          colors: myStoryList[index - 1].hasUnSeen() != -1
+                              ? [
+                                  Color.fromRGBO(250, 87, 142, 1),
+                                  Color.fromRGBO(202, 136, 18, 1),
+                                  Color.fromRGBO(253, 167, 142, 1),
+                                ]
+                              : [
+                                  Color.fromRGBO(255, 255, 255, 1),
+                                  Color.fromRGBO(190, 190, 190, 1),
+                                ],
                         ),
                       ),
                       child: Padding(

@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:ionicons/ionicons.dart';
 import '../test_cred.dart';
 
 class VideoUploadScreen extends StatefulWidget {
@@ -86,6 +87,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       setState(() {
         _thumbnail = File(result.files.single.path);
       });
+      Navigator.pop(context);
     }
   }
 
@@ -93,6 +95,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     setState(() {
       _thumbnail = null;
     });
+    Navigator.pop(context);
   }
 
   Future<void> _upload(BuildContext context) async {
@@ -113,6 +116,96 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       print('Uploaded');
       Navigator.push(context, MaterialPageRoute(builder: (_) => FeedScreen()));
     }
+  }
+
+  GestureDetector bottomSheetTile(
+          String type, Color color, IconData icon, Function onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              height: 70,
+              width: 70,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey.shade600,
+                size: 30,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              type,
+              style: GoogleFonts.raleway(
+                color: Color.fromRGBO(176, 183, 194, 1),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  showOverlay() {
+    showModalBottomSheet(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
+        context: context,
+        builder: (context) {
+          return Container(
+            height: 200,
+            margin: EdgeInsets.fromLTRB(10, 20, 10, 0),
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Change Video Cover",
+                        style: GoogleFonts.lato(
+                            fontSize: 20, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                SizedBox(height: 30),
+                Expanded(
+                  child: Container(
+                    child: Center(
+                      child: Row(
+                        children: [
+                          Spacer(),
+                          bottomSheetTile(
+                              "Reset Cover",
+                              Color.fromRGBO(232, 252, 246, 1),
+                              Ionicons.trash_outline,
+                              _revertToGeneratedThumbnail),
+                          Spacer(),
+                          bottomSheetTile(
+                              "Set Cover",
+                              Color.fromRGBO(235, 221, 217, 1),
+                              Ionicons.images_outline,
+                              _uploadThumbnail),
+                          Spacer(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   @override
@@ -301,6 +394,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                               width: 100,
                               child: GestureDetector(
                                 onTap: () {
+                                  showOverlay();
                                   print("Change Thumbnail");
                                 },
                                 child: ClipRRect(
@@ -324,26 +418,26 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                   ),
                 ],
               ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black26, width: 1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: TextField(
-                    controller: captionController,
-                    maxLength: 30,
-                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                    decoration: InputDecoration(
-                      hintText: "Caption",
-                      contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-              ),
+              // Padding(
+              //   padding:
+              //       const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              //   child: Container(
+              //     decoration: BoxDecoration(
+              //       border: Border.all(color: Colors.black26, width: 1),
+              //       borderRadius: BorderRadius.circular(10),
+              //     ),
+              //     child: TextField(
+              //       controller: captionController,
+              //       maxLength: 30,
+              //       maxLengthEnforcement: MaxLengthEnforcement.enforced,
+              //       decoration: InputDecoration(
+              //         hintText: "Caption",
+              //         contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
+              //         border: InputBorder.none,
+              //       ),
+              //     ),
+              //   ),
+              // ),
               uploading
                   ? Padding(
                       padding: const EdgeInsets.all(20.0),
@@ -351,7 +445,28 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                         strokeWidth: 1,
                       ))
                   : Container(),
-              ElevatedButton(
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                child: Text("Cancel"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            Spacer(),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
                 child: Text("Upload"),
                 onPressed: () {
                   setState(() {
@@ -360,8 +475,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                   return _upload(context);
                 },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
