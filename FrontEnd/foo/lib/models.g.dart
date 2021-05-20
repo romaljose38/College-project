@@ -399,13 +399,15 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       username: fields[0] as String,
       userId: fields[1] as int,
       stories: (fields[2] as List)?.cast<Story>(),
-    )..timeOfLastStory = fields[3] as DateTime;
+    )
+      ..timeOfLastStory = fields[3] as DateTime
+      ..viewedUsers = (fields[4] as List)?.cast<StoryUser>();
   }
 
   @override
   void write(BinaryWriter writer, UserStoryModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -413,7 +415,9 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       ..writeByte(2)
       ..write(obj.stories)
       ..writeByte(3)
-      ..write(obj.timeOfLastStory);
+      ..write(obj.timeOfLastStory)
+      ..writeByte(4)
+      ..write(obj.viewedUsers);
   }
 
   @override
@@ -423,6 +427,48 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is UserStoryModelAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class StoryUserAdapter extends TypeAdapter<StoryUser> {
+  @override
+  final int typeId = 9;
+
+  @override
+  StoryUser read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return StoryUser()
+      ..fName = fields[0] as String
+      ..lName = fields[1] as String
+      ..username = fields[2] as String
+      ..profilePicture = fields[3] as String;
+  }
+
+  @override
+  void write(BinaryWriter writer, StoryUser obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(0)
+      ..write(obj.fName)
+      ..writeByte(1)
+      ..write(obj.lName)
+      ..writeByte(2)
+      ..write(obj.username)
+      ..writeByte(3)
+      ..write(obj.profilePicture);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StoryUserAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

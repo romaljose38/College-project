@@ -14,8 +14,13 @@ import 'package:foo/test_cred.dart';
 import 'package:video_player/video_player.dart';
 import 'package:foo/stories/video_trimmer/videoediting.dart';
 
+import 'package:foo/stories/story.dart';
+
 class StoryUploadPick extends StatelessWidget {
   final Trimmer _trimmer = Trimmer();
+  final myStory;
+
+  StoryUploadPick({this.myStory});
 
   Future<void> _uploadStory(BuildContext context, File mediaFile) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -41,7 +46,15 @@ class StoryUploadPick extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
+        if (myStory == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Long press to add a new moment")));
+        }
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => MyStoryScreen(storyObject: myStory)));
+      },
+      onLongPress: () async {
         FilePickerResult result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
           allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mkv'],
@@ -72,8 +85,9 @@ class StoryUploadPick extends StatelessWidget {
         }
       },
       child: Container(
-        margin: EdgeInsets.only(left: 20, top: 10, bottom: 10, right: 5),
-        height: 50,
+        //margin: EdgeInsets.only(left: 20, top: 10, bottom: 10, right: 5),
+        margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+        height: 80, //50,
         width: 80,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),

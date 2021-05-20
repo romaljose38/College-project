@@ -365,6 +365,9 @@ class UserStoryModel extends HiveObject {
   @HiveField(3)
   DateTime timeOfLastStory;
 
+  @HiveField(4)
+  List<StoryUser> viewedUsers = <StoryUser>[];
+
   UserStoryModel({this.username, this.userId, this.stories});
 
   int hasUnSeen() {
@@ -384,4 +387,29 @@ class UserStoryModel extends HiveObject {
       timeOfLastStory = story.time;
     }
   }
+
+  bool isEmpty() {
+    if (stories != null) {
+      if (stories.length == 0) {
+        return true; //returns true if length is 0
+      }
+      return false; //returns false if length > 0 as length is non-negative
+    }
+    return true; //return true if stories is null
+  }
+}
+
+@HiveType(typeId: 9)
+class StoryUser extends HiveObject {
+  @HiveField(0)
+  String fName;
+
+  @HiveField(1)
+  String lName;
+
+  @HiveField(2)
+  String username;
+
+  @HiveField(3)
+  String profilePicture;
 }

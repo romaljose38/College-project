@@ -30,6 +30,7 @@ Future<void> main() async {
   Hive.registerAdapter(NotificationsAdapter());
   Hive.registerAdapter(UserStoryModelAdapter());
   Hive.registerAdapter(StoryAdapter());
+  Hive.registerAdapter(StoryUserAdapter());
 
   await Hive.openBox('Threads');
   await Hive.openBox('Feed');

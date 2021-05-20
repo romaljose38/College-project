@@ -33,7 +33,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   GlobalKey<SliverAnimatedListState> listKey;
   ScrollController _controller;
   double currentPos = 0;
-  var myStoryList = [];
+  UserStoryModel myStory;
   //
 
   @override
@@ -163,19 +163,50 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     return ValueListenableBuilder(
         valueListenable: Hive.box('MyStories').listenable(),
         builder: (context, box, widget) {
-          myStoryList = box.values.toList();
-          myStoryList
+          // List<UserStoryModel> seenStoryList = <UserStoryModel>[];
+          // List<UserStoryModel> unSeenStoryList = <UserStoryModel>[];
+
+          var boxList = box.values.toList();
+          var seenList = [];
+          var unSeenList = [];
+          var myStoryList = [];
+          //_getCurrentStoryViewer();
+
+          if (curUser != null) {
+            for (int item = 0; item < boxList.length; item++) {
+              if (boxList[item].username == curUser) {
+                myStory = boxList[item];
+              } else {
+                if (boxList[item].hasUnSeen() == -1) {
+                  seenList.add(boxList[item]);
+                } else {
+                  unSeenList.add(boxList[item]);
+                }
+              }
+            }
+          }
+          // myStoryList = boxList.where((x) => x.username != curUser).toList();
+          seenList
               .sort((a, b) => b.timeOfLastStory.compareTo(a.timeOfLastStory));
+          unSeenList
+              .sort((a, b) => b.timeOfLastStory.compareTo(a.timeOfLastStory));
+          myStoryList = [...unSeenList, ...seenList];
+
           return Container(
             width: double.infinity,
-            height: 100.0,
+            height: 120.0,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               //itemCount: pst.stories.length + 1,
               itemCount: myStoryList.length + 1, //myStoryList.length + 1,
               itemBuilder: (BuildContext context, int index) {
                 if (index == 0) {
-                  return StoryUploadPick();
+                  return Column(
+                    children: [
+                      StoryUploadPick(myStory: myStory),
+                      Text("Momentos"),
+                    ],
+                  );
                 }
                 return GestureDetector(
                     onTap: () {
@@ -188,50 +219,57 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                 )),
                       );
                     },
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                      height: 50,
-                      width: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: myStoryList[index - 1].hasUnSeen() != -1
-                              ? [
-                                  Color.fromRGBO(250, 87, 142, 1),
-                                  Color.fromRGBO(202, 136, 18, 1),
-                                  Color.fromRGBO(253, 167, 142, 1),
-                                ]
-                              : [
-                                  Color.fromRGBO(255, 255, 255, 1),
-                                  Color.fromRGBO(190, 190, 190, 1),
-                                ],
-                        ),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.all(3),
-                        child: Container(
+                    child: Column(
+                      children: [
+                        Container(
+                          margin:
+                              EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                          height: 80,
+                          width: 80,
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(26),
+                            borderRadius: BorderRadius.circular(30),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: myStoryList[index - 1].hasUnSeen() != -1
+                                  ? [
+                                      Color.fromRGBO(250, 87, 142, 1),
+                                      Color.fromRGBO(202, 136, 18, 1),
+                                      Color.fromRGBO(253, 167, 142, 1),
+                                    ]
+                                  : [
+                                      Color.fromRGBO(255, 255, 255, 1),
+                                      Color.fromRGBO(190, 190, 190, 1),
+                                    ],
+                            ),
                           ),
                           child: Padding(
-                            padding: EdgeInsets.all(2),
+                            padding: EdgeInsets.all(3),
                             child: Container(
                               decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius: BorderRadius.circular(23),
-                                  image: DecorationImage(
-                                    image: AssetImage(pst.stories[index - 1]),
-                                    // image: NetworkImage(
-                                    //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
-                                    fit: BoxFit.cover,
-                                  )),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(2),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(23),
+                                      image: DecorationImage(
+                                        image:
+                                            AssetImage(pst.stories[index - 1]),
+                                        // image: NetworkImage(
+                                        //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                                        fit: BoxFit.cover,
+                                      )),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        Text(myStoryList[index - 1].username),
+                      ],
                     ));
               },
             ),
@@ -438,7 +476,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               slivers: [
                 //SliverToBoxAdapter(child: _horiz()),
                 SliverToBoxAdapter(child: _newHoriz()),
-                SliverToBoxAdapter(child: SizedBox(height: 20)),
+                SliverToBoxAdapter(child: SizedBox(height: 10)),
                 SliverAnimatedList(
                   initialItemCount: itemCount,
                   key: listKey,
