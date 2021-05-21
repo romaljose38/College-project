@@ -558,6 +558,8 @@ class _MyStoryScreenState extends State<MyStoryScreen>
   TransformationController transformationController;
   int _currentIndex = 0;
 
+  bool _isVideo = true;
+
   @override
   void initState() {
     super.initState();
@@ -696,6 +698,8 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                         case 'image':
                           {
                             _animController.forward();
+                            _isVideo = false;
+                            MyStoryVideoPlayer.videoController = null;
                             return GestureDetector(
                               onTapDown: (_) {
                                 _animController.stop();
@@ -727,8 +731,22 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                           }
                         case 'video':
                           {
+                            _isVideo = true;
                             return GestureDetector(
-                              child: StoryVideoPlayer(
+                              onTapDown: (_) {
+                                MyStoryVideoPlayer.videoController.pause();
+                                _animController.stop();
+                                _timer =
+                                    Timer(Duration(milliseconds: 200), () {});
+                              },
+                              onTapUp: (details) {
+                                MyStoryVideoPlayer.videoController.play();
+                                _animController.forward();
+                                if (_timer.isActive) {
+                                  _backwardOrForward(details);
+                                }
+                              },
+                              child: MyStoryVideoPlayer(
                                 videoFile: snapshot.data,
                                 animController: _animController,
                                 backwardOrForward: _backwardOrForward,
@@ -777,9 +795,51 @@ class _MyStoryScreenState extends State<MyStoryScreen>
               ],
             ),
           ),
+          Align(
+            alignment: Alignment(0.0, 0.9),
+            child: IconButton(
+              icon: Icon(Icons.android, color: Colors.white),
+              onPressed: () {
+                _animController.stop();
+                if (_isVideo == true) {
+                  MyStoryVideoPlayer.videoController.pause();
+                }
+                _showModal();
+              },
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _showModal() {
+    Future<void> fVal = showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return ListView.builder(
+            itemCount: 25,
+            itemBuilder: (context, index) {
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: CachedNetworkImageProvider(
+                      'https://image.cnbcfm.com/api/v1/image/105753692-1550781987450gettyimages-628353178.jpeg?v=1550782124'),
+                ),
+                title: Text('Emma Stone'),
+                subtitle: Text('7 minutes ago'),
+              );
+            },
+          );
+        });
+
+    fVal.then((void value) => _closeModal());
+  }
+
+  void _closeModal() {
+    _animController.forward();
+    if (_isVideo == true) {
+      MyStoryVideoPlayer.videoController.play();
+    }
   }
 
   void _backwardOrForward(TapUpDetails details) {
@@ -877,5 +937,69 @@ class MyInfo extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class MyStoryVideoPlayer extends StatefulWidget {
+  final File videoFile;
+  final AnimationController animController;
+  final Function backwardOrForward;
+  static VideoPlayerController videoController;
+
+  MyStoryVideoPlayer(
+      {@required this.videoFile,
+      @required this.animController,
+      @required this.backwardOrForward});
+
+  @override
+  _MyStoryVideoPlayerState createState() => _MyStoryVideoPlayerState();
+}
+
+class _MyStoryVideoPlayerState extends State<MyStoryVideoPlayer> {
+  @override
+  void initState() {
+    super.initState();
+    MyStoryVideoPlayer.videoController =
+        VideoPlayerController.file(widget.videoFile)
+          ..initialize().then((_) {
+            setState(() {});
+            if (MyStoryVideoPlayer.videoController.value.isInitialized) {
+              widget.animController.duration =
+                  MyStoryVideoPlayer.videoController.value.duration;
+              MyStoryVideoPlayer.videoController.play();
+              widget.animController.forward();
+            }
+          });
+    widget.animController.addStatusListener((status) {
+      if (status == AnimationStatus.forward) {
+        MyStoryVideoPlayer.videoController.play();
+      } else {
+        MyStoryVideoPlayer.videoController.pause();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    MyStoryVideoPlayer.videoController.dispose();
+    super.dispose();
+  }
+
+  Timer _timer;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MyStoryVideoPlayer.videoController != null &&
+        MyStoryVideoPlayer.videoController.value.isInitialized) {
+      return FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(
+          width: MyStoryVideoPlayer.videoController.value.size.width,
+          height: MyStoryVideoPlayer.videoController.value.size.height,
+          child: VideoPlayer(MyStoryVideoPlayer.videoController),
+        ),
+      );
+    }
+    return Center(child: Text("Video not working!"));
   }
 }
