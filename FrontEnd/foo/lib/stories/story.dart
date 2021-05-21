@@ -7,6 +7,7 @@ import 'package:wakelock/wakelock.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:foo/test_cred.dart';
 import 'package:foo/models.dart';
+import 'package:foo/stories/modalsheetviews.dart';
 
 import 'dart:io';
 import 'dart:async';
@@ -479,15 +480,15 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
         setState(() {});
         if (videoController.value.isInitialized) {
           widget.animController.duration = videoController.value.duration;
-          videoController.play();
+          videoController?.play();
           widget.animController.forward();
         }
       });
     widget.animController.addStatusListener((status) {
       if (status == AnimationStatus.forward) {
-        videoController.play();
+        videoController?.play();
       } else {
-        videoController.pause();
+        videoController?.pause();
       }
     });
   }
@@ -510,7 +511,7 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
           _timer = Timer(Duration(milliseconds: 200), () {});
         },
         onTapUp: (details) {
-          videoController.play();
+          videoController?.play();
           widget.animController.forward();
           if (_timer.isActive) {
             widget.backwardOrForward(details);
@@ -740,7 +741,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                                     Timer(Duration(milliseconds: 200), () {});
                               },
                               onTapUp: (details) {
-                                MyStoryVideoPlayerState.videoController.play();
+                                MyStoryVideoPlayerState.videoController?.play();
                                 _animController.forward();
                                 if (_timer.isActive) {
                                   _backwardOrForward(details);
@@ -802,7 +803,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
               onPressed: () {
                 _animController.stop();
                 if (_isVideo == true) {
-                  MyStoryVideoPlayerState.videoController.pause();
+                  MyStoryVideoPlayerState.videoController?.pause();
                 }
                 _showModal();
               },
@@ -816,20 +817,13 @@ class _MyStoryScreenState extends State<MyStoryScreen>
   void _showModal() {
     Future<void> fVal = showModalBottomSheet(
         context: context,
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
+        ),
         builder: (context) {
-          return ListView.builder(
-            itemCount: 25,
-            itemBuilder: (context, index) {
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: CachedNetworkImageProvider(
-                      'https://image.cnbcfm.com/api/v1/image/105753692-1550781987450gettyimages-628353178.jpeg?v=1550782124'),
-                ),
-                title: Text('Emma Stone'),
-                subtitle: Text('7 minutes ago'),
-              );
-            },
-          );
+          return ModalSheetContent();
         });
 
     fVal.then((void value) => _closeModal());
@@ -838,7 +832,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
   void _closeModal() {
     _animController.forward();
     if (_isVideo == true) {
-      MyStoryVideoPlayerState.videoController.play();
+      MyStoryVideoPlayerState.videoController?.play();
     }
   }
 
@@ -964,15 +958,15 @@ class MyStoryVideoPlayerState extends State<MyStoryVideoPlayer> {
         setState(() {});
         if (videoController.value.isInitialized) {
           widget.animController.duration = videoController.value.duration;
-          videoController.play();
+          videoController?.play();
           widget.animController.forward();
         }
       });
     widget.animController.addStatusListener((status) {
       if (status == AnimationStatus.forward) {
-        videoController.play();
+        videoController?.play();
       } else {
-        videoController.pause();
+        videoController?.pause();
       }
     });
   }
@@ -983,7 +977,7 @@ class MyStoryVideoPlayerState extends State<MyStoryVideoPlayer> {
     super.dispose();
   }
 
-  Timer _timer;
+  // Timer _timer;
 
   @override
   Widget build(BuildContext context) {

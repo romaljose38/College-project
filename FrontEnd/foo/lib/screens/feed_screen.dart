@@ -204,7 +204,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                   return Column(
                     children: [
                       StoryUploadPick(myStory: myStory),
-                      Text("Momentos"),
+                      Text(
+                        "Momentos",
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   );
                 }
@@ -268,7 +271,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        Text(myStoryList[index - 1].username),
+                        Text(
+                          myStoryList[index - 1].username,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ));
               },
