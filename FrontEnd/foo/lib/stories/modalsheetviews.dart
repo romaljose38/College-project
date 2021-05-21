@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ModalSheetContent extends StatefulWidget {
   @override
@@ -43,6 +44,16 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
               height: 60,
               child: Row(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 30.0),
+                    child: Text(
+                      _seenUsers ? "Views" : "Comments",
+                      style: GoogleFonts.lato(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                    ),
+                  ),
                   Spacer(),
                   IconButton(
                       icon: Icon(Icons.message,
@@ -65,6 +76,7 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
                     icon: Icon(Icons.delete),
                     onPressed: null,
                   ),
+                  SizedBox(width: 20),
                 ],
               ),
             ),
@@ -111,6 +123,66 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
           subtitle: Text('Cool mahn!'),
         );
       },
+    );
+  }
+}
+
+class ReplyModalSheet extends StatefulWidget {
+  @override
+  _ReplyModalSheetState createState() => _ReplyModalSheetState();
+}
+
+class _ReplyModalSheetState extends State<ReplyModalSheet> {
+  TextEditingController _textController;
+
+  @override
+  initState() {
+    super.initState();
+    _textController = TextEditingController();
+  }
+
+  @override
+  dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(15),
+      color: Colors.transparent,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(
+            Radius.circular(30.0),
+            // topLeft: Radius.circular(30.0),
+            // topRight: Radius.circular(30.0),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+                child: TextField(
+              autofocus: true,
+              decoration: InputDecoration(
+                hintStyle: GoogleFonts.sourceSansPro(),
+                hintText: "Reply",
+                border: InputBorder.none,
+                isCollapsed: true,
+                contentPadding: EdgeInsets.only(
+                    left: 20, right: 8.0, top: 5.0, bottom: 8.0),
+              ),
+            )),
+            IconButton(
+              icon: Icon(Icons.send),
+              onPressed: null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

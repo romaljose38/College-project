@@ -8,7 +8,6 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:foo/test_cred.dart';
 import 'package:foo/models.dart';
 import 'package:foo/stories/modalsheetviews.dart';
-
 import 'dart:io';
 import 'dart:async';
 
@@ -44,6 +43,7 @@ class _StoryScreenState extends State<StoryScreen>
   TransformationController transformationController;
   int _currentIndex;
   int otherIndex = 0;
+  bool _isVideo = false;
 
   @override
   void initState() {
@@ -195,6 +195,7 @@ class _StoryScreenState extends State<StoryScreen>
                       switch (_getTypeOf(story.file)) {
                         case 'image':
                           {
+                            _isVideo = false;
                             _animController.forward();
                             return GestureDetector(
                               onTapDown: (_) {
@@ -227,8 +228,22 @@ class _StoryScreenState extends State<StoryScreen>
                           }
                         case 'video':
                           {
+                            _isVideo = true;
                             return GestureDetector(
-                              child: StoryVideoPlayer(
+                              onTapDown: (_) {
+                                MyStoryVideoPlayerState.videoController.pause();
+                                _animController.stop();
+                                _timer =
+                                    Timer(Duration(milliseconds: 200), () {});
+                              },
+                              onTapUp: (details) {
+                                MyStoryVideoPlayerState.videoController?.play();
+                                _animController.forward();
+                                if (_timer.isActive) {
+                                  _backwardOrForward(details);
+                                }
+                              },
+                              child: MyStoryVideoPlayer(
                                 videoFile: snapshot.data,
                                 animController: _animController,
                                 backwardOrForward: _backwardOrForward,
@@ -276,9 +291,46 @@ class _StoryScreenState extends State<StoryScreen>
               ],
             ),
           ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: TextButton(
+              child: Text("Reply",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w400)),
+              onPressed: () {
+                _animController.stop();
+                if (_isVideo == true) {
+                  MyStoryVideoPlayerState.videoController?.pause();
+                }
+                _showModal();
+              },
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _showModal() {
+    Future<void> fVal = showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
+        ),
+        builder: (context) {
+          return ReplyModalSheet();
+        });
+
+    fVal.then((void value) => _closeModal());
+  }
+
+  void _closeModal() {
+    _animController.forward();
+    if (_isVideo == true) {
+      MyStoryVideoPlayerState.videoController?.play();
+    }
   }
 
   void _backwardOrForward(TapUpDetails details) {
