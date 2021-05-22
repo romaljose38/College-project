@@ -33,6 +33,7 @@ class SocketChannel {
 
   Future<void> handleSocket() async {
     try {
+      print("pingingggg");
       var resp = await http.get(Uri.http(localhost, '/api/ping'));
       if (resp.statusCode == 200) {
         if (!isConnected) {
@@ -57,7 +58,7 @@ class SocketChannel {
     isConnected = true;
     print("socket connection initializied");
     channel.done.then((dynamic _) => _onDisconnected());
-
+    _timer.cancel();
     getPendingMessages();
     broadcastNotifications();
   }
@@ -101,9 +102,17 @@ class SocketChannel {
     }, onDone: () {
       isConnected = false;
       print("conecting aborted");
+      if (!_timer.isActive) {
+        _timer =
+            Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
+      }
     }, onError: (e) {
       isConnected = false;
       print('Server error: $e');
+      if (!_timer.isActive) {
+        _timer =
+            Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
+      }
     });
   }
 
@@ -133,7 +142,24 @@ class SocketChannel {
       updateTypingStatus(data);
     } else if (data['type'] == 'story_add') {
       addNewStory(data);
+    } else if (data['type'] == 'online_status') {
+      changeUserStatus(data);
     }
+  }
+
+  void changeUserStatus(data) {
+    print(data);
+    String me = _prefs.getString('username');
+    String threadName = me + '_' + data['u'];
+    var threadBox = Hive.box('Threads');
+    var existingThread = threadBox.get(threadName);
+    if (data['s'] == 'online') {
+      existingThread.isOnline = true;
+    } else if (data['s'] == 'offline') {
+      existingThread.isOnline = false;
+      existingThread.lastSeen = DateTime.now();
+    }
+    existingThread.save();
   }
 
   void addNewStory(data) {
@@ -191,8 +217,8 @@ class SocketChannel {
   }
 
   void addNotification(data) async {
-    if ((_prefs.containsKey('lastNotifId') &
-            (_prefs.getInt('lastNotifId') != data['id'])) |
+    if ((_prefs.containsKey('lastNotifId') &&
+            (_prefs.getInt('lastNotifId') != data['id'])) ||
         !_prefs.containsKey('lastNotifId')) {
       _prefs.setInt("lastNotifId", data['id']);
       DateTime curTime = DateTime.now();
@@ -201,7 +227,9 @@ class SocketChannel {
           type: NotificationType.friendRequest,
           userName: data['username'],
           timeCreated: curTime,
-          userId: data['user_id']);
+          userId: data['user_id'],
+          notifId: data['id']);
+      print("reache here");
       var notifBox = await Hive.openBox('Notifications');
       await notifBox.put(curTime.toString(), notif);
     }
@@ -365,5 +393,8 @@ class SocketChannel {
 
   void _onDisconnected() {
     isConnected = false;
+    if (!_timer.isActive) {
+      _timer = Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
+    }
   }
 }

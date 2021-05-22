@@ -212,11 +212,8 @@ class _ProfileTestState extends State<ProfileTest>
     }
   }
 
-  IconButton chatIcon() => IconButton(
-      icon: Icon(Ionicons.chatbox_outline),
-      onPressed: () {
-        print("rejected");
-      });
+  IconButton chatIcon() =>
+      IconButton(icon: Icon(Ionicons.chatbox_outline), onPressed: handleChat);
 
   Row properRow() {
     List widgetList;
@@ -248,8 +245,9 @@ class _ProfileTestState extends State<ProfileTest>
   Future<void> handleChat() async {
     String threadName = "${widget.curUser}_${widget.userName}";
     var threadBox = Hive.box("Threads");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     Thread thread;
-    if (threadBox.containsKey('threadName')) {
+    if (threadBox.containsKey(threadName)) {
       thread = threadBox.get(threadName);
     } else {
       thread = Thread(
@@ -265,6 +263,7 @@ class _ProfileTestState extends State<ProfileTest>
       PageRouteBuilder(pageBuilder: (context, animation, secAnimation) {
         return ChatScreen(
           thread: thread,
+          prefs: prefs,
         );
       }, transitionsBuilder: (context, animation, secAnimation, child) {
         return SlideTransition(
@@ -291,16 +290,26 @@ class _ProfileTestState extends State<ProfileTest>
         children: [
           Expanded(
             flex: 2,
-            child: Container(
-              margin: EdgeInsets.fromLTRB(8, 0, 5, 0),
-              decoration: BoxDecoration(
-                boxShadow: shadow,
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(10),
-                image: DecorationImage(
-                  image: CachedNetworkImageProvider(
-                      getUrl(widget.posts[0].postUrl)),
-                  fit: BoxFit.cover,
+            child: GestureDetector(
+              onLongPressStart: (press) {
+                return showOverlay(
+                    context, "http://" + localhost + widget.posts[0].postUrl);
+              },
+              onLongPressEnd: (details) {
+                animationController
+                    .reverse()
+                    .whenComplete(() => overlayEntry.remove());
+              },
+              child: Container(
+                margin: EdgeInsets.fromLTRB(8, 0, 5, 0),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(15),
+                  image: DecorationImage(
+                    image: CachedNetworkImageProvider(
+                        getUrl(widget.posts[0].postUrl)),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
@@ -308,33 +317,53 @@ class _ProfileTestState extends State<ProfileTest>
           Expanded(
             child: Column(
               children: [
-                Container(
-                  height: 95,
-                  decoration: BoxDecoration(
-                    boxShadow: shadow,
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
-                    image: DecorationImage(
-                      image: CachedNetworkImageProvider(
-                          getUrl(widget.posts[1].postUrl)),
-                      fit: BoxFit.cover,
+                GestureDetector(
+                  onLongPressStart: (press) {
+                    return showOverlay(context,
+                        "http://" + localhost + widget.posts[1].postUrl);
+                  },
+                  onLongPressEnd: (details) {
+                    animationController
+                        .reverse()
+                        .whenComplete(() => overlayEntry.remove());
+                  },
+                  child: Container(
+                    height: 95,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(15),
+                      image: DecorationImage(
+                        image: CachedNetworkImageProvider(
+                            getUrl(widget.posts[1].postUrl)),
+                        fit: BoxFit.cover,
+                      ),
                     ),
+                    margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
                   ),
-                  margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
                 ),
-                Container(
-                  height: 95,
-                  decoration: BoxDecoration(
-                    boxShadow: shadow,
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
-                    image: DecorationImage(
-                      image: CachedNetworkImageProvider(
-                          getUrl(widget.posts[2].postUrl)),
-                      fit: BoxFit.cover,
+                GestureDetector(
+                  onLongPressStart: (press) {
+                    return showOverlay(context,
+                        "http://" + localhost + widget.posts[2].postUrl);
+                  },
+                  onLongPressEnd: (details) {
+                    animationController
+                        .reverse()
+                        .whenComplete(() => overlayEntry.remove());
+                  },
+                  child: Container(
+                    height: 95,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(15),
+                      image: DecorationImage(
+                        image: CachedNetworkImageProvider(
+                            getUrl(widget.posts[2].postUrl)),
+                        fit: BoxFit.cover,
+                      ),
                     ),
+                    margin: EdgeInsets.fromLTRB(3, 5, 8, 0),
                   ),
-                  margin: EdgeInsets.fromLTRB(3, 5, 8, 0),
                 )
               ],
             ),
@@ -444,15 +473,23 @@ class _ProfileTestState extends State<ProfileTest>
 
   @override
   Widget build(BuildContext context) {
-    return NestedScrollView(
-      headerSliverBuilder: (context, val) {
-        return [
-          SliverToBoxAdapter(
-            child: topPortion(),
-          )
-        ];
-      },
-      body: widget.posts.length >= 3 ? threeOrMore() : grid(false),
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: topPortion(),
+        ),
+        ...(widget.posts.length >= 3
+            ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
+            : [grid(false)]),
+      ],
+      // headerSliverBuilder: (context, val) {
+      //   return [
+      //     SliverToBoxAdapter(
+      //       child: topPortion(),
+      //     )
+      //   ];
+      // },
+      // body: widget.posts.length >= 3 ? threeOrMore() : grid(false),
     );
   }
 
@@ -464,68 +501,125 @@ class _ProfileTestState extends State<ProfileTest>
           ),
         ],
       );
-  GridView grid(bool needExtention) {
+  SliverPadding grid(bool needExtention) {
     int postCount;
     if (needExtention) {
       postCount = widget.posts.length - 3;
     } else {
       postCount = widget.posts.length;
     }
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
-      shrinkWrap: true,
-      physics: BouncingScrollPhysics(),
-      itemCount: postCount,
-      gridDelegate:
-          SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
-      itemBuilder: (context, index) {
-        int curIndex;
-        if (needExtention) {
-          curIndex = index + 3;
-        } else {
-          curIndex = index;
-        }
-        return Container(
-          margin: EdgeInsets.all(5),
-          height: 200,
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.white.withOpacity(.4),
-                offset: Offset(1, 3),
-                blurRadius: 3,
-              )
-            ],
-            borderRadius: BorderRadius.circular(15),
-            color: Colors.white,
-          ),
-          child: GestureDetector(
-            onLongPressStart: (press) {
-              return showOverlay(context,
-                  "http://" + localhost + widget.posts[curIndex].postUrl);
-            },
-            onLongPressEnd: (details) {
-              animationController
-                  .reverse()
-                  .whenComplete(() => overlayEntry.remove());
-            },
-            child: AspectRatio(
-                aspectRatio: 4 / 5,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    image: DecorationImage(
-                        image: CachedNetworkImageProvider(
-                          "http://" +
-                              localhost +
-                              widget.posts[curIndex].postUrl,
-                        ),
-                        fit: BoxFit.cover),
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      sliver: SliverGrid(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              int curIndex;
+              if (needExtention) {
+                curIndex = index + 3;
+              } else {
+                curIndex = index;
+              }
+              return Container(
+                margin: EdgeInsets.symmetric(horizontal: 3, vertical: 5),
+                height: 200,
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withOpacity(.4),
+                      offset: Offset(1, 3),
+                      blurRadius: 3,
+                    )
+                  ],
+                  borderRadius: BorderRadius.circular(15),
+                  color: Colors.white,
+                ),
+                child: GestureDetector(
+                  onLongPressStart: (press) {
+                    return showOverlay(context,
+                        "http://" + localhost + widget.posts[curIndex].postUrl);
+                  },
+                  onLongPressEnd: (details) {
+                    animationController
+                        .reverse()
+                        .whenComplete(() => overlayEntry.remove());
+                  },
+                  child: AspectRatio(
+                    aspectRatio: 4 / 5,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        image: DecorationImage(
+                            image: CachedNetworkImageProvider(
+                              "http://" +
+                                  localhost +
+                                  widget.posts[curIndex].postUrl,
+                            ),
+                            fit: BoxFit.cover),
+                      ),
+                    ),
                   ),
-                )),
+                ),
+              );
+            },
+            childCount: postCount,
           ),
-        );
-      },
+          gridDelegate:
+              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3)
+          // padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
+          // shrinkWrap: true,
+          // physics: BouncingScrollPhysics(),
+          // itemCount: postCount,
+          // gridDelegate:
+          //     SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+          // itemBuilder: (context, index) {
+          //   int curIndex;
+          //   if (needExtention) {
+          //     curIndex = index + 3;
+          //   } else {
+          //     curIndex = index;
+          //   }
+          //   return Container(
+          //     margin: EdgeInsets.all(5),
+          //     height: 200,
+          //     decoration: BoxDecoration(
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: Colors.white.withOpacity(.4),
+          //           offset: Offset(1, 3),
+          //           blurRadius: 3,
+          //         )
+          //       ],
+          //       borderRadius: BorderRadius.circular(15),
+          //       color: Colors.white,
+          //     ),
+          //     child: GestureDetector(
+          //       onLongPressStart: (press) {
+          //         return showOverlay(context,
+          //             "http://" + localhost + widget.posts[curIndex].postUrl);
+          //       },
+          //       onLongPressEnd: (details) {
+          //         animationController
+          //             .reverse()
+          //             .whenComplete(() => overlayEntry.remove());
+          //       },
+          //       child: AspectRatio(
+          //           aspectRatio: 4 / 5,
+          //           child: Container(
+          //             decoration: BoxDecoration(
+          //               borderRadius: BorderRadius.circular(15),
+          //               image: DecorationImage(
+          //                   image: CachedNetworkImageProvider(
+          //                     "http://" +
+          //                         localhost +
+          //                         widget.posts[curIndex].postUrl,
+          //                   ),
+          //                   fit: BoxFit.cover),
+          //             ),
+          //           )),
+          //     ),
+          //   );
+          // },
+          ),
     );
   }
 }

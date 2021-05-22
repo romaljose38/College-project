@@ -85,6 +85,12 @@ class Thread extends HiveObject {
   @HiveField(5)
   int hasUnseen;
 
+  @HiveField(6)
+  bool isOnline;
+
+  @HiveField(7)
+  DateTime lastSeen;
+
   Thread({this.first, this.second});
 
   void addChat(chat) {
@@ -313,7 +319,11 @@ class Notifications extends HiveObject {
   @HiveField(4)
   bool hasAccepted;
 
-  Notifications({this.type, this.userName, this.userId, this.timeCreated});
+  @HiveField(5)
+  int notifId;
+
+  Notifications(
+      {this.type, this.userName, this.userId, this.timeCreated, this.notifId});
 }
 
 // Story models ahead

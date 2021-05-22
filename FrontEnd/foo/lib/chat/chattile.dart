@@ -66,7 +66,7 @@ class ChatTile extends StatelessWidget {
                   ),
                   SizedBox(
                     height: 20,
-                    child: (thread.hasUnseen > 0)
+                    child: (thread.hasUnseen ?? -1 > 0)
                         ? Container(
                             width: 20,
                             height: 20,

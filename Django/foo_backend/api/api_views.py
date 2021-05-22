@@ -94,7 +94,7 @@ def get_previous_posts(request,username):
     try:
         user = User.objects.get(username=username)
         id=request.query_params['id']
-        qs = Post.objects.filter(id__lt=int(id)).order_by('id')[int(id)-6:]
+        qs = Post.objects.filter(id__lt=int(id)).order_by('-id')[:5]
         print(qs)
         serialized = PostSerializer(qs, many=True, context={"user": user})
         print(serialized.data)
@@ -207,14 +207,11 @@ def send_friend_request(request):
 @api_view(['GET'])
 def handle_friend_request(request):
     try:
-        username = request.query_params['username']
-        frndId = request.query_params['frndId']
+        id = int(request.query_params['id'])        
         action = request.query_params['action']
-        print(request.query_params)
-        from_user = User.objects.get(id=frndId)
-        to_user = User.objects.get(username=username)
-        qs = FriendRequest.objects.filter(from_user=from_user, to_user=to_user)
-        frnd_rqst = qs.first()
+        frnd_rqst= FriendRequest.objects.get(id=id)
+        from_user = frnd_rqst.from_user
+        to_user = frnd_rqst.to_user
         if action=="accept":       
             frnd_rqst.status = "accepted"
             from_user.profile.friends.add(to_user)
@@ -223,7 +220,6 @@ def handle_friend_request(request):
         elif action=="reject":
             frnd_rqst.status = "rejected"
             frnd_rqst.delete()
-        print(qs)
         return Response(status=200)
     except Exception as e:
         print(e)
@@ -266,7 +262,13 @@ def story_upload_handler(request):
 def get_status(request):
     try:
         username = request.query_params['username']
+        cur_id = request.query_params['id']
+        cur_user = User.objects.get(id=int(cur_id))
         user = User.objects.get(username=username)
+        user.profile.people_i_should_inform.add(cur_user)
+        user.save()
+        cur_user.profile.people_i_peek.add(user)
+        cur_user.save()
         if(user.profile.online):
             return Response(status=200,data={"status":"online"})
         else:
@@ -278,3 +280,19 @@ def get_status(request):
 @api_view(['GET'])
 def ping(request):
     return Response(status=200)
+
+
+@api_view(['GET'])
+def user_story_viewed(request):
+    try:
+        story_id = request.query_params['id']
+        user_id = request.query_params['u_id']
+        story = Story.objects.get(id=int(story_id))
+        user = User.objects.get(id=user_id)
+        story.views.add(user)
+        story.save()
+        return Response(status=200)
+
+    except Exception as e:
+        print(e)
+        return Response(status=400)

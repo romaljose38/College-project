@@ -106,9 +106,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     builder: (context, box, widget) {
                       print(box.values.toList());
 
-                      List threads = box.values.toList();
+                      List threads = box.values.toList() ?? [];
 
-                      if (threads.length > 1) {
+                      if (threads.length >= 1) {
                         threads.sort((a, b) {
                           return b.lastAccessed.compareTo(a.lastAccessed);
                         });

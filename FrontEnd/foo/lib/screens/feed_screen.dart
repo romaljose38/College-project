@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:foo/colour_palette.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/screens/post_tile.dart';
 import 'package:flutter/material.dart';
@@ -31,14 +32,17 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   int itemCount = 0;
   bool isConnected = false;
   GlobalKey<SliverAnimatedListState> listKey;
-
+  bool hasRequested = false;
   double currentPos = 0;
   List<Post> postsList = <Post>[];
   var myStoryList = [];
+  AnimationController _animationController;
   //
 
   @override
   initState() {
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     listKey = GlobalKey<SliverAnimatedListState>();
     setInitialData();
     //_fetchStory();
@@ -47,15 +51,20 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
     _scrollController
       ..addListener(() {
-        if (_scrollController.position.pixels ==
-            _scrollController.position.maxScrollExtent) {
+        if (_scrollController.position.maxScrollExtent -
+                _scrollController.position.pixels <=
+            800) {
           print("max max max");
-          getPreviousPosts();
+          if (!hasRequested) {
+            getPreviousPosts();
+          }
+          //
         }
       });
   }
 
   getPreviousPosts() async {
+    hasRequested = true;
     print(postsList);
     var response = await http.get(Uri.http(
         localhost,
@@ -96,13 +105,17 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     bool result = await DataConnectionChecker().hasConnection;
 
     if (result == true) {
-      setState(() {
-        isConnected = true;
-      });
+      if (mounted) {
+        setState(() {
+          isConnected = true;
+        });
+      }
     } else {
-      setState(() {
-        isConnected = false;
-      });
+      if (mounted) {
+        setState(() {
+          isConnected = false;
+        });
+      }
     }
   }
 
@@ -134,7 +147,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       var respJson = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        respJson.forEach((e) {
+        respJson.reversed.toList().forEach((e) {
           Post post = Post(
               username: e['user']['username'],
               postUrl: 'http://' + localhost + e['file'],
@@ -156,9 +169,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               itemCount += 1;
               // postsList = postsList;
             });
-          } else {
-            // feed.addPost(post);
-            // feed.save();
           }
         });
       }
@@ -391,27 +401,28 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       await feedBox.put("feed", feed);
     }
 
-    respJson.forEach((e) {
+    respJson.reversed.toList().forEach((e) {
+      Post post = Post(
+          username: e['user']['username'],
+          postUrl: 'http://' + localhost + e['file'],
+          userDpUrl: 'assets/images/user0.png',
+          postId: e['id'],
+          userId: e['user']['id'],
+          commentCount: e['comment_count'],
+          caption: e['caption'],
+          likeCount: e['likeCount'],
+          haveLiked: e['hasLiked'],
+          type: e['post_type']);
+      feed.addPost(post);
+      feed.save();
       if (feed.isNew(e['id'])) {
-        Post post = Post(
-            username: e['user']['username'],
-            postUrl: 'http://' + localhost + e['file'],
-            userDpUrl: 'assets/images/user0.png',
-            postId: e['id'],
-            userId: e['user']['id'],
-            commentCount: e['comment_count'],
-            caption: e['caption'],
-            likeCount: e['likeCount'],
-            haveLiked: e['hasLiked'],
-            type: e['post_type']);
         listKey.currentState.insertItem(0);
         postsList.insert(0, post);
-        feed.addPost(post);
+
         setState(() {
           itemCount += 1;
           // postsList = postsList;
         });
-        feed.save();
       }
     });
   }
@@ -421,22 +432,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(
-        extendBodyBehindAppBar: true,
-        extendBody: true,
+        // extendBodyBehindAppBar: true,
+        // extendBody: true,
         // backgroundColor: Color.fromRGBO(24, 4, 29, 1),
         // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
-        floatingActionButton: TextButton(
-          child: Text(
-            "A",
-            style: TextStyle(color: Colors.black),
-          ),
-          onPressed: () {
-            listKey.currentState.insertItem(0);
-            var feedBox = Hive.box("Feed");
-            var feed = feedBox.get('feed');
-            postsList.insert(0, feed.posts[0]);
-          },
-        ),
+
         backgroundColor: Colors.white,
         body: Container(
           // margin: EdgeInsets.only(bottom: 40),

@@ -5,5 +5,11 @@ from . import consumers,views
 websocket_urlpatterns = [
     path('ws/test_room/', consumers.DevelopmentChatConsumer.as_asgi()),
     path('ws/chat_room/<str:username>/', consumers.ChatConsumer.as_asgi()),
+  
 
+
+]
+
+async_urlpatterns = [
+      path('http_consumer', consumers.TestConsumer.as_asgi()),
 ]

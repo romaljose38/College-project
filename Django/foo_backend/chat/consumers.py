@@ -1,5 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.http import AsyncHttpConsumer
 from channels.db import database_sync_to_async
 from .models import (
     Thread,
@@ -12,7 +13,8 @@ from .models import (
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from datetime import datetime
-
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 User = get_user_model()
 
 # Right now we need two chat consumers.
@@ -103,12 +105,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
             await self.accept()
-            
+            informing_list = await self.inform_people()
             await self.send_pending_messages()
-
+            # print(tes)
             pending_msg_status = await self.get_pending_notifications()
-            # pending_requests = await self.get_pending_requests()
+            pending_requests = await self.get_pending_requests()
             pending_story_notifs = await self.get_pending_story_notifications()
+            
+            
+            if len(informing_list)>0:
+                for msg in informing_list:
+                    await self.channel_layer.group_send(
+                        msg[0],
+                        msg[1]
+                    )
             
             if len(pending_msg_status)>0:
                 for msg in pending_msg_status:
@@ -117,14 +127,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if len(pending_story_notifs)>0:
                 for msg in pending_story_notifs:
                     await self.send(text_data=json.dumps(msg))
-            # if len(pending_requests)>0:
-            #     for req in pending_requests:
-            #         request = await self.get_request_details(req)
-                    
-            #         msg_obj = json.dumps(request)
 
-            #         await self.send(text_data=msg_obj)
+            if len(pending_requests)>0:
+                for req in pending_requests:                    
+                    msg_obj = json.dumps(req)
+
+                    await self.send(text_data=msg_obj)
                     
+    @database_sync_to_async
+    def inform_people(self):
+        final_list =[]
+        online_inform_qs = self.user.profile.people_i_should_inform.all()
+        for user in online_inform_qs:
+            if user.profile.online:
+                final_list.append([
+                    user.username,
+                    {   
+                        'type':'online_status',
+                        'u':self.user.username,
+                        's':'online'
+                    }
+                ])
+        return final_list
+    
 
     async def send_pending_messages(self):
         pending_messages = await self.get_pending_messages()
@@ -180,7 +205,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_pending_requests(self):
-        return FriendRequest.objects.filter(to_user=self.user, has_received=False)
+        request_qs = FriendRequest.objects.filter(to_user=self.user, has_received=False)
+
+        requests = []
+
+        for request in request_qs:
+            requests.append({"type":"notification","username":request.from_user.username, "user_id":request.from_user.id, "id":request.id})
+
+        return requests
 
     @database_sync_to_async
     def get_pending_notifications(self):
@@ -224,14 +256,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             'time':notif.story.time_created.strftime("%Y-%m-%d %H:%M:%S"),
                         },
                 )
+            elif notif.notif_type=="story_view":
+                final_list.append({                        
+                            'type':'story_view',
+                            'u':notif.from_user.username, 
+                            'id':notif.story.id,                           
+                            'n_id':notif.id,
+                            'time':notif.time_created,
+                        },
+                )
            
 
         print(final_list)
         return final_list
-
-    @database_sync_to_async
-    def get_request_details(self, request):
-        return {"type":"notification","username":request.from_user.username, "user_id":request.from_user.id, "id":request.id}
 
     async def receive(self, text_data):
         print(text_data)
@@ -487,6 +524,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return User.objects.get(username=username)
 
     async def disconnect(self, close_code):
+
+        await self.get_informers_list()
+        # print(informing_list)
+        await self.remove_me_from_others_lists()
+        
+        
+        
+
         if self.recent_chat_with != "":
             data =  {'from':self.room_group_name,
                     'type': 'typing_status',
@@ -496,12 +541,45 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.recent_chat_with,
                 data
                 )
-        
         await self.update_user_offline(self.user)
         await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+                self.room_group_name,
+                self.channel_name
+            )
+        # if len(informing_list)>0:
+        #         for msg in informing_list:
+        #             await self.channel_layer.group_send(
+        #                 msg[0],
+        #                 msg[1]
+        #             )
+        
+
+    @database_sync_to_async
+    def remove_me_from_others_lists(self):
+        qs = self.user.profile.people_i_peek.all()
+        for user in qs:
+            user.profile.people_i_should_inform.remove(self.user)
+    
+        
+
+
+
+    @database_sync_to_async
+    def get_informers_list(self):
+        final_list =[]
+        offline_inform_qs = self.user.profile.people_i_should_inform.all()
+        for user in offline_inform_qs:
+            # if user.profile.online:
+                # final_list.append([
+                # user.username,
+                _dict= {   
+                        'type':'online_status',
+                        'u':self.user.username,
+                        's':'offline'
+                    }
+                # ])
+                async_to_sync(self.channel_layer.group_send)(user.username,_dict)
+        # return final_list
 
     @database_sync_to_async
     def update_user_offline(self, user):
@@ -528,3 +606,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
         print(event)
         print(self.room_group_name)
         await self.send(text_data=json.dumps(event))
+
+    async def online_status(self,event):
+        print(event)
+        print(self.room_group_name)
+        await self.send(text_data=json.dumps(event))
+
+
+    async def story_view(self,event):
+        print(event)
+        print(self.room_group_name)
+        await self.send(text_data=json.dumps(event))
+
+
+
+
+
+class TestConsumer(AsyncHttpConsumer):
+    async def handle(self, body):
+        # await self.send_headers(status=400,headers=[
+        #     (b"Content-Type", b"multipart/form-data"),
+        # ])
+        print(self.scope)
+        # Headers are only sent after the first body event.
+        # Set "more_body" to tell the interface server to not
+        # finish the response yet:
+        print(self.body['name'])
+        await self.send_response(200, b"{'status':'test'}")
+        await self.send_body(b"hello", more_body=True)
