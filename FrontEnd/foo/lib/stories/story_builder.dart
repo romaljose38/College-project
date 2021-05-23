@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:foo/stories/story.dart';
+import 'package:foo/stories/story_new.dart';
 
 import 'package:wakelock/wakelock.dart';
 
