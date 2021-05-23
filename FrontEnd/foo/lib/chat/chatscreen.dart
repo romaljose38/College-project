@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +49,6 @@ class _ChatScreenState extends State<ChatScreen> {
   String userStatus = "";
   bool keyboardUp;
   bool overlayVisible = false;
-  bool isTyping = false;
   OverlayEntry entry;
   StreamSubscription test;
 
@@ -66,25 +66,44 @@ class _ChatScreenState extends State<ChatScreen> {
     listenToHive();
     obtainStatus();
     updateLastChatMsgStatus();
-    // timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
+    timer = Timer.periodic(
+        Duration(seconds: 5), (Timer t) => _checkConnectionStatus());
     test = Hive.box('threads').watch(key: threadName).listen((BoxEvent event) {
       print("hive listen");
 
       Thread existingThread = Hive.box('threads').get(threadName);
-      if (existingThread.isOnline) {
-        print("hes online");
+      if (mounted) {
+        if (existingThread.isOnline) {
+          print("hes online");
+
+          setState(() {
+            userStatus = "Online";
+          });
+        } else {
+          setState(() {
+            userStatus = timeago.format(existingThread.lastSeen);
+          });
+        }
       }
       if (existingThread.isTyping ?? false == true) {
+        print("typing");
         if (mounted) {
           setState(() {
-            isTyping = true;
+            userStatus = "typing..";
           });
         }
       } else if (existingThread.isTyping == false) {
+        print("stopped");
         if (mounted) {
-          setState(() {
-            isTyping = false;
-          });
+          if (existingThread.isOnline) {
+            setState(() {
+              userStatus = "Online";
+            });
+          } else {
+            setState(() {
+              userStatus = timeago.format(existingThread.lastSeen);
+            });
+          }
         }
       }
     }, onDone: () {
@@ -117,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (thread.chatList.last.isMe != true) {
           var threadBox = Hive.box("Threads");
           var thread = threadBox.get(curUser + '_' + otherUser);
-          if (thread.hasUnseen > 0) {
+          if ((thread.hasUnseen ?? -1) > 0) {
             thread.hasUnseen = 0;
             thread.save();
           }
@@ -155,6 +174,18 @@ class _ChatScreenState extends State<ChatScreen> {
           });
         }
       }
+    }
+  }
+
+  void _checkConnectionStatus() async {
+    bool result = await DataConnectionChecker().hasConnection;
+
+    if ((result == true) && (userStatus == "")) {
+      obtainStatus();
+    } else if ((result == false) && (userStatus != "")) {
+      setState(() {
+        userStatus = "";
+      });
     }
   }
 
@@ -232,7 +263,7 @@ class _ChatScreenState extends State<ChatScreen> {
         isMe: true,
       ));
       currentThread.save();
-      LandingPageState.channel.add(data);
+      SocketChannel.sendToChannel(data);
     }
   }
 
@@ -242,48 +273,73 @@ class _ChatScreenState extends State<ChatScreen> {
     FilePickerResult result =
         await FilePicker.platform.pickFiles(withData: true);
     File file = File(result.files.single.path);
-    String _extension = result.files.single.extension;
-    var bytes = result.files.single.bytes;
-    print(bytes);
-    Directory appDir = await getApplicationDocumentsDirectory();
-    String path = appDir.path +
-        '/images/sent/' +
-        '${curUser}_${otherUser}_${curTime.toString()}' +
-        '.$_extension';
-    File(path).createSync(recursive: true);
-    File savedFile = await file.copy(path);
+    // String _extension = result.files.single.extension;
+    // var bytes = result.files.single.bytes;
+    // print(bytes);
+    // Directory appDir = await getApplicationDocumentsDirectory();
+    // String path = appDir.path +
+    //     '/images/sent/' +
+    //     '${curUser}_${otherUser}_${curTime.toString()}' +
+    //     '.$_extension';
+    // File(path).createSync(recursive: true);
+    // File savedFile = await file.copy(path);
+    int curUserId = _prefs.getInt('id');
+    // var uri = Uri.http(localhost, '/api/upload_chat_media');
+    // var request = http.MultipartRequest('POST', uri)
+    //   ..fields['u_id'] = curUserId.toString()
+    //   ..fields['username'] = otherUser
+    //   ..files.add(await http.MultipartFile.fromPath('file', file.path));
+    // var response = await request.send();
+    // print(response.statusCode);
+    print(_id);
+    var threadBox = Hive.box('Threads');
+    Thread currentThread = threadBox.get(threadName);
+    currentThread.addChat(ChatMessage(
+      filePath: file.path,
+      id: _id,
+      time: curTime,
+      // base64string: imgString,
+      senderName: curUser,
+      msgType: "img",
+      isMe: true,
+    ));
+    currentThread.save();
 
-    print(savedFile.path);
+    // print(savedFile.path);
 
-    String imgString = base64Encode(bytes);
-    print(imgString);
+    // String imgString = base64Encode(bytes);
+    // print(imgString);
 
-    var data = jsonEncode({
-      'type': 'img',
-      'ext': _extension,
-      'image': imgString,
-      'from': curUser,
-      'id': _id,
-      'to': otherUser,
-      'time': curTime.toString(),
-    });
-    print(data);
-    if (SocketChannel.isConnected) {
-      var threadBox = Hive.box('Threads');
+    // var data = jsonEncode({
+    //   'type': 'img',
+    //   'ext': _extension,
+    //   'image': imgString,
+    //   'from': curUser,
+    //   'id': _id,
+    //   'to': otherUser,
+    //   'time': curTime.toString(),
+    // });
+    // print(data);
+    // if (SocketChannel.isConnected) {
+    //   var threadBox = Hive.box('Threads');
 
-      Thread currentThread = threadBox.get(threadName);
-      currentThread.addChat(ChatMessage(
-        filePath: savedFile.path,
-        id: _id,
-        time: curTime,
-        base64string: imgString,
-        senderName: curUser,
-        msgType: "img",
-        isMe: true,
-      ));
-      currentThread.save();
-      SocketChannel.sendToChannel(data);
-    }
+    //   Thread currentThread = threadBox.get(threadName);
+    //   currentThread.addChat(ChatMessage(
+    //     filePath: savedFile.path,
+    //     id: _id,
+    //     time: curTime,
+    //     base64string: imgString,
+    //     senderName: curUser,
+    //     msgType: "img",
+    //     isMe: true,
+    //   ));
+    //   currentThread.save();
+    //   SocketChannel.sendToChannel(data);
+    // }
+  }
+
+  removeKey() {
+    _prefs.setBool("${otherUser}_hasNew", false);
   }
 
   void showOverlay() {
@@ -300,7 +356,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _scrollController.animateTo(
                 _scrollController.position.minScrollExtent,
                 duration: Duration(milliseconds: 100),
-                curve: Curves.easeIn);
+                curve: Curves.bounceIn);
             entry.remove();
           },
           child: Container(
@@ -422,41 +478,41 @@ class _ChatScreenState extends State<ChatScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                ValueListenableBuilder(
-                                    valueListenable: Hive.box("Threads")
-                                        .listenable(keys: [threadName]),
-                                    builder: (context, box, widget) {
-                                      var existingThread = box.get(threadName);
-                                      var lastSeen = existingThread.lastSeen;
-                                      String time;
-                                      if (lastSeen != null) {
-                                        String time = timeago
-                                            .format(existingThread.lastSeen);
-                                      }
+                                // ValueListenableBuilder(
+                                //     valueListenable: Hive.box("Threads")
+                                //         .listenable(keys: [threadName]),
+                                //     builder: (context, box, widget) {
+                                //       var existingThread = box.get(threadName);
+                                //       var lastSeen = existingThread.lastSeen;
+                                //       String time;
+                                //       if (lastSeen != null) {
+                                //         String time = timeago
+                                //             .format(existingThread.lastSeen);
+                                //       }
 
-                                      print("value listenable chck");
+                                //       print("value listenable chck");
 
-                                      var text = (existingThread.isTyping ==
-                                              true)
-                                          ? "typing"
-                                          : (existingThread.isOnline ?? false
-                                              ? "Online"
-                                              : time ?? userStatus);
-                                      return Text(
-                                        text,
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            color: Color.fromRGBO(
-                                                180, 190, 255, 1)),
-                                      );
-                                    }),
-                                // Text(
-                                //   isTyping ? "typing.." : userStatus,
-                                //   style: TextStyle(
-                                //     fontSize: 15,
-                                //     color: Color.fromRGBO(180, 190, 255, 1),
-                                //   ),
-                                // ),
+                                //       var text = (existingThread.isTyping ==
+                                //               true)
+                                //           ? "typing"
+                                //           : (existingThread.isOnline ?? false
+                                //               ? "Online"
+                                //               : time ?? userStatus);
+                                //       return Text(
+                                //         text,
+                                //         style: TextStyle(
+                                //             fontSize: 15,
+                                //             color: Color.fromRGBO(
+                                //                 180, 190, 255, 1)),
+                                //       );
+                                //     }),
+                                Text(
+                                  userStatus,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Color.fromRGBO(180, 190, 255, 1),
+                                  ),
+                                ),
                                 SizedBox(height: 7),
                                 Text(widget.thread.second.name,
                                     style: TextStyle(
@@ -496,8 +552,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (_prefs.containsKey("${otherUser}_hasNew") &&
                     _prefs.getBool("${otherUser}_hasNew") &&
                     !overlayVisible) {
-                  if (_scrollController.offset > 300) {
-                    showOverlay();
+                  if (_scrollController.hasClients) {
+                    if ((_scrollController?.offset ?? 0) < 300) {
+                      removeKey();
+                    } else if (_scrollController.offset > 300) {
+                      showOverlay();
+                    }
                   }
                 }
                 print("rerender");

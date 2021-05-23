@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:foo/models.dart';
 import 'package:foo/test_cred.dart';
 import 'package:http/http.dart' as http;
@@ -16,14 +18,21 @@ class SocketChannel {
   String username;
   Timer _timer;
   SharedPreferences _prefs;
+  AudioCache cache = AudioCache(respectSilence: true);
   static bool isConnected = false;
 
   factory SocketChannel() {
     return socket;
   }
 
+  playAudio() async {
+    await cache.play('sounds/notification.wav',
+        isNotification: true, mode: PlayerMode.LOW_LATENCY, duckAudio: true);
+  }
+
   SocketChannel._internal() {
     setPrefs();
+
     _timer = Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
   }
 
@@ -120,10 +129,7 @@ class SocketChannel {
     if (data.containsKey('received')) {
       _updateChatStatus(data);
     } else if (data.containsKey("r_s")) {
-      _updateReachedServerStatus(
-          id: data['r_s']['id'],
-          newId: data['r_s']['n_id'],
-          name: data['r_s']['to']);
+      _updateReachedServerStatus(data);
     } else if (data['type'] == 'chat_message') {
       if ((_prefs.containsKey('lastMsgId') &&
               (_prefs.getInt('lastMsgId') != data['message']['id'])) ||
@@ -235,13 +241,19 @@ class SocketChannel {
     }
   }
 
-  void _updateReachedServerStatus({id, newId, name}) {
+  void _updateReachedServerStatus(data) {
+    var id = data['r_s']['id'];
+    var newId = data['r_s']['n_id'];
+    var name = data['r_s']['to'];
+
     String me = _prefs.getString('username');
     String threadName = me + '_' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
+
     existingThread.updateChatId(id: id, newId: newId);
     existingThread.save();
+    sendToChannel(jsonEncode({'n_r': data['r_s']['notif_id']}));
   }
 
   void _updateChatStatus(data) {
@@ -273,10 +285,10 @@ class SocketChannel {
       ));
     } else if (data['msg_type'] == 'img') {
       thread.addChat(ChatMessage(
-        base64string: data['message']['img'],
+        filePath: data['message']['img'],
         senderName: data['message']['from'],
-        msgType: 'img',
         time: DateTime.parse(data['message']['time']),
+        msgType: "img",
         isMe: false,
         id: data['message']['id'],
       ));
@@ -333,6 +345,7 @@ class SocketChannel {
         }
       } else if (currentUser == data['message']['from']) {
         print("here");
+
         var seenTicker = {
           "type": "seen_ticker",
           "to": data['message']['from'],
@@ -341,6 +354,7 @@ class SocketChannel {
         sendToChannel(jsonEncode(seenTicker));
         _prefs.setInt("lastSeenId", data['message']['id']);
         _prefs.setBool("${data['message']['from']}_hasNew", true);
+        playAudio();
       }
 
       // else{
@@ -367,10 +381,9 @@ class SocketChannel {
         ));
       } else if (data['msg_type'] == 'img') {
         existingThread.addChat(ChatMessage(
-          base64string: data['message']['img'],
+          filePath: data['message']['img'],
           senderName: data['message']['from'],
           time: DateTime.parse(data['message']['time']),
-          ext: data['message']['ext'],
           msgType: "img",
           isMe: false,
           id: data['message']['id'],

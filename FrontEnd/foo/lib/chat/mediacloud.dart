@@ -1,57 +1,202 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
+import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
-class MediaCloud extends StatelessWidget {
+class MediaCloud extends StatefulWidget {
   final ChatMessage msgObj;
+  final String otherUser;
 
-  MediaCloud({this.msgObj});
+  MediaCloud({this.msgObj, this.otherUser});
 
-  FutureOr convertEncodedString() async {
-    if ((msgObj.isMe == true) & (msgObj.filePath != null)) {
-      File file = File(msgObj.filePath);
-      if (file != null) {
-        return file;
+  @override
+  _MediaCloudState createState() => _MediaCloudState();
+}
+
+class _MediaCloudState extends State<MediaCloud> {
+  File file;
+  bool hasUploaded = true;
+  bool processed = false;
+  bool isTrying = false;
+  SharedPreferences _prefs;
+  bool hasSetPrefs = false;
+
+  //for receiver
+  bool hasDownloaded;
+  bool fileExists;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.msgObj.isMe == true) {
+      processMyImage();
+      if (!widget.msgObj.haveReachedServer) {
+        hasUploaded = false;
+        trySendingImageAgain();
       }
+      print(widget.otherUser);
     } else {
-      var ext = msgObj.ext;
-      var img64 = msgObj.base64string;
-      Directory appDir = await getApplicationDocumentsDirectory();
-      String path = appDir.path + '/images/' + msgObj.id.toString() + '.$ext';
-      bool isPresent = await File(path).exists();
-      if (!isPresent) {
-        if (ext == null) {
-          return;
-        }
-
-        print(ext);
-        var bytes = base64Decode(img64);
-        print(bytes);
-
-        File(appDir.path + '/images/' + msgObj.id.toString() + '.$ext')
-            .createSync(recursive: true);
-        print(appDir.path + '/images/' + msgObj.id.toString() + '.$ext');
-
-        File fle = File(path);
-        await fle.writeAsBytes(bytes);
-        print("writing done successfully to " + fle.path);
-        return fle;
-      }
-      print("already exists");
-      return File(path);
+      processHerImage();
     }
   }
 
-  String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
+  setPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    hasSetPrefs = true;
+  }
+
+  trySendingImageAgain() async {
+    if (hasSetPrefs != true) {
+      await setPrefs();
+    }
+    setState(() {
+      isTrying = true;
+    });
+
+    int curUserId = _prefs.getInt('id');
+    var uri = Uri.http(localhost, '/api/upload_chat_media');
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['u_id'] = curUserId.toString()
+      ..fields['time'] = widget.msgObj.time.toString()
+      ..fields['msg_id'] = widget.msgObj.id.toString()
+      ..fields['username'] = widget.otherUser
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+    print(request.fields);
+    var response = await request.send();
+
+    if (response.statusCode != 200) {
+      setState(() {
+        isTrying = false;
+      });
+    }
+  }
+
+  showImage() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => ImageDetailView(
+                  image: file,
+                )));
+  }
+
+  FutureOr processMyImage() async {
+    if (widget.msgObj.haveReachedServer != true) {
+      setState(() {
+        hasUploaded = false;
+      });
+    }
+    if ((widget.msgObj.filePath != null) &
+        (await File(widget.msgObj.filePath).exists())) {
+      File _file = File(widget.msgObj.filePath);
+      if (_file != null) {
+        // return file;
+        setState(() {
+          file = _file;
+          processed = true;
+        });
+      }
+    } else {
+      setState(() {
+        processed = true;
+      });
+    }
+
+    // var ext = widget.msgObj.ext;
+    // var img64 = widget.msgObj.base64string;
+    // Directory appDir = await getApplicationDocumentsDirectory();
+    // String path =
+    //     appDir.path + '/images/' + widget.msgObj.id.toString() + '.$ext';
+    // bool isPresent = await File(path).exists();
+    // if (!isPresent) {
+    //   if (ext == null) {
+    //     return;
+    //   }
+
+    //   print(ext);
+    //   var bytes = base64Decode(img64);
+    //   print(bytes);
+
+    //   File(appDir.path + '/images/' + widget.msgObj.id.toString() + '.$ext')
+    //       .createSync(recursive: true);
+    //   print(appDir.path + '/images/' + widget.msgObj.id.toString() + '.$ext');
+
+    //   File fle = File(path);
+    //   await fle.writeAsBytes(bytes);
+    //   print("writing done successfully to " + fle.path);
+    //   return fle;
+    // }
+    // print("already exists");
+    // return File(path);
+  }
+
+  processHerImage() async {
+    String mediaName =
+        '/storage/emulated/0/foo/images/${widget.msgObj.time.toString()}';
+    if (await Permission.storage.request().isGranted) {
+      if (widget.msgObj.hasSeen != true) {
+        var url = 'http://$localhost${widget.msgObj.filePath}';
+        print(url);
+        setState(() {
+          isTrying = true;
+        });
+        var response = await http.get(Uri.parse(url));
+
+        if (response.statusCode == 200) {
+          File _file = File(mediaName);
+          await _file.create(recursive: true);
+          await _file.writeAsBytes(response.bodyBytes);
+          setState(() {
+            isTrying = false;
+            hasDownloaded = true;
+            fileExists = true;
+            file = _file;
+          });
+          widget.msgObj.hasSeen = true;
+        } else {
+          setState(() {
+            isTrying = false;
+            hasDownloaded = false;
+            fileExists = false;
+          });
+        }
+      } else {
+        if (await _isExistsInStorage(mediaName)) {
+          File file2 = File(mediaName);
+          setState(() {
+            hasDownloaded = true;
+            fileExists = true;
+            file = file2;
+          });
+        } else {
+          setState(() {
+            hasDownloaded = true;
+            fileExists = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<bool> _isExistsInStorage(String fileName) async {
+    return await File(fileName).exists();
+  }
+
+  String getTime() => intl.DateFormat('hh:mm').format(widget.msgObj.time);
 
   BoxDecoration _getDecoration() {
     return BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
         gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
@@ -65,95 +210,275 @@ class MediaCloud extends StatelessWidget {
             ]));
   }
 
+  Positioned timeAndStatus() => Positioned(
+        bottom: 18.0,
+        right: 18.0,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(
+              padding: EdgeInsets.all(5),
+              child: Row(
+                children: <Widget>[
+                  Text(getTime(),
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                      style: TextStyle(
+                        color: this.widget.msgObj.isMe == true
+                            ? Colors.white
+                            : Colors.black,
+                        fontSize: 10.0,
+                      )),
+                  SizedBox(width: 3.0),
+                  (widget.msgObj.isMe == true)
+                      ? Icon(
+                          widget.msgObj.haveReachedServer
+                              ? (widget.msgObj.haveReceived
+                                  ? (widget.msgObj.hasSeen == true)
+                                      ? Icons.done_outline_sharp
+                                      : Icons.done_all
+                                  : Icons.done)
+                              : Icons.timelapse_outlined,
+                          size: 12.0,
+                          color: Colors.white,
+                        )
+                      : Container(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+  GestureDetector hisImage() => GestureDetector(
+        onTap: (fileExists ?? false) ? showImage : () {},
+        child: Hero(
+          tag: (fileExists ?? false) ? file.path : "",
+          child: Container(
+            margin: EdgeInsets.all(5),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Stack(
+                children: [
+                  (hasDownloaded ?? false)
+                      ? (fileExists ?? false)
+                          ? Container(
+                              width: 250,
+                              height: 250,
+
+                              // decoration: _getDecoration(),
+                              decoration: BoxDecoration(
+                                  // borderRadius: BorderRadius.only(
+                                  //   topLeft: Radius.circular(30),
+                                  //   topRight: Radius.circular(30),
+                                  //   bottomRight: Radius.circular(30),
+                                  //   bottomLeft: Radius.circular(30),
+                                  // ),
+                                  image: DecorationImage(
+                                      image: FileImage(file),
+                                      fit: BoxFit.cover)),
+                            )
+                          : Container(
+                              width: 250,
+                              height: 250,
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.image_not_supported_outlined),
+                                    Text(
+                                      "File is missing",
+                                      textAlign: TextAlign.center,
+                                    )
+                                  ],
+                                ),
+                              ))
+                      : isTrying
+                          ? Container(
+                              width: 250,
+                              height: 250,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(.3),
+                              ),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          : Container(
+                              width: 250,
+                              height: 250,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(.3),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.download_rounded),
+                                      onPressed: processHerImage,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                  hasUploaded == false
+                      ? (file != null)
+                          ? isTrying
+                              ? Container(
+                                  height: 250,
+                                  width: 250,
+                                  color: Colors.black.withOpacity(.2),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      backgroundColor: Colors.white,
+                                      strokeWidth: 1,
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  width: 250,
+                                  height: 250,
+                                  decoration: BoxDecoration(
+                                      // color: Colors.black.withOpacity(.3),
+
+                                      ),
+                                  child: Center(
+                                    child: TextButton(
+                                      child: Text(
+                                        "Retry",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      onPressed: trySendingImageAgain,
+                                    ),
+                                  ),
+                                )
+                          : Container()
+                      : Container(),
+                  timeAndStatus()
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+  GestureDetector myImage() => GestureDetector(
+        onTap: processed ? showImage : () {},
+        child: Hero(
+          tag: processed ? file.path : "",
+          child: Container(
+            margin: EdgeInsets.all(5),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Stack(
+                children: [
+                  processed
+                      ? Container(
+                          width: 250,
+                          height: 250,
+
+                          // decoration: _getDecoration(),
+                          decoration: BoxDecoration(
+                              // borderRadius: BorderRadius.only(
+                              //   topLeft: Radius.circular(30),
+                              //   topRight: Radius.circular(30),
+                              //   bottomRight: Radius.circular(30),
+                              //   bottomLeft: Radius.circular(30),
+                              // ),
+                              image: DecorationImage(
+                                  image: FileImage(file), fit: BoxFit.cover)),
+                        )
+                      : Container(
+                          height: 250,
+                          width: 250,
+                          decoration: _getDecoration(),
+                          child: Center(child: Text("File not found!")),
+                        ),
+                  hasUploaded == false
+                      ? (file != null)
+                          ? isTrying
+                              ? Container(
+                                  height: 250,
+                                  width: 250,
+                                  color: Colors.black.withOpacity(.2),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      backgroundColor: Colors.white,
+                                      strokeWidth: 1,
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  width: 250,
+                                  height: 250,
+                                  decoration: BoxDecoration(
+                                      // color: Colors.black.withOpacity(.3),
+
+                                      ),
+                                  child: Center(
+                                    child: TextButton(
+                                      child: Text(
+                                        "Retry",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      onPressed: trySendingImageAgain,
+                                    ),
+                                  ),
+                                )
+                          : Container()
+                      : Container(),
+                  timeAndStatus()
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
-    print(this.msgObj.isMe);
-    print(this.msgObj.haveReachedServer);
-    print(this.msgObj.haveReceived);
+    print(widget.msgObj.msgType);
+    print(widget.msgObj.haveReachedServer);
 
     return Column(
       children: [
         Row(
-          mainAxisAlignment: (this.msgObj.isMe == true)
+          mainAxisAlignment: (this.widget.msgObj.isMe == true)
               ? MainAxisAlignment.end
               : MainAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                FutureBuilder(
-                  future: convertEncodedString(),
-                  builder: (context, snapshot) {
-                    if (msgObj.msgType == "img") {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        print('snapshot data is here ');
-                        print(snapshot.data);
-                        Widget child;
-                        if (snapshot.data == "does not exist") {
-                          child = Center(
-                              child: Text("File does not exist",
-                                  style: TextStyle(color: Colors.white)));
-                        } else {
-                          child = Image.file(
-                            snapshot.data,
-                            // color:Colors.white.withOpacity(.2),
-                            fit: BoxFit.contain,
-                          );
-                        }
-                        return Container(
-                          padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
-                          margin: EdgeInsets.all(5),
-                          width: 250,
-                          height: 260,
-                          decoration: _getDecoration(),
-                          child: AspectRatio(aspectRatio: 4 / 5, child: child),
-                        );
-                      }
-                    }
-                    return Container(
-                      margin: EdgeInsets.all(5),
-                      padding: EdgeInsets.fromLTRB(5, 5, 5, 25),
-                      height: 260,
-                      width: 250,
-                      decoration: _getDecoration(),
-                      child: Center(
-                          child: CircularProgressIndicator(
-                        backgroundColor: Colors.black,
-                      )),
-                    );
-                  },
-                ),
-                Positioned(
-                  bottom: 7.0,
-                  right: 15.0,
-                  child: Row(
-                    children: <Widget>[
-                      Text(getTime(),
-                          textAlign: TextAlign.right,
-                          textDirection: TextDirection.rtl,
-                          style: TextStyle(
-                            color: this.msgObj.isMe == true
-                                ? Colors.white
-                                : Colors.black,
-                            fontSize: 10.0,
-                          )),
-                      SizedBox(width: 3.0),
-                      Icon(
-                        (this.msgObj.haveReachedServer == true)
-                            ? (this.msgObj.haveReceived
-                                ? Icons.done_all
-                                : Icons.done)
-                            : Icons.timelapse_outlined,
-                        size: 12.0,
-                        color: Colors.black38,
-                      )
-                    ],
-                  ),
-                )
-              ],
-            ),
+            widget.msgObj.isMe == true ? myImage() : hisImage(),
           ],
         ),
       ],
     );
+  }
+}
+
+class ImageDetailView extends StatelessWidget {
+  final File image;
+
+  ImageDetailView({this.image});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            )),
+        extendBodyBehindAppBar: true,
+        body: Center(
+          child: Hero(
+            tag: image.path,
+            child: InteractiveViewer(
+              constrained: true,
+              maxScale: 1.5,
+              child: Image.file(image, fit: BoxFit.contain),
+            ),
+          ),
+        ));
   }
 }

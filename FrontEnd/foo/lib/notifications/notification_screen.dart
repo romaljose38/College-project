@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foo/notifications/friend_request_tile.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'package:foo/models.dart';
 
 class NotificationScreen extends StatelessWidget {
   @override

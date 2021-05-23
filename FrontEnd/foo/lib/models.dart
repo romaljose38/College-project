@@ -137,7 +137,9 @@ class Thread extends HiveObject {
 
   bool updateChatId({id, newId}) {
     for (int i = 0; i < chatList.length; i++) {
+      print(chatList[chatList.length - 1 - i].id);
       if (chatList[chatList.length - 1 - i].id == id) {
+        print("yep inside model the updation is happening");
         chatList[chatList.length - 1 - i].id = newId;
         chatList[chatList.length - 1 - i].haveReachedServer = true;
         return true;

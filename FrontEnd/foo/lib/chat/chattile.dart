@@ -66,7 +66,7 @@ class ChatTile extends StatelessWidget {
                   ),
                   SizedBox(
                     height: 20,
-                    child: (thread.hasUnseen ?? -1 > 0)
+                    child: ((thread.hasUnseen ?? -1) > 0)
                         ? Container(
                             width: 20,
                             height: 20,
@@ -124,7 +124,7 @@ class ChatTile extends StatelessWidget {
               Text(
                 (thread.chatList.length != 0)
                     ? ((thread.chatList.last.msgType == "txt")
-                        ? thread.chatList.last.message //"text"
+                        ? (thread.chatList.last.message ?? "") //"text"
                         : "media")
                     : "",
                 overflow: TextOverflow.ellipsis,

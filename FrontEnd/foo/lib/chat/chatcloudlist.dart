@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'audiocloud.dart';
 import 'chatcloud.dart';
-import 'dart:async';
 
 import 'mediacloud.dart';
 
@@ -30,17 +29,12 @@ class ChatCloudList extends StatefulWidget {
 }
 
 class _ChatCloudListState extends State<ChatCloudList> {
-  SharedPreferences _prefs;
   int day;
 
   @override
   void initState() {
     super.initState();
     // _setname();
-  }
-
-  Future<void> initSharePrefs() async {
-    _prefs = await SharedPreferences.getInstance();
   }
 
   // void _scrollToEnd() async {
@@ -54,7 +48,9 @@ class _ChatCloudListState extends State<ChatCloudList> {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+        cacheExtent: 300,
         reverse: true,
+        physics: BouncingScrollPhysics(),
         controller: widget.scrollController,
         itemCount: widget.chatList.length ?? 0,
         itemBuilder: (context, index) {
@@ -73,7 +69,10 @@ class _ChatCloudListState extends State<ChatCloudList> {
               msgObj: widget.chatList[reversedIndex],
             );
           } else {
-            return MediaCloud(msgObj: widget.chatList[reversedIndex]);
+            return MediaCloud(
+              msgObj: widget.chatList[reversedIndex],
+              otherUser: widget.otherUser,
+            );
           }
         });
   }

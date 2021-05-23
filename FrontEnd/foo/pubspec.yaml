@@ -78,6 +78,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/sounds/
     
   fonts:
     - family:  Feed

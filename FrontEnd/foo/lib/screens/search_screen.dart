@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flappy_search_bar/search_bar_style.dart';
 import 'package:flutter/material.dart';
-import 'package:foo/colour_palette.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -41,10 +40,10 @@ class SearchScreen extends StatelessWidget {
 
 class UserTest {
   final String name;
-  final String l_name;
-  final String f_name;
+  final String lname;
+  final String fname;
   final int id;
-  UserTest({this.name, this.id, this.l_name, this.f_name});
+  UserTest({this.name, this.id, this.lname, this.fname});
 }
 
 Future<List<UserTest>> search(String search) async {
@@ -60,15 +59,15 @@ Future<List<UserTest>> search(String search) async {
     returList.add(UserTest(
         name: e["username"],
         id: e['id'],
-        f_name: e['f_name'],
-        l_name: e['l_name']));
+        fname: e['f name'],
+        lname: e['l_name']));
   });
   print(returList);
   return returList;
 }
 
 class SearchTile extends StatelessWidget {
-  UserTest user;
+  final UserTest user;
 
   SearchTile({this.user});
 
@@ -135,7 +134,7 @@ class SearchTile extends StatelessWidget {
                         style: GoogleFonts.raleway(
                             fontWeight: FontWeight.w600, fontSize: 17)),
                     SizedBox(height: 6),
-                    Text(this.user.f_name, style: TextStyle(fontSize: 13)),
+                    Text(this.user.fname, style: TextStyle(fontSize: 13)),
                   ],
                 ),
               ],

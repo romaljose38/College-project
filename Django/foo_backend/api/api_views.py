@@ -6,12 +6,18 @@ from rest_framework.decorators import parser_classes
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 from django.db.models import Q
 from chat.models import (
     Post,
     Comment,
     FriendRequest,
-    Story
+    Story,
+    Thread,
+    ChatMessage,
+    Notification
 )
 from .serializers import (
     PostSerializer,
@@ -291,6 +297,54 @@ def user_story_viewed(request):
         user = User.objects.get(id=user_id)
         story.views.add(user)
         story.save()
+        return Response(status=200)
+
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def upload_chat_media(request):
+    try:
+        print(request.data)
+        user_id = int(request.data['u_id'])
+        time = request.data['time']
+        fake_id = request.data['msg_id']
+        other_user_username = request.data['username']
+        file =request.data['file']
+        print(other_user_username)
+        print(user_id)
+        from_user = User.objects.get(id=user_id)
+        thread = Thread.objects.get_or_new(from_user,other_user_username)
+        cur_message = ChatMessage.objects.create(user=from_user, thread=thread, msg_type="img",time_created=time, file=file)
+        cur_message.recipients.add(from_user)
+        cur_message.save()
+        notif = Notification(notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif.save()
+        channel =get_channel_layer()
+        msg= {
+            "type":"server_response",
+            "r_s":{
+                'to':other_user_username,
+                'id':int(fake_id),
+                'n_id':cur_message.id,
+                'notif_id':notif.id,
+            }
+            }
+        async_to_sync(channel.group_send)(from_user.username,msg)
+
+
+        message = {
+                        'img':cur_message.file.url,                        
+                        'time':time,
+                        'id':cur_message.id,
+                        'from':from_user.username  # This line is not needed in production; only for debugging
+                    }
+
+        async_to_sync(channel.group_send)(other_user_username,{'type':'chat_message','message':message})
         return Response(status=200)
 
     except Exception as e:

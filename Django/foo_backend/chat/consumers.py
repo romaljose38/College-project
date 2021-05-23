@@ -324,11 +324,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if(text_data_json['type']=='msg'):           # This is the username of the user to which the message is to be sent
                     msg = text_data_json['message']
 
-                    chat_msg_id = await self.create_chat_message(message=msg,to=to,time=time_str)
+                    chat_msg_id,notif_id = await self.create_chat_message(message=msg,to=to,time=time_str,ref_id=_id)
                 
                     message = {
-                        'message':msg,
-                        'to':to,
+                        'message':msg,                        
                         'id':chat_msg_id,
                         'time':time_str,
                         'from':self.user.username  # This line is not needed in production; only for debugging
@@ -340,6 +339,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             'to':to,
                             'id':_id,
                             'n_id':chat_msg_id,
+                            'notif_id':notif_id,
                         }
                         }
                         )
@@ -361,7 +361,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     message = {
                         'aud':aud,
                         'ext':extension,
-                        'to':to,
+                        
                         'time':time_str,
                         'id':chat_msg_id,
                         'from':self.user.username  # This line is not needed in production; only for debugging
@@ -394,8 +394,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     message = {
                         'img':img,
                         'ext':extension,
-                        'time':time_str,
-                        'to':to,
+                        'time':time_str,                        
                         'id':chat_msg_id,
                         'from':self.user.username  # This line is not needed in production; only for debugging
                     }
@@ -438,12 +437,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
     @database_sync_to_async
-    def create_chat_message(self, message, to, time):
+    def create_chat_message(self, message, to, time, ref_id):
         thread = Thread.objects.get_or_new(self.user,to)
         cur_message = ChatMessage.objects.create(user=self.user, message=message, thread=thread, msg_type="msg",time_created=time)
         cur_message.recipients.add(self.user)
         cur_message.save()
-        return cur_message.id
+        notif = Notification(notif_to=self.user,chatmsg_id=cur_message.id,ref_id=ref_id, notif_type="s_reached")
+        notif.save()
+        return cur_message.id, notif.id
 
 
     @database_sync_to_async
@@ -615,6 +616,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def story_view(self,event):
         print(event)
+        print(self.room_group_name)
+        await self.send(text_data=json.dumps(event))
+
+    async def server_response(self,event):
+        print(event)
+        event.pop("type")
         print(self.room_group_name)
         await self.send(text_data=json.dumps(event))
 
