@@ -58,6 +58,7 @@ dependencies:
   helpers: ^1.1.3
   wakelock: ^0.5.2
   video_thumbnail: ^0.3.3
+  better_player: ^0.0.67
   
 
 dev_dependencies:

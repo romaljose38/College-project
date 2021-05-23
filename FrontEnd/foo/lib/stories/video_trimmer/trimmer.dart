@@ -14,7 +14,7 @@ import 'package:foo/test_cred.dart';
 import 'package:video_player/video_player.dart';
 import 'package:foo/stories/video_trimmer/videoediting.dart';
 
-import 'package:foo/stories/story.dart';
+import 'package:foo/stories/story_new.dart';
 
 class StoryUploadPick extends StatelessWidget {
   final Trimmer _trimmer = Trimmer();
