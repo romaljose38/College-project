@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
@@ -11,7 +13,16 @@ import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../colour_palette.dart';
+
+class UserTest {
+  final String name;
+  final String l_name;
+  final String f_name;
+  final int id;
+  UserTest({this.name, this.id, this.l_name, this.f_name});
+}
 
 class CommentScreen extends StatefulWidget {
   final String postUrl;
@@ -34,16 +45,30 @@ class CommentScreen extends StatefulWidget {
 }
 
 class _CommentScreenState extends State<CommentScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
+  TextEditingController _commentController = TextEditingController();
   bool hasCommentExpanded = false;
   bool hasTextExpanded = false;
   bool hasFetched = false;
   List<CommentTile> commentsList = <CommentTile>[];
+  FocusNode textFocus = FocusNode();
+
+  //
+  List mentionList = [];
+  bool overlayVisible = false;
+  Animation animation;
+  OverlayEntry overlayEntry;
+  AnimationController animationController;
+  int start = 0, end = 0;
 
   @override
   void initState() {
     super.initState();
     _getComments();
+    animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    animation = Tween<double>(begin: 0, end: 1).animate(animationController);
+
     // detectHeight();
   }
 
@@ -80,6 +105,150 @@ class _CommentScreenState extends State<CommentScreen>
     });
   }
 
+  Future<void> _addComment() async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    String username = _prefs.getString("username");
+    String comment = _commentController.text;
+    List commentSplit = comment.split(' ');
+    List finalMentionList = [];
+    Map mapToSend = {};
+    print(commentSplit);
+    commentSplit.forEach((element) {
+      if (element != "") {
+        if (element[0] == "@") {
+          String stringToCheck = element.substring(1, element.length);
+          mapToSend[element] = true;
+          if (mentionList.contains(stringToCheck)) {
+            print("yep avdond");
+            finalMentionList.add(stringToCheck);
+          }
+        } else {
+          mapToSend[element] = false;
+        }
+      }
+    });
+    print(mapToSend);
+    print(finalMentionList);
+    var response =
+        await http.post(Uri.http(localhost, '/api/$username/add_comment'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode({
+              'comment': mapToSend,
+              'post': widget.postId,
+              'mentions': finalMentionList,
+            }));
+
+    _commentController.text = "";
+    if (response.statusCode == 200) {
+      setState(() {
+        commentsList.insert(
+            0,
+            CommentTile(
+                comment: Comment(
+                    comment: mapToSend,
+                    userdpUrl: "assets/images/user3.png",
+                    username: username)));
+      });
+    }
+  }
+
+  Future<List<UserTest>> search(String search) async {
+    print(search);
+    var resp =
+        await http.get(Uri.http(localhost, '/api/users', {'name': search}));
+    var respJson = jsonDecode(resp.body);
+    print(respJson);
+
+    List<UserTest> returList = [];
+    respJson.forEach((e) {
+      print(e);
+      returList.add(UserTest(
+          name: e["username"],
+          id: e['id'],
+          f_name: e['f_name'],
+          l_name: e['l_name']));
+    });
+    return returList;
+  }
+
+  showOverlay(BuildContext context) {
+    overlayVisible = true;
+    OverlayState overlayState = Overlay.of(context);
+    overlayEntry = OverlayEntry(
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.black.withOpacity(.3),
+        body: FadeTransition(
+          opacity: animation,
+          child: GestureDetector(
+            onTap: () {
+              animationController
+                  .reverse()
+                  .whenComplete(() => {overlayEntry.remove()});
+            },
+            child: Container(
+              // clipBehavior: Clip.antiAlias,
+              width: double.infinity,
+              height: double.infinity,
+              color: Colors.transparent,
+
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.95,
+                      height: MediaQuery.of(context).size.height * 0.3,
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SearchBar<UserTest>(
+                          minimumChars: 1,
+                          onSearch: search,
+                          onError: (err) {
+                            print(err);
+                            return Container();
+                          },
+                          onItemFound: (UserTest user, int index) {
+                            return GestureDetector(
+                              onTap: () {
+                                print("$start, $end");
+                                _commentController.text = insertAtChangedPoint(
+                                    '@${user.name}', start, end);
+                                print(user.name);
+                                mentionList.add(user.name);
+                              },
+                              child: ListTile(
+                                title: Text(user.name),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    animationController.addListener(() {
+      overlayState.setState(() {});
+    });
+    animationController.forward();
+    overlayState.insert(overlayEntry);
+  }
+
+  String insertAtChangedPoint(String word, int start, int end) {
+    String text = _commentController.text;
+    String newText = text.replaceRange(start, end, word);
+    print(newText);
+    return newText;
+  }
+
   Container _commentField() => Container(
         width: MediaQuery.of(context).size.width,
         height: 71,
@@ -91,14 +260,15 @@ class _CommentScreenState extends State<CommentScreen>
           ),
         ),
         child: Padding(
-            padding: EdgeInsets.fromLTRB(15, 12, 15, 10),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 5),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Color.fromRGBO(226, 235, 243, .7),
-              ),
-              child: Row(children: [
+          padding: EdgeInsets.fromLTRB(15, 12, 15, 10),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Color.fromRGBO(226, 235, 243, .7),
+            ),
+            child: Row(
+              children: [
                 Container(
                   width: 30,
                   height: 30,
@@ -113,7 +283,7 @@ class _CommentScreenState extends State<CommentScreen>
                 ),
                 Expanded(
                   child: TextField(
-                    // controller: _commentController,
+                    controller: _commentController,
                     cursorColor: Colors.black,
                     decoration: InputDecoration(
                       hintText: "Add a comment",
@@ -126,25 +296,29 @@ class _CommentScreenState extends State<CommentScreen>
                             style:
                                 TextStyle(color: Colors.black, fontSize: 25)),
                         onTap: () {
-                          // var cursor = _commentController.selection;
-                          // start = cursor.start;
-                          // end = cursor.end;
-                          // showOverlay(context);
+                          var cursor = _commentController.selection;
+                          start = cursor.start;
+                          end = cursor.end;
+                          showOverlay(context);
                         },
                       ),
                     ),
                   ),
                 ),
                 Container(
-                    padding: EdgeInsets.all(5),
-                    // decoration: BoxDecoration(
-                    //   color: Colors.white,
-                    //   shape: BoxShape.circle,
-                    // ),
-                    child: IconButton(
-                        icon: Icon(Ionicons.send, size: 16), onPressed: () {})),
-              ]),
-            )),
+                  padding: EdgeInsets.all(5),
+                  // decoration: BoxDecoration(
+                  //   color: Colors.white,
+                  //   shape: BoxShape.circle,
+                  // ),
+                  child: IconButton(
+                      icon: Icon(Ionicons.send, size: 16),
+                      onPressed: _addComment),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
 
   Future<bool> _onWillPop() async {

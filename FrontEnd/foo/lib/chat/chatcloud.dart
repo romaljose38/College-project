@@ -82,9 +82,9 @@ class ChatCloud extends StatelessWidget {
                               textDirection: TextDirection.rtl,
                               style: TextStyle(
                                 color: this.msgObj.isMe == true
-                                    ? Colors.white
+                                    ? Colors.white70
                                     : Colors.black,
-                                fontSize: 10.0,
+                                fontSize: 9.0,
                               )),
                           SizedBox(width: 3.0),
                           (this.msgObj.isMe == true)

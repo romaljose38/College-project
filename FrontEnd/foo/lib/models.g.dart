@@ -166,13 +166,15 @@ class ThreadAdapter extends TypeAdapter<Thread> {
       ..chatList = (fields[2] as List)?.cast<ChatMessage>()
       ..lastAccessed = fields[3] as DateTime
       ..isTyping = fields[4] as bool
-      ..hasUnseen = fields[5] as int;
+      ..hasUnseen = fields[5] as int
+      ..isOnline = fields[6] as bool
+      ..lastSeen = fields[7] as DateTime;
   }
 
   @override
   void write(BinaryWriter writer, Thread obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.first)
       ..writeByte(1)
@@ -184,7 +186,11 @@ class ThreadAdapter extends TypeAdapter<Thread> {
       ..writeByte(4)
       ..write(obj.isTyping)
       ..writeByte(5)
-      ..write(obj.hasUnseen);
+      ..write(obj.hasUnseen)
+      ..writeByte(6)
+      ..write(obj.isOnline)
+      ..writeByte(7)
+      ..write(obj.lastSeen);
   }
 
   @override
@@ -306,13 +312,14 @@ class NotificationsAdapter extends TypeAdapter<Notifications> {
       userName: fields[1] as String,
       userId: fields[2] as int,
       timeCreated: fields[3] as DateTime,
+      notifId: fields[5] as int,
     )..hasAccepted = fields[4] as bool;
   }
 
   @override
   void write(BinaryWriter writer, Notifications obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.type)
       ..writeByte(1)
@@ -322,7 +329,9 @@ class NotificationsAdapter extends TypeAdapter<Notifications> {
       ..writeByte(3)
       ..write(obj.timeCreated)
       ..writeByte(4)
-      ..write(obj.hasAccepted);
+      ..write(obj.hasAccepted)
+      ..writeByte(5)
+      ..write(obj.notifId);
   }
 
   @override

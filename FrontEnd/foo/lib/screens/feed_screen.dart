@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:foo/colour_palette.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/screens/post_tile.dart';
 import 'package:flutter/material.dart';
@@ -25,46 +26,73 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   // ScrollController _scrollController = ScrollController();
   // ScrollController _nestedScrollController = ScrollController();
-  TrackingScrollController _scrollController = TrackingScrollController();
+  ScrollController _scrollController = ScrollController();
   SharedPreferences prefs;
   String curUser;
   int itemCount = 0;
   bool isConnected = false;
   GlobalKey<SliverAnimatedListState> listKey;
-  ScrollController _controller;
+  bool hasRequested = false;
   double currentPos = 0;
   UserStoryModel myStory;
+  List<Post> postsList = <Post>[];
+  var myStoryList = [];
+  AnimationController _animationController;
   //
 
   @override
   initState() {
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     listKey = GlobalKey<SliverAnimatedListState>();
     setInitialData();
     //_fetchStory();
     super.initState();
     // _getNewPosts();
-    _controller = ScrollController();
-    _controller.addListener(() {
-      setState(() {
-        currentPos = _controller.offset;
-      });
-      // print(currentPos);
-    });
+
     _scrollController
       ..addListener(() {
-        // if (_scrollController.position.pixels ==
-        //     _scrollController.position.maxScrollExtent) {
-        //   print("max max max");
-        //   postsList.add(Post(
-        //     username: 'Sam Martin',
-        //     userDpUrl: 'assets/images/user0.png',
-        //     postUrl: 'assets/images/post0.jpg',
-        //   ));
-        //   setState(() {
-        //     itemCount += 1;
-        //   });
-        // }
+        if (_scrollController.position.maxScrollExtent -
+                _scrollController.position.pixels <=
+            800) {
+          print("max max max");
+          if (!hasRequested) {
+            getPreviousPosts();
+          }
+          //
+        }
       });
+  }
+
+  getPreviousPosts() async {
+    hasRequested = true;
+    print(postsList);
+    var response = await http.get(Uri.http(
+        localhost,
+        '/api/$curUser/get_previous_posts',
+        {'id': postsList.last.postId.toString()}));
+    var respJson = jsonDecode(response.body);
+
+    respJson.forEach((e) {
+      Post post = Post(
+          username: e['user']['username'],
+          postUrl: 'http://' + localhost + e['file'],
+          userDpUrl: 'assets/images/user0.png',
+          postId: e['id'],
+          userId: e['user']['id'],
+          commentCount: e['comment_count'],
+          caption: e['caption'],
+          likeCount: e['likeCount'],
+          haveLiked: e['hasLiked'],
+          type: e['post_type']);
+      int index = postsList.length - 1;
+      listKey.currentState.insertItem(index);
+      postsList.add(post);
+      setState(() {
+        itemCount += 1;
+        // postsList = postsList;
+      });
+    });
   }
 
   @override
@@ -78,13 +106,17 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     bool result = await DataConnectionChecker().hasConnection;
 
     if (result == true) {
-      setState(() {
-        isConnected = true;
-      });
+      if (mounted) {
+        setState(() {
+          isConnected = true;
+        });
+      }
     } else {
-      setState(() {
-        isConnected = false;
-      });
+      if (mounted) {
+        setState(() {
+          isConnected = false;
+        });
+      }
     }
   }
 
@@ -94,7 +126,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     curUser = prefs.getString("username");
     var feedBox = Hive.box("Feed");
     Feed feed;
-    if (feedBox.containsKey("feed")) {
+    if (feedBox.containsKey("feed") && feedBox.get("feed").posts != null) {
       feed = feedBox.get("feed");
 
       for (int i = feed.posts.length - 1; i >= 0; i--) {
@@ -116,7 +148,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       var respJson = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        respJson.forEach((e) {
+        respJson.reversed.toList().forEach((e) {
           Post post = Post(
               username: e['user']['username'],
               postUrl: 'http://' + localhost + e['file'],
@@ -134,6 +166,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             listKey.currentState.insertItem(0);
             postsList.insert(0, post);
             //feed.addPost(post);
+
             setState(() {
               itemCount += 1;
             });
@@ -142,8 +175,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       }
     }
   }
-
-  List postsList = [];
 
   // Future<void> _fetchStory() async {
   //   await _checkConnectionStatus();
@@ -420,27 +451,28 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       await feedBox.put("feed", feed);
     }
 
-    respJson.forEach((e) {
+    respJson.reversed.toList().forEach((e) {
+      Post post = Post(
+          username: e['user']['username'],
+          postUrl: 'http://' + localhost + e['file'],
+          userDpUrl: 'assets/images/user0.png',
+          postId: e['id'],
+          userId: e['user']['id'],
+          commentCount: e['comment_count'],
+          caption: e['caption'],
+          likeCount: e['likeCount'],
+          haveLiked: e['hasLiked'],
+          type: e['post_type']);
+      feed.addPost(post);
+      feed.save();
       if (feed.isNew(e['id'])) {
-        Post post = Post(
-            username: e['user']['username'],
-            postUrl: 'http://' + localhost + e['file'],
-            userDpUrl: 'assets/images/user0.png',
-            postId: e['id'],
-            userId: e['user']['id'],
-            commentCount: e['comment_count'],
-            caption: e['caption'],
-            likeCount: e['likeCount'],
-            haveLiked: e['hasLiked'],
-            type: e['post_type']);
         listKey.currentState.insertItem(0);
         postsList.insert(0, post);
-        feed.addPost(post);
+
         setState(() {
           itemCount += 1;
           // postsList = postsList;
         });
-        feed.save();
       }
     });
   }
@@ -450,22 +482,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(
-        extendBodyBehindAppBar: true,
-        extendBody: true,
+        // extendBodyBehindAppBar: true,
+        // extendBody: true,
         // backgroundColor: Color.fromRGBO(24, 4, 29, 1),
         // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
-        floatingActionButton: TextButton(
-          child: Text(
-            "A",
-            style: TextStyle(color: Colors.black),
-          ),
-          onPressed: () {
-            listKey.currentState.insertItem(0);
-            var feedBox = Hive.box("Feed");
-            var feed = feedBox.get('feed');
-            postsList.insert(0, feed.posts[0]);
-          },
-        ),
+
         backgroundColor: Colors.white,
         body: Container(
           // margin: EdgeInsets.only(bottom: 40),
@@ -478,7 +499,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               return Future.value('nothing');
             },
             child: CustomScrollView(
-              controller: _controller,
+              controller: _scrollController,
               slivers: [
                 //SliverToBoxAdapter(child: _horiz()),
                 SliverToBoxAdapter(child: _newHoriz()),

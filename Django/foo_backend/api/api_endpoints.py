@@ -20,6 +20,7 @@ urlpatterns = [
     path('get_status', api_views.get_status, name="get_status"),
     path('story_upload', api_views.story_upload_handler, name="story_upload"),
     path('ping', api_views.ping, name="ping"),
-
+    path('<str:username>/get_previous_posts', api_views.get_previous_posts, name="previous_posts"),
+    path('add_view', api_views.user_story_viewed, name="story_views"),
 
 ]

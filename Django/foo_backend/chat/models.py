@@ -104,9 +104,9 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(auto_now=False, auto_now_add=True)
-
-
-    friends = models.ManyToManyField(User, related_name="friends")
+    people_i_should_inform = models.ManyToManyField(User, related_name="cctvs", blank=True)
+    people_i_peek = models.ManyToManyField(User, related_name="watching", blank=True)
+    friends = models.ManyToManyField(User, related_name="friends", blank=True)
 
     def __str__(self):
         return f'{self.user.email}'
@@ -158,7 +158,7 @@ class ChatMessage(models.Model):
     user   = models.ForeignKey(User, related_name="sender", on_delete=models.CASCADE)
     message = models.TextField(null=True,blank=True)
     time_created = models.CharField(max_length=30,null=True)
-    recipients = models.ManyToManyField(User)
+    recipients = models.ManyToManyField(User, blank=True)
     msg_type = models.CharField(max_length=3,null=True,blank=True,choices=MSG_TYPES)
     base64string = models.TextField(null=True,blank=True)
     extension = models.CharField(max_length=10,null=True,blank=True)
@@ -190,7 +190,7 @@ class Post(models.Model):
     time_created = models.DateTimeField(auto_now_add=True)
     caption = models.CharField(max_length=100)
 
-    likes = models.ManyToManyField(User,related_name="likes")
+    likes = models.ManyToManyField(User,related_name="likes", blank=True)
 
 
     def have_liked(self,user):
@@ -205,7 +205,7 @@ class Comment(models.Model):
     comment = models.CharField(max_length=1000)
     time_created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE,related_name="mentions")
-    mentions = models.ManyToManyField(User)
+    mentions = models.ManyToManyField(User, blank=True)
 
 
 
@@ -232,11 +232,13 @@ class Story(models.Model):
     user = models.ForeignKey(User, related_name="stories", on_delete=models.CASCADE)
     file = models.FileField(upload_to=user_story_directory_path)
     time_created = models.DateTimeField(auto_now_add=True)
-    views = models.ManyToManyField(User, related_name="story_views")
+    views = models.ManyToManyField(User, related_name="story_views", blank=True)
 
 class StoryNotification(models.Model):
-    STORY_NOTIF_TYPES = (('story_add','story_add'),('story_del','story_del'))
+    STORY_NOTIF_TYPES = (('story_add','story_add'),('story_del','story_del'),('story_view','story_view'))
 
     story = models.ForeignKey(Story, on_delete=models.CASCADE)
     to_user = models.ForeignKey(User, on_delete=models.CASCADE)
     notif_type = models.CharField(max_length=15,choices=STORY_NOTIF_TYPES)
+    time_created = models.CharField(max_length=20)
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE,related_name="story_viewed_user", blank=True)

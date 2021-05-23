@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
-
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -28,42 +28,44 @@ def create_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=FriendRequest)
 def send_request(sender, instance, created, **kwargs):
-    if instance.status == "pending":
-        channel_layer = get_channel_layer()
-        print(channel_layer)
-        if instance.to_user.profile.online:
-            print("hes online")
-            # send_notif(instance.to_user.username)
-            async_to_sync(channel_layer.group_send)(instance.to_user.username, {
-                "type": "notification", 
-                "username": instance.from_user.username, 
-                'user_id': instance.from_user.id, 
-                'id': instance.id
-                })
+    if created:
+        if instance.status == "pending":
+            channel_layer = get_channel_layer()
+            print(channel_layer)
+            if instance.to_user.profile.online:
+                print("hes online")
+                # send_notif(instance.to_user.username)
+                async_to_sync(channel_layer.group_send)(instance.to_user.username, {
+                    "type": "notification", 
+                    "username": instance.from_user.username, 
+                    'user_id': instance.from_user.id, 
+                    'id': instance.id
+                    })
 
 
 @receiver(post_save, sender=Story)
 def story_created_notif(sender, instance, created, **kwargs):
-    friends_qs = instance.user.profile.friends.all()
-    channel_layer = get_channel_layer()
-    test=[]
-    for user in friends_qs:
-        notification = StoryNotification.objects.create(story=instance,notif_type="story_add",to_user=user)
-        notification.save()
-        if user.profile.online:
-            print(user.username)
-            _dict = {
-                'type':'story_add',
-                'u':instance.user.username,
-                'u_id':instance.user.id,
-                's_id':instance.id,
-                'url':instance.file.url,
-                'n_id':notification.id,
-                'time':instance.time_created.strftime("%Y-%m-%d %H:%M:%S"),
-            }
-            test.append(_dict)
-            async_to_sync(channel_layer.group_send)(user.username,_dict)
-    print(test)
+    if created:
+        friends_qs = instance.user.profile.friends.all()
+        channel_layer = get_channel_layer()
+        test=[]
+        for user in friends_qs:
+            notification = StoryNotification.objects.create(story=instance,notif_type="story_add",to_user=user)
+            notification.save()
+            if user.profile.online:
+                print(user.username)
+                _dict = {
+                    'type':'story_add',
+                    'u':instance.user.username,
+                    'u_id':instance.user.id,
+                    's_id':instance.id,
+                    'url':instance.file.url,
+                    'n_id':notification.id,
+                    'time':instance.time_created.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                test.append(_dict)
+                async_to_sync(channel_layer.group_send)(user.username,_dict)
+        print(test)
 
 
 
@@ -101,3 +103,25 @@ async def send_notif(from_username):
 
 
 # m2m_changed.connect(inform_user,sender=ChatMessage.recipients.through)
+
+@receiver(m2m_changed,sender=Story.views.through)
+def story_viewed(sender, instance, **kwargs):
+    if(kwargs['action']=='post_add'):
+        print('post add')
+        channel_layer = get_channel_layer()
+        user_id = kwargs['pk_set'].pop()
+        user = User.objects.get(id=user_id)
+        time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        notif = StoryNotification(notif_type="story_view",to_user=instance.user,from_user=user,story=instance,time_created=time)
+        notif.save()
+        if instance.user.profile.online:
+            _dict = {
+                'type':'story_view',
+                'u':user.username,
+                'id':instance.id,
+                'n_id':notif.id,
+                'time':time
+            }
+            async_to_sync(channel_layer.group_send)(instance.user.username,_dict)
+    
+    # pass

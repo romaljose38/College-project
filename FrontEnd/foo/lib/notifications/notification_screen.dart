@@ -3,6 +3,7 @@ import 'package:foo/notifications/friend_request_tile.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:foo/models.dart';
 
@@ -60,7 +61,7 @@ class NotificationScreen extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(20, 7, 10, 20),
                   child: Text(
-                    "Conversations",
+                    "Notifications",
                     style: TextStyle(
                       fontSize: 25,
                       fontWeight: FontWeight.w700,
@@ -90,11 +91,13 @@ class NotificationScreen extends StatelessWidget {
                       topLeft: Radius.circular(50),
                     ),
                     child: Container(
-                      padding: EdgeInsets.only(left: 40, top: 20),
+                      padding: EdgeInsets.only(left: 40, top: 40),
+
                       child: ValueListenableBuilder(
                         valueListenable: Hive.box("Notifications").listenable(),
                         builder: (context, box, index) {
                           List notifications = box.values.toList() ?? [];
+                          print(notifications);
                           if (notifications.length > 1) {
                             // notifications.sort((a,b)=>a.)
                           }
@@ -138,68 +141,5 @@ class NotificationScreen extends StatelessWidget {
         //       );
         //     }),
         );
-  }
-}
-
-class Tile extends StatelessWidget {
-  final Notifications notification;
-
-  Tile({this.notification});
-  // GlobalKey key;
-  @override
-  Widget build(BuildContext context) {
-    return Dismissible(
-      direction: DismissDirection.startToEnd,
-      key: Key('test'),
-      child: Container(
-          child: Row(
-        children: [
-          // Spacer(flex: 1),
-          CircleAvatar(
-            child: ClipOval(
-              child: Image(
-                height: 60.0,
-                width: 60.0,
-                image: AssetImage("assets/images/user4.png"),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: TextSpan(
-                  text: "You have a friend request from ",
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w300,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: this.notification.userName,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 5),
-              Text(
-                timeago.format(this.notification.timeCreated),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-          // Spacer(flex: 2),
-        ],
-      )),
-    );
   }
 }

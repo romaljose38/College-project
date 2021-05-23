@@ -54,9 +54,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void initState() {
-    _getUserName();
     super.initState();
     _prefs = widget.prefs;
+    _getUserName();
     otherUser = widget.thread.second.name;
     curUser = widget.thread.first.name;
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
@@ -66,12 +66,15 @@ class _ChatScreenState extends State<ChatScreen> {
     listenToHive();
     obtainStatus();
     updateLastChatMsgStatus();
-    timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
+    // timer = Timer.periodic(Duration(seconds: 5), (Timer t) => obtainStatus());
     test = Hive.box('threads').watch(key: threadName).listen((BoxEvent event) {
       print("hive listen");
 
       Thread existingThread = Hive.box('threads').get(threadName);
-      if (existingThread.isTyping) {
+      if (existingThread.isOnline) {
+        print("hes online");
+      }
+      if (existingThread.isTyping ?? false == true) {
         if (mounted) {
           setState(() {
             isTyping = true;
@@ -126,15 +129,16 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     super.dispose();
-    timer.cancel();
-    print("dispose");
+    timer?.cancel();
+    test?.cancel();
     _chatController.dispose();
     _scrollController.dispose();
   }
 
   Future<void> obtainStatus() async {
-    var resp = await http
-        .get(Uri.http(localhost, '/api/get_status', {"username": otherUser}));
+    var id = _prefs.getInt("id");
+    var resp = await http.get(Uri.http(localhost, '/api/get_status',
+        {"username": otherUser, "id": id.toString()}));
     if (resp.statusCode == 200) {
       Map body = jsonDecode(resp.body);
       if (body['status'] == "online") {
@@ -145,9 +149,11 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       } else {
         DateTime time = DateTime.parse(body['status']);
-        setState(() {
-          userStatus = timeago.format(time);
-        });
+        if (mounted) {
+          setState(() {
+            userStatus = timeago.format(time);
+          });
+        }
       }
     }
   }
@@ -416,30 +422,41 @@ class _ChatScreenState extends State<ChatScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ValueListenableBuilder(
-                                //     valueListenable: Hive.box("Threads")
-                                //         .listenable(keys: [threadName]),
-                                //     builder: (context, box, widget) {
-                                //       print("value listenable chck");
-                                //       var existingThread = box.get(threadName);
+                                ValueListenableBuilder(
+                                    valueListenable: Hive.box("Threads")
+                                        .listenable(keys: [threadName]),
+                                    builder: (context, box, widget) {
+                                      var existingThread = box.get(threadName);
+                                      var lastSeen = existingThread.lastSeen;
+                                      String time;
+                                      if (lastSeen != null) {
+                                        String time = timeago
+                                            .format(existingThread.lastSeen);
+                                      }
 
-                                //       return Text(
-                                //         existingThread.isTyping == true
-                                //             ? "typing..."
-                                //             : "hello",
-                                //         style: TextStyle(
-                                //             fontSize: 15,
-                                //             color: Color.fromRGBO(
-                                //                 180, 190, 255, 1)),
-                                //       );
-                                //     }),
-                                Text(
-                                  isTyping ? "typing.." : userStatus,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Color.fromRGBO(180, 190, 255, 1),
-                                  ),
-                                ),
+                                      print("value listenable chck");
+
+                                      var text = (existingThread.isTyping ==
+                                              true)
+                                          ? "typing"
+                                          : (existingThread.isOnline ?? false
+                                              ? "Online"
+                                              : time ?? userStatus);
+                                      return Text(
+                                        text,
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            color: Color.fromRGBO(
+                                                180, 190, 255, 1)),
+                                      );
+                                    }),
+                                // Text(
+                                //   isTyping ? "typing.." : userStatus,
+                                //   style: TextStyle(
+                                //     fontSize: 15,
+                                //     color: Color.fromRGBO(180, 190, 255, 1),
+                                //   ),
+                                // ),
                                 SizedBox(height: 7),
                                 Text(widget.thread.second.name,
                                     style: TextStyle(
