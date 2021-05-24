@@ -150,6 +150,8 @@ class SocketChannel {
       addNewStory(data);
     } else if (data['type'] == 'online_status') {
       changeUserStatus(data);
+    } else if (data['type'] == 'story_view') {
+      addStoryView(data);
     }
   }
 
@@ -195,6 +197,22 @@ class SocketChannel {
 
       storyBox.put(data['u'], newUser);
     }
+    sendToChannel(jsonEncode({'s_r': data['n_id']}));
+  }
+
+  void addStoryView(data) {
+    String me = _prefs.getString('username');
+    var storyBox = Hive.box('MyStories');
+    print(data);
+
+    var userStory = storyBox.get(me);
+    userStory.addView(
+        StoryUser(
+          username: data['u'],
+          viewedTime: DateTime.parse(data['time']),
+        ),
+        data['id'].toInt());
+    userStory.save();
     sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }
 

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:foo/models.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class ModalSheetContent extends StatefulWidget {
+  final List<StoryUser> viewers;
+
+  ModalSheetContent({this.viewers});
+
   @override
   _ModalSheetContentState createState() => _ModalSheetContentState();
 }
@@ -84,7 +90,10 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
               child: PageView(
                   controller: _pageController,
                   physics: NeverScrollableScrollPhysics(),
-                  children: [seenUsersListView(), repliedUsersListView()]),
+                  children: [
+                    seenUsersListView(widget.viewers),
+                    repliedUsersListView()
+                  ]),
               // child:
               //     _seenUsers ? seenUsersListView() : repliedUsersListView(),
             ),
@@ -94,17 +103,17 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
     );
   }
 
-  Widget seenUsersListView() {
+  Widget seenUsersListView(List<StoryUser> storyViewers) {
     return ListView.builder(
-      itemCount: 25,
+      itemCount: storyViewers.length,
       itemBuilder: (context, index) {
         return ListTile(
           leading: CircleAvatar(
             backgroundImage: CachedNetworkImageProvider(
                 'https://image.cnbcfm.com/api/v1/image/105753692-1550781987450gettyimages-628353178.jpeg?v=1550782124'),
           ),
-          title: Text('Emma Stone'),
-          subtitle: Text('7 minutes ago'),
+          title: Text(storyViewers[index].username),
+          subtitle: Text(timeago.format(storyViewers[index].viewedTime)),
         );
       },
     );

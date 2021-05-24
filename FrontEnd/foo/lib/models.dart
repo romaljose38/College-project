@@ -350,6 +350,9 @@ class Story extends HiveObject {
   @HiveField(5)
   int notificationId;
 
+  @HiveField(6)
+  List<StoryUser> viewedUsers = <StoryUser>[];
+
   Story(
       {this.file,
       this.views,
@@ -377,9 +380,6 @@ class UserStoryModel extends HiveObject {
   @HiveField(3)
   DateTime timeOfLastStory;
 
-  @HiveField(4)
-  List<StoryUser> viewedUsers = <StoryUser>[];
-
   UserStoryModel({this.username, this.userId, this.stories});
 
   int hasUnSeen() {
@@ -397,6 +397,20 @@ class UserStoryModel extends HiveObject {
     else {
       stories.add(story);
       timeOfLastStory = story.time;
+    }
+  }
+
+  void addView(StoryUser user, int storyId) {
+    for (int i = 0; i < stories.length; i++) {
+      if (stories[i].storyId == storyId) {
+        if (stories[i].viewedUsers == null) {
+          stories[i].viewedUsers = [];
+        }
+        if (!stories[i].viewedUsers.contains(user)) {
+          stories[i].viewedUsers.add(user);
+          break;
+        }
+      }
     }
   }
 
@@ -424,4 +438,9 @@ class StoryUser extends HiveObject {
 
   @HiveField(3)
   String profilePicture;
+
+  @HiveField(4)
+  DateTime viewedTime;
+
+  StoryUser({this.username, this.viewedTime});
 }

@@ -3,6 +3,7 @@ import 'package:helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:foo/landing_page.dart';
 
 // //-------------------//
@@ -97,7 +98,7 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportVideo() async {
     Misc.delayed(1000, () => _isExporting.value = true);
     //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
-    final File file = await _controller.exportVideo(
+    final File exportedFile = await _controller.exportVideo(
       preset: VideoExportPreset.medium,
       customInstruction: "-crf 17",
       onProgress: (statics) {
@@ -107,6 +108,18 @@ class _VideoEditorState extends State<VideoEditor> {
       },
     );
     _isExporting.value = false;
+
+    await Permission.storage.request();
+    String directoryPath = '/storage/emulated/0/foo/stories/upload';
+    Directory directory =
+        await Directory(directoryPath).create(recursive: true);
+    String uploadStoryPath =
+        '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.mp4';
+
+    exportedFile.copySync(uploadStoryPath);
+    await exportedFile.delete();
+
+    File file = File(uploadStoryPath);
 
     if (file != null) {
       _exportText = "Video success export!";

@@ -302,6 +302,8 @@ class _CropMyImageState extends State<CropMyImage> {
   File _file;
   File _sample;
   File _lastCropped;
+  final String dirPath = '/storage/emulated/0/foo/stories/upload';
+  String filePath;
 
   bool _isCropping = false;
 
@@ -345,6 +347,7 @@ class _CropMyImageState extends State<CropMyImage> {
     _lastCropped = file;
 
     print("$file");
+    print(file.path);
     Navigator.of(context).push(
       MaterialPageRoute(
           builder: (context) => CropMyImage(
@@ -433,8 +436,16 @@ class _CropMyImageState extends State<CropMyImage> {
                   : IconButton(
                       icon: Icon(Icons.upload_file, color: Colors.white),
                       onPressed: () {
-                        print(widget.file);
-                        widget.uploadFunc(context, widget.file);
+                        String fileFormat = widget.file.path.split('.').last;
+                        Directory(dirPath).createSync(recursive: true);
+                        filePath = dirPath +
+                            '/${DateTime.now().millisecondsSinceEpoch}.' +
+                            fileFormat;
+                        widget.file.copySync(filePath);
+                        File uploadFile = File(filePath);
+                        widget.file.delete();
+                        print(uploadFile);
+                        widget.uploadFunc(context, uploadFile);
                       },
                     )
             ],
