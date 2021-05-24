@@ -294,7 +294,7 @@ class SocketChannel {
       ));
     } else if (data['msg_type'] == 'aud') {
       thread.addChat(ChatMessage(
-        base64string: data['message']['aud'],
+        filePath: data['message']['aud'],
         senderName: data['message']['from'],
         msgType: 'aud',
         time: DateTime.parse(data['message']['time']),
@@ -371,10 +371,9 @@ class SocketChannel {
         ));
       } else if (data['msg_type'] == 'aud') {
         existingThread.addChat(ChatMessage(
-          base64string: data['message']['aud'],
+          filePath: data['message']['aud'],
           senderName: data['message']['from'],
           time: DateTime.parse(data['message']['time']),
-          ext: data['message']['ext'],
           msgType: "aud",
           isMe: false,
           id: data['message']['id'],

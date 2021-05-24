@@ -40,7 +40,7 @@ class _MediaCloudState extends State<MediaCloud> {
     super.initState();
     if (widget.msgObj.isMe == true) {
       processMyImage();
-      if (!widget.msgObj.haveReachedServer) {
+      if (widget.msgObj.haveReachedServer != true) {
         hasUploaded = false;
         trySendingImageAgain();
       }
@@ -64,19 +64,26 @@ class _MediaCloudState extends State<MediaCloud> {
     });
 
     int curUserId = _prefs.getInt('id');
-    var uri = Uri.http(localhost, '/api/upload_chat_media');
+    var uri = Uri.http(localhost, '/api/upload_chat_image');
     var request = http.MultipartRequest('POST', uri)
       ..fields['u_id'] = curUserId.toString()
       ..fields['time'] = widget.msgObj.time.toString()
       ..fields['msg_id'] = widget.msgObj.id.toString()
       ..fields['username'] = widget.otherUser
-      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+      ..files.add(
+          await http.MultipartFile.fromPath('file', widget.msgObj.filePath));
     print(request.fields);
     var response = await request.send();
 
     if (response.statusCode != 200) {
       setState(() {
         isTrying = false;
+        hasUploaded = false;
+      });
+    } else {
+      setState(() {
+        isTrying = false;
+        hasUploaded = true;
       });
     }
   }
@@ -87,28 +94,26 @@ class _MediaCloudState extends State<MediaCloud> {
         MaterialPageRoute(
             builder: (_) => ImageDetailView(
                   image: file,
+                  time: widget.msgObj.time.toString(),
                 )));
   }
 
   FutureOr processMyImage() async {
-    if (widget.msgObj.haveReachedServer != true) {
-      setState(() {
-        hasUploaded = false;
-      });
-    }
     if ((widget.msgObj.filePath != null) &
         (await File(widget.msgObj.filePath).exists())) {
       File _file = File(widget.msgObj.filePath);
       if (_file != null) {
         // return file;
-        setState(() {
-          file = _file;
-          processed = true;
-        });
+        if (mounted) {
+          setState(() {
+            file = _file;
+            processed = true;
+          });
+        }
       }
     } else {
       setState(() {
-        processed = true;
+        processed = false;
       });
     }
 
@@ -141,8 +146,9 @@ class _MediaCloudState extends State<MediaCloud> {
   }
 
   processHerImage() async {
+    var ext = widget.msgObj.filePath.split('.').last;
     String mediaName =
-        '/storage/emulated/0/foo/images/${widget.msgObj.time.toString()}';
+        '/storage/emulated/0/foo/images/${widget.msgObj.time.toString()}.$ext';
     if (await Permission.storage.request().isGranted) {
       if (widget.msgObj.hasSeen != true) {
         var url = 'http://$localhost${widget.msgObj.filePath}';
@@ -362,7 +368,7 @@ class _MediaCloudState extends State<MediaCloud> {
   GestureDetector myImage() => GestureDetector(
         onTap: processed ? showImage : () {},
         child: Hero(
-          tag: processed ? file.path : "",
+          tag: widget.msgObj.time.toString(),
           child: Container(
             margin: EdgeInsets.all(5),
             child: ClipRRect(
@@ -391,38 +397,36 @@ class _MediaCloudState extends State<MediaCloud> {
                           decoration: _getDecoration(),
                           child: Center(child: Text("File not found!")),
                         ),
-                  hasUploaded == false
-                      ? (file != null)
-                          ? isTrying
-                              ? Container(
-                                  height: 250,
-                                  width: 250,
-                                  color: Colors.black.withOpacity(.2),
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      backgroundColor: Colors.white,
-                                      strokeWidth: 1,
-                                    ),
-                                  ),
-                                )
-                              : Container(
-                                  width: 250,
-                                  height: 250,
-                                  decoration: BoxDecoration(
-                                      // color: Colors.black.withOpacity(.3),
+                  (hasUploaded == false)
+                      ? (isTrying
+                          ? Container(
+                              height: 250,
+                              width: 250,
+                              color: Colors.black.withOpacity(.2),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  backgroundColor: Colors.white,
+                                  strokeWidth: 1,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              width: 250,
+                              height: 250,
+                              decoration: BoxDecoration(
+                                  // color: Colors.black.withOpacity(.3),
 
-                                      ),
-                                  child: Center(
-                                    child: TextButton(
-                                      child: Text(
-                                        "Retry",
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      onPressed: trySendingImageAgain,
-                                    ),
                                   ),
-                                )
-                          : Container()
+                              child: Center(
+                                child: TextButton(
+                                  child: Text(
+                                    "Retry",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  onPressed: trySendingImageAgain,
+                                ),
+                              ),
+                            ))
                       : Container(),
                   timeAndStatus()
                 ],
@@ -454,8 +458,9 @@ class _MediaCloudState extends State<MediaCloud> {
 
 class ImageDetailView extends StatelessWidget {
   final File image;
+  final String time;
 
-  ImageDetailView({this.image});
+  ImageDetailView({this.image, this.time});
 
   @override
   Widget build(BuildContext context) {
@@ -472,7 +477,7 @@ class ImageDetailView extends StatelessWidget {
         extendBodyBehindAppBar: true,
         body: Center(
           child: Hero(
-            tag: image.path,
+            tag: this.time,
             child: InteractiveViewer(
               constrained: true,
               maxScale: 1.5,

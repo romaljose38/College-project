@@ -4,32 +4,196 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
+import 'package:foo/test_cred.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
-class AudioCloud extends StatelessWidget {
+class AudioCloud extends StatefulWidget {
   final ChatMessage msgObj;
+  final AnimationController controller;
+  final String otherUser;
 
-  AudioCloud({this.msgObj});
+  AudioCloud({this.msgObj, this.controller, this.otherUser});
+
+  @override
+  _AudioCloudState createState() => _AudioCloudState();
+}
+
+class _AudioCloudState extends State<AudioCloud> {
+  File file;
+  bool fileExists = false;
+  SharedPreferences _prefs;
+  bool hasSetPrefs = false;
+  bool isUploading = false;
+  ValueNotifier tryingNotifier;
+  bool reachedServer = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.msgObj.isMe == true) {
+      setFile();
+      print(widget.msgObj.haveReachedServer);
+      if (widget.msgObj.haveReachedServer == true) {
+        setState(() {
+          reachedServer = true;
+        });
+
+        // trySendingToServer();
+        // setState(() {
+        //   reachedServer = true;
+        // });
+      } else {
+        setState(() {
+          reachedServer = false;
+        });
+        trySendingToServer();
+      }
+    } else {
+      tryDownloading();
+    }
+  }
+
+  tryDownloading() async {
+    var ext = widget.msgObj.filePath.split('.').last;
+
+    String mediaName =
+        '/storage/emulated/0/foo/audio/${widget.msgObj.time.microsecondsSinceEpoch}.$ext';
+    setState(() {
+      isUploading = true;
+    });
+    if (await Permission.storage.request().isGranted) {
+      if (widget.msgObj.hasSeen != true) {
+        var url = 'http://$localhost${widget.msgObj.filePath}';
+        print(url);
+        try {
+          var response = await http.get(Uri.parse(url));
+
+          if (response.statusCode == 200) {
+            File _file = File(mediaName);
+            await _file.create(recursive: true);
+            await _file.writeAsBytes(response.bodyBytes);
+            setState(() {
+              fileExists = true;
+              file = _file;
+              isUploading = false;
+              reachedServer = true;
+            });
+            widget.msgObj.hasSeen = true;
+            widget.msgObj.save();
+          } else {
+            setState(() {
+              isUploading = false;
+            });
+          }
+        } catch (e) {
+          setState(() {
+            isUploading = false;
+          });
+        }
+      } else {
+        if (await File(mediaName).exists()) {
+          setState(() {
+            fileExists = true;
+            file = File(mediaName);
+            isUploading = false;
+            reachedServer = true;
+          });
+        } else {
+          setState(() {
+            fileExists = false;
+            isUploading = false;
+            reachedServer = true;
+          });
+        }
+      }
+    }
+  }
+
+  void setFile() async {
+    if ((widget.msgObj.filePath != null) &
+        (await File(widget.msgObj.filePath).exists())) {
+      if (await Permission.storage.request().isGranted) {
+        File _file = File(widget.msgObj.filePath);
+        if (_file != null) {
+          // return file;
+          setState(() {
+            file = _file;
+            fileExists = true;
+            tryingNotifier = ValueNotifier(isUploading);
+          });
+        }
+      }
+    }
+  }
+
+  setPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    hasSetPrefs = true;
+  }
+
+  void trySendingToServer() async {
+    print("uploading...");
+    if (hasSetPrefs != true) {
+      await setPrefs();
+    }
+    setState(() {
+      tryingNotifier = ValueNotifier(true);
+    });
+    if (await Permission.storage.request().isGranted) {
+      try {
+        int curUserId = _prefs.getInt('id');
+        var uri = Uri.http(localhost, '/api/upload_chat_audio');
+        var request = http.MultipartRequest('POST', uri)
+          ..fields['u_id'] = curUserId.toString()
+          ..fields['time'] = widget.msgObj.time.toString()
+          ..fields['msg_id'] = widget.msgObj.id.toString()
+          ..fields['username'] = widget.otherUser
+          ..files.add(await http.MultipartFile.fromPath(
+              'file', widget.msgObj.filePath));
+        var response = await request.send();
+        if (response.statusCode == 200) {
+          setState(() {
+            tryingNotifier.value = false;
+            reachedServer = true;
+          });
+        } else {
+          setState(() {
+            tryingNotifier.value = false;
+          });
+        }
+      } catch (error) {
+        setState(() {
+          tryingNotifier.value = false;
+        });
+      }
+    }
+  }
 
   FutureOr convertEncodedString() async {
-    if ((this.msgObj.isMe == true) & (this.msgObj.filePath != null)) {
-      bool exists = await File(this.msgObj.filePath).exists();
+    if ((this.widget.msgObj.isMe == true) &
+        (this.widget.msgObj.filePath != null)) {
+      bool exists = await File(this.widget.msgObj.filePath).exists();
       if (exists) {
-        File file = File(this.msgObj.filePath);
+        File file = File(this.widget.msgObj.filePath);
         if (file != null) {
           return file;
         }
       }
       return "does not exist";
     } else {
-      var ext = this.msgObj.ext;
-      var aud64 = this.msgObj.base64string;
+      var ext = this.widget.msgObj.ext;
+      var aud64 = this.widget.msgObj.base64string;
       Directory appDir = await getApplicationDocumentsDirectory();
       String path =
-          appDir.path + '/Audio/' + this.msgObj.id.toString() + '.$ext';
+          appDir.path + '/Audio/' + this.widget.msgObj.id.toString() + '.$ext';
       bool isPresent = await File(path).exists();
       if (!isPresent) {
         if (ext == null) {
@@ -40,9 +204,15 @@ class AudioCloud extends StatelessWidget {
         var bytes = base64Decode(aud64);
         print(bytes);
 
-        File(appDir.path + '/Audio/' + this.msgObj.id.toString() + '.$ext')
+        File(appDir.path +
+                '/Audio/' +
+                this.widget.msgObj.id.toString() +
+                '.$ext')
             .createSync(recursive: true);
-        print(appDir.path + '/Audio/' + this.msgObj.id.toString() + '.$ext');
+        print(appDir.path +
+            '/Audio/' +
+            this.widget.msgObj.id.toString() +
+            '.$ext');
 
         File fle = File(path);
         await fle.writeAsBytes(bytes);
@@ -54,7 +224,7 @@ class AudioCloud extends StatelessWidget {
     }
   }
 
-  String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
+  String getTime() => intl.DateFormat('hh:mm').format(this.widget.msgObj.time);
 
   BoxDecoration _getDecoration() {
     return BoxDecoration(
@@ -72,47 +242,110 @@ class AudioCloud extends StatelessWidget {
             ]));
   }
 
+  showError(val) {
+    CustomOverlay overlay =
+        CustomOverlay(context: context, animationController: widget.controller);
+    overlay.show("File is missing");
+  }
+
+  noAudioHim() {
+    return Container(
+        margin: EdgeInsets.all(5),
+        height: 60,
+        width: 240,
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                stops: [
+                  .3,
+                  1
+                ],
+                colors: [
+                  Color.fromRGBO(248, 251, 255, 1),
+                  Color.fromRGBO(255, 255, 255, 1)
+                ])),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Spacer(),
+            GestureDetector(
+                child: isUploading
+                    ? SizedBox(
+                        height: 26,
+                        width: 26,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1,
+                        ),
+                      )
+                    : Icon(
+                        Ionicons.cloud_download,
+                        size: 26,
+                        color: Colors.black,
+                      ),
+                onTap: tryDownloading),
+            SliderTheme(
+              data: SliderThemeData(
+                  trackHeight: 1.4,
+                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 7)),
+              child: Slider(
+                  value: 0, onChanged: showError, activeColor: Colors.white),
+            ),
+          ],
+        ));
+  }
+
+  noAudio() {
+    return Container(
+        margin: EdgeInsets.all(5),
+        height: 60,
+        width: 240,
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                stops: [
+                  .3,
+                  1
+                ],
+                colors: [
+                  Color.fromRGBO(255, 143, 187, 1),
+                  Color.fromRGBO(255, 117, 116, 1)
+                ])),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            IconButton(icon: Icon(Icons.play_arrow_rounded), onPressed: () {}),
+            Slider(value: 0, onChanged: showError),
+          ],
+        ));
+  }
+
   @override
   Widget build(BuildContext context) {
+    print(widget.msgObj.filePath);
     return Column(
       children: [
         Row(
-          mainAxisAlignment: (this.msgObj.isMe == true)
+          mainAxisAlignment: (this.widget.msgObj.isMe == true)
               ? MainAxisAlignment.end
               : MainAxisAlignment.start,
           children: [
             Stack(
               children: [
-                FutureBuilder(
-                    future: convertEncodedString(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        // addListeners();
-                        print(snapshot.data);
-                        File file = snapshot.data;
-                        return Player(file: file);
-                      }
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                              margin: EdgeInsets.all(5),
-                              height: 60,
-                              width: 260,
-                              decoration: _getDecoration(),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  IconButton(
-                                      icon: Icon(Icons.play_arrow_rounded),
-                                      onPressed: () {}),
-                                  Slider(value: 0, onChanged: (val) {}),
-                                ],
-                              )),
-                        ),
-                      );
-                    }),
+                fileExists
+                    ? Player(
+                        file: file,
+                        notifier: tryingNotifier,
+                        reachedServer: reachedServer,
+                        uploadFunction: trySendingToServer,
+                        isMe: widget.msgObj.isMe,
+                      )
+                    : widget.msgObj.isMe
+                        ? noAudio()
+                        : noAudioHim(),
                 Positioned(
                   bottom: 7.0,
                   right: 15.0,
@@ -122,21 +355,23 @@ class AudioCloud extends StatelessWidget {
                           textAlign: TextAlign.right,
                           textDirection: TextDirection.rtl,
                           style: TextStyle(
-                            color: this.msgObj.isMe == true
+                            color: this.widget.msgObj.isMe == true
                                 ? Colors.white
                                 : Colors.black,
                             fontSize: 10.0,
                           )),
                       SizedBox(width: 3.0),
-                      Icon(
-                        (this.msgObj.haveReachedServer == true)
-                            ? (this.msgObj.haveReceived
-                                ? Icons.done_all
-                                : Icons.done)
-                            : Icons.timelapse_outlined,
-                        size: 12.0,
-                        color: Colors.black38,
-                      )
+                      (widget.msgObj.isMe == true)
+                          ? Icon(
+                              (this.widget.msgObj.haveReachedServer == true)
+                                  ? (this.widget.msgObj.haveReceived
+                                      ? Icons.done_all
+                                      : Icons.done)
+                                  : Icons.timelapse_outlined,
+                              size: 12.0,
+                              color: Colors.black38,
+                            )
+                          : Container(),
                     ],
                   ),
                 )
@@ -151,8 +386,19 @@ class AudioCloud extends StatelessWidget {
 
 class Player extends StatefulWidget {
   final File file;
+  final ValueNotifier notifier;
+  final bool reachedServer;
+  final Function uploadFunction;
+  final bool isMe;
 
-  Player({Key key, this.file}) : super(key: key);
+  Player(
+      {Key key,
+      this.file,
+      this.notifier,
+      this.reachedServer,
+      this.uploadFunction,
+      this.isMe})
+      : super(key: key);
 
   @override
   _PlayerState createState() => _PlayerState();
@@ -176,28 +422,34 @@ class _PlayerState extends State<Player> {
   void addListeners() {
     player.onDurationChanged.listen((Duration d) {
       setState(() {
-        totalDuration = d.inMilliseconds;
+        totalDuration = d.inMicroseconds;
       });
       print('Max duration: $d');
     });
 
     player.onAudioPositionChanged.listen((e) {
-      if (e.inMilliseconds == totalDuration) {
-        setState(() {
-          isPlaying = false;
-        });
-      }
-      var percent = e.inMilliseconds / totalDuration;
+      print("not fired");
+
+      var percent = e.inMicroseconds / totalDuration;
       print(percent);
       setState(() {
         valState = percent;
       });
+      print("value sett");
       print(e.inMilliseconds);
+      if (e.inMicroseconds == totalDuration) {
+        print("total duration reached");
+        setState(() {
+          isPlaying = false;
+          valState = 1;
+        });
+      }
     });
 
     player.onPlayerCompletion.listen((event) {
       setState(() {
         isPlaying = false;
+        valState = 1;
       });
     });
   }
@@ -208,6 +460,7 @@ class _PlayerState extends State<Player> {
     print(totalDuration);
     if ((widget.file != null) & (!hasInitialized)) {
       print("initializing");
+      print(widget.file.path);
       await player.play(widget.file.path,
           isLocal: true, volume: .8, stayAwake: true);
       setState(() {
@@ -230,8 +483,8 @@ class _PlayerState extends State<Player> {
   //manages slider seeking
   Future<void> seekAudio(double val) async {
     print(val);
-
-    Duration position = Duration(milliseconds: (val * totalDuration).toInt());
+    print("value changesd $val");
+    Duration position = Duration(microseconds: (val * totalDuration).toInt());
     await player.seek(position);
   }
 
@@ -241,14 +494,16 @@ class _PlayerState extends State<Player> {
         gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
-            stops: [
-              .3,
-              1
-            ],
-            colors: [
-              Color.fromRGBO(255, 143, 187, 1),
-              Color.fromRGBO(255, 117, 116, 1)
-            ]));
+            stops: [.3, 1],
+            colors: widget.isMe
+                ? [
+                    Color.fromRGBO(255, 143, 187, 1),
+                    Color.fromRGBO(255, 117, 116, 1)
+                  ]
+                : [
+                    Color.fromRGBO(248, 251, 255, 1),
+                    Color.fromRGBO(255, 255, 255, 1)
+                  ]));
   }
 
   @override
@@ -263,13 +518,45 @@ class _PlayerState extends State<Player> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            IconButton(
-                icon: Icon(
-                  this.isPlaying ? Ionicons.pause_circle : Ionicons.play_circle,
-                  size: 26,
-                  color: Colors.white,
-                ),
-                onPressed: playerStateChange),
+            Spacer(),
+            widget.reachedServer
+                ? GestureDetector(
+                    onTap: playerStateChange,
+                    child: Icon(
+                      this.isPlaying
+                          ? Ionicons.pause_circle
+                          : Ionicons.play_circle,
+                      size: 26,
+                      color: widget.isMe ? Colors.white : Colors.black,
+                    ),
+                  )
+                : ValueListenableBuilder(
+                    valueListenable: widget.notifier,
+                    builder: (context, snapshot, _widget) {
+                      print("hello");
+                      Widget child;
+                      if (widget.notifier.value == true) {
+                        child = SizedBox(
+                          height: 26,
+                          width: 26,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1,
+                          ),
+                        );
+                      } else {
+                        child = Icon(
+                          Ionicons.cloud_upload,
+                          size: 26,
+                          color: Colors.white,
+                        );
+                      }
+
+                      return GestureDetector(
+                          child: child,
+                          onTap: (widget.notifier.value == true)
+                              ? () {}
+                              : widget.uploadFunction);
+                    }),
             SliderTheme(
               data: SliderThemeData(
                   trackHeight: 1.4,

@@ -6,7 +6,6 @@ import 'package:wakelock/wakelock.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:http/http.dart';
 import 'package:foo/test_cred.dart';
-import 'package:better_player/better_player.dart';
 import 'package:video_player/video_player.dart';
 import 'package:foo/stories/modalsheetviews.dart';
 

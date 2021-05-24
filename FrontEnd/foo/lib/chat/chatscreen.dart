@@ -233,38 +233,51 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendAudio(String path) async {
     var _id = DateTime.now().microsecondsSinceEpoch;
     var curTime = DateTime.now();
-    File file = File(path);
-    String _extension = path.split('.').last;
-    var bytes = await file.readAsBytes();
-    String audString = base64Encode(bytes);
-    print(audString);
 
-    var data = jsonEncode({
-      'type': 'aud',
-      'ext': _extension,
-      'audio': audString,
-      'from': curUser,
-      'id': _id,
-      'to': otherUser,
-      'time': curTime.toString(),
-    });
-    print(data);
-    if (SocketChannel.isConnected) {
-      var threadBox = Hive.box('Threads');
+    var threadBox = Hive.box('Threads');
+    Thread currentThread = threadBox.get(threadName);
+    currentThread.addChat(ChatMessage(
+      filePath: path,
+      id: _id,
+      time: curTime,
+      // base64string: imgString,
+      senderName: curUser,
+      msgType: "aud",
+      isMe: true,
+    ));
+    currentThread.save();
+    // File file = File(path);
+    // String _extension = path.split('.').last;
+    // var bytes = await file.readAsBytes();
+    // String audString = base64Encode(bytes);
+    // print(audString);
 
-      Thread currentThread = threadBox.get(threadName);
-      currentThread.addChat(ChatMessage(
-        filePath: file.path,
-        id: _id,
-        time: curTime,
-        base64string: audString,
-        senderName: curUser,
-        msgType: "aud",
-        isMe: true,
-      ));
-      currentThread.save();
-      SocketChannel.sendToChannel(data);
-    }
+    // var data = jsonEncode({
+    //   'type': 'aud',
+    //   'ext': _extension,
+    //   'audio': audString,
+    //   'from': curUser,
+    //   'id': _id,
+    //   'to': otherUser,
+    //   'time': curTime.toString(),
+    // });
+    // print(data);
+    // if (SocketChannel.isConnected) {
+    //   var threadBox = Hive.box('Threads');
+
+    //   Thread currentThread = threadBox.get(threadName);
+    //   currentThread.addChat(ChatMessage(
+    //     filePath: file.path,
+    //     id: _id,
+    //     time: curTime,
+    //     base64string: audString,
+    //     senderName: curUser,
+    //     msgType: "aud",
+    //     isMe: true,
+    //   ));
+    //   currentThread.save();
+    //   SocketChannel.sendToChannel(data);
+    // }
   }
 
   void _sendImage() async {
@@ -608,6 +621,7 @@ class _RecordAppState extends State<RecordApp>
   Animation _colorTween;
   Timer _timer;
   FocusNode _chatFocus;
+  bool hasSent = false;
 
   @override
   void initState() {
@@ -712,9 +726,10 @@ class _RecordAppState extends State<RecordApp>
   Future<void> _stopRecording() async {
     await Record.stop();
 
-    file = File(path);
-    print(file.path);
-    widget.sendAudio(file.path);
+    if (hasSent != true) {
+      widget.sendAudio(path);
+      hasSent = true;
+    }
   }
 
   Future<void> _cancelRecording() async {

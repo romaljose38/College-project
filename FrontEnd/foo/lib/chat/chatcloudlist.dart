@@ -28,12 +28,16 @@ class ChatCloudList extends StatefulWidget {
   _ChatCloudListState createState() => _ChatCloudListState();
 }
 
-class _ChatCloudListState extends State<ChatCloudList> {
+class _ChatCloudListState extends State<ChatCloudList>
+    with SingleTickerProviderStateMixin {
   int day;
+  AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
+    _controller =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     // _setname();
   }
 
@@ -63,6 +67,8 @@ class _ChatCloudListState extends State<ChatCloudList> {
           } else if (widget.chatList[reversedIndex].msgType == "aud") {
             return AudioCloud(
               msgObj: widget.chatList[reversedIndex],
+              controller: _controller,
+              otherUser: widget.otherUser,
             );
           } else if (widget.chatList[reversedIndex].msgType == "date") {
             return DateCloud(
@@ -81,6 +87,7 @@ class _ChatCloudListState extends State<ChatCloudList> {
   void dispose() {
     // _scrollController.dispose();
     super.dispose();
+    _controller?.dispose();
   }
 }
 

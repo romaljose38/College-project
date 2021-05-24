@@ -47,7 +47,10 @@ class CustomOverlay {
     animationController
         .forward()
         .whenComplete(() => overlayState.insert(_entry));
-    Timer(Duration(seconds: 2), () => _entry.remove());
+    Timer(
+        Duration(seconds: 2),
+        () =>
+            animationController.reverse().whenComplete(() => _entry.remove()));
   }
 
   _initiate() {

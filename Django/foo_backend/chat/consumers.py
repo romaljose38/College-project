@@ -442,7 +442,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         cur_message = ChatMessage.objects.create(user=self.user, message=message, thread=thread, msg_type="msg",time_created=time)
         cur_message.recipients.add(self.user)
         cur_message.save()
-        notif = Notification(notif_to=self.user,chatmsg_id=cur_message.id,ref_id=ref_id, notif_type="s_reached")
+        notif = Notification(notif_to=self.user,chatmsg_id=cur_message.id,ref_id=str(ref_id), notif_type="s_reached")
         notif.save()
         return cur_message.id, notif.id
 

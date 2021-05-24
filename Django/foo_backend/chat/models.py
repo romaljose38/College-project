@@ -176,7 +176,7 @@ class Notification(models.Model):
 
     NOTIF_TYPES = (('seen','seen'),('received','received'),('s_reached','s_reached'))
 
-    ref_id = models.IntegerField(null=True)
+    ref_id = models.CharField(null=True,max_length=20)
     chatmsg_id = models.IntegerField(null=True)
     notif_from = models.ForeignKey(User, related_name="from_user_chat", on_delete=models.CASCADE, null=True)
     notif_to = models.ForeignKey(User, related_name="to_user_chat", on_delete=models.CASCADE)
