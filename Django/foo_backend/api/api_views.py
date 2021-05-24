@@ -260,7 +260,8 @@ def story_upload_handler(request):
         story = Story.objects.create(file=file, user=user)
         story.save()
         return Response(status=200)
-    except:
+    except Exception as e:
+        print(e)
         return Response(status=400)
 
 
@@ -294,7 +295,7 @@ def user_story_viewed(request):
         story_id = request.query_params['id']
         user_id = request.query_params['u_id']
         story = Story.objects.get(id=int(story_id))
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(id=int(user_id))
         story.views.add(user)
         story.save()
         return Response(status=200)

@@ -362,13 +362,13 @@ class StoryAdapter extends TypeAdapter<Story> {
       viewed: fields[3] as bool,
       storyId: fields[4] as int,
       notificationId: fields[5] as int,
-    );
+    )..viewedUsers = (fields[6] as List)?.cast<StoryUser>();
   }
 
   @override
   void write(BinaryWriter writer, Story obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.file)
       ..writeByte(1)
@@ -380,7 +380,9 @@ class StoryAdapter extends TypeAdapter<Story> {
       ..writeByte(4)
       ..write(obj.storyId)
       ..writeByte(5)
-      ..write(obj.notificationId);
+      ..write(obj.notificationId)
+      ..writeByte(6)
+      ..write(obj.viewedUsers);
   }
 
   @override
@@ -408,15 +410,13 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       username: fields[0] as String,
       userId: fields[1] as int,
       stories: (fields[2] as List)?.cast<Story>(),
-    )
-      ..timeOfLastStory = fields[3] as DateTime
-      ..viewedUsers = (fields[4] as List)?.cast<StoryUser>();
+    )..timeOfLastStory = fields[3] as DateTime;
   }
 
   @override
   void write(BinaryWriter writer, UserStoryModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -424,9 +424,7 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       ..writeByte(2)
       ..write(obj.stories)
       ..writeByte(3)
-      ..write(obj.timeOfLastStory)
-      ..writeByte(4)
-      ..write(obj.viewedUsers);
+      ..write(obj.timeOfLastStory);
   }
 
   @override
@@ -450,17 +448,19 @@ class StoryUserAdapter extends TypeAdapter<StoryUser> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return StoryUser()
+    return StoryUser(
+      username: fields[2] as String,
+      viewedTime: fields[4] as DateTime,
+    )
       ..fName = fields[0] as String
       ..lName = fields[1] as String
-      ..username = fields[2] as String
       ..profilePicture = fields[3] as String;
   }
 
   @override
   void write(BinaryWriter writer, StoryUser obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.fName)
       ..writeByte(1)
@@ -468,7 +468,9 @@ class StoryUserAdapter extends TypeAdapter<StoryUser> {
       ..writeByte(2)
       ..write(obj.username)
       ..writeByte(3)
-      ..write(obj.profilePicture);
+      ..write(obj.profilePicture)
+      ..writeByte(4)
+      ..write(obj.viewedTime);
   }
 
   @override

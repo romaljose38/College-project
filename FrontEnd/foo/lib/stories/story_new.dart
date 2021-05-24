@@ -35,10 +35,15 @@ mixin StoryEssentials {
     return url.split('/').last;
   }
 
-  Future<void> _downloadMedia(String url) async {
+  Future<void> _downloadMedia(String url, {bool upload = false}) async {
     var response = await get(Uri.parse(url));
     var mediaName = _getMediaName(url);
-    var filePathAndName = "$storyDir/$mediaName";
+    var filePathAndName;
+    if (upload) {
+      filePathAndName = "$storyDir/upload/$mediaName";
+    } else {
+      filePathAndName = "$storyDir/$mediaName";
+    }
 
     if (await Permission.storage.request().isGranted) {
       File file2 = File(filePathAndName);
@@ -47,19 +52,30 @@ mixin StoryEssentials {
     }
   }
 
-  Future<bool> _isExistsInStorage(String url) async {
+  Future<bool> _isExistsInStorage(String url, {bool upload = false}) async {
     String mediaName = _getMediaName(url);
-    return await File("$storyDir/$mediaName").exists();
+    if (upload) {
+      return await File("$storyDir/upload/$mediaName").exists();
+    } else {
+      return await File("$storyDir/$mediaName").exists();
+    }
   }
 
-  Future<File> _getOrDownload(String url) async {
+  Future<File> _getOrDownload(String url, {bool upload = false}) async {
     // String url = 'http://$localhost${story.file}';
     String mediaName = _getMediaName(url);
     if (await Permission.storage.request().isGranted) {
-      if (!(await _isExistsInStorage(url))) {
-        await _downloadMedia(url);
+      if (upload) {
+        if (!(await _isExistsInStorage(url, upload: true))) {
+          await _downloadMedia(url, upload: true);
+        }
+        return File("$storyDir/upload/$mediaName");
+      } else {
+        if (!(await _isExistsInStorage(url))) {
+          await _downloadMedia(url);
+        }
+        return File("$storyDir/$mediaName");
       }
-      return File("$storyDir/$mediaName");
     } else {
       disableWakeLock();
       // Navigator.pop(context);
@@ -154,7 +170,7 @@ class _StoryScreenState extends State<StoryScreen>
 
   void _setMedia() {
     _getOrDownload('http://$localhost${stories[_currentIndex].file}')
-        .then((value) {
+        .then((value) async {
       setState(() {
         mediaFile = value;
         mediaType = _getTypeOf(stories[_currentIndex].file);
@@ -169,8 +185,20 @@ class _StoryScreenState extends State<StoryScreen>
       }
 
       if (stories[_currentIndex].viewed == null) {
-        widget.storyObject.stories[_currentIndex].viewed = true;
-        widget.storyObject.save();
+        Map<String, String> hasViewedObject = {
+          'id': stories[_currentIndex].storyId.toString(),
+          'u_id': widget.storyObject.userId.toString(),
+        };
+
+        Uri url = Uri.http(localhost, 'api/add_view', hasViewedObject);
+
+        var response = await get(url);
+
+        print("StatusCode ${response.statusCode}");
+        if (response.statusCode == 200) {
+          widget.storyObject.stories[_currentIndex].viewed = true;
+          widget.storyObject.save();
+        }
       }
       if (mediaType == 'image') {
         _animController.duration = Duration(seconds: 10);
@@ -540,13 +568,15 @@ class _MyStoryScreenState extends State<MyStoryScreen>
   void _setEssentialVariables() {
     username = widget.storyObject.username;
     stories = widget.storyObject.stories;
-    _currentIndex = widget.storyObject.hasUnSeen();
-    if (_currentIndex == -1) _currentIndex = 0;
+    _currentIndex = 0;
+    // _currentIndex = widget.storyObject.hasUnSeen();
+    // if (_currentIndex == -1) _currentIndex = 0;
     timeUploaded = _formatTime(stories[_currentIndex].time);
   }
 
   void _setMedia() {
-    _getOrDownload('http://$localhost${stories[_currentIndex].file}')
+    _getOrDownload('http://$localhost${stories[_currentIndex].file}',
+            upload: true)
         .then((value) {
       setState(() {
         mediaFile = value;
@@ -703,16 +733,17 @@ class _MyStoryScreenState extends State<MyStoryScreen>
               ),
               Align(
                 alignment: Alignment.bottomCenter,
-                child: TextButton(
-                  child: Text("Reply", style: TextStyle(color: Colors.white)),
+                child: IconButton(
+                  icon: Icon(Icons.android, color: Colors.white),
                   onPressed: () {
-                    _animController.forward();
+                    _animController.stop();
                     if (mediaType == 'video') videoController?.pause();
                     showModalBottomSheet(
                         backgroundColor: Colors.transparent,
                         context: context,
                         builder: (context) {
-                          return ModalSheetContent();
+                          return ModalSheetContent(
+                              viewers: stories[_currentIndex].viewedUsers);
                         })
                       ..then((_) {
                         _animController.forward();

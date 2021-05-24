@@ -246,4 +246,4 @@ class StoryNotification(models.Model):
     to_user = models.ForeignKey(User, on_delete=models.CASCADE)
     notif_type = models.CharField(max_length=15,choices=STORY_NOTIF_TYPES)
     time_created = models.CharField(max_length=20)
-    from_user = models.ForeignKey(User, on_delete=models.CASCADE,related_name="story_viewed_user", blank=True)
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE,related_name="story_viewed_user", blank=True, null=True)
