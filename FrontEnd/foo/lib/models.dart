@@ -448,6 +448,14 @@ class UserStoryModel extends HiveObject {
     }
     return true; //return true if stories is null
   }
+
+  void deleteOldStory({int id}) {
+    for (int i = 0; i < stories.length; i++) {
+      if (stories[i].storyId == id) {
+        stories.removeAt(i);
+      }
+    }
+  }
 }
 
 @HiveType(typeId: 9)

@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import post_save, pre_delete, m2m_changed
 from .models import (
     Profile, 
     ChatMessage, 
@@ -144,3 +144,23 @@ def story_comment(sender, instance, **kwargs):
                 'time':time
             }
             async_to_sync(channel_layer.group_send)(user.username,_dict)
+
+@receiver(pre_delete, sender=Story)
+def story_deleted_notif(sender, instance, **kwargs):
+    friends_qs = instance.user.profile.friends.all()
+    channel_layer = get_channel_layer()
+    test=[]
+    for user in friends_qs:
+        notification = StoryNotification.objects.create(storyId=instance.id,notif_type="story_delete",to_user=user,from_user=instance.user)
+        notification.save()
+        if user.profile.online:
+            print(user.username)
+            _dict = {
+                'type':'story_delete',
+                'u':instance.user.username,
+                's_id':instance.id,
+                'n_id':notification.id,
+            }
+            test.append(_dict)
+            async_to_sync(channel_layer.group_send)(user.username,_dict)
+    print(test)

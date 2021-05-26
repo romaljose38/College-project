@@ -249,7 +249,8 @@ class StoryComment(models.Model):
 class StoryNotification(models.Model):
     STORY_NOTIF_TYPES = (('story_add','story_add'),('story_del','story_del'),('story_view','story_view'))
 
-    story = models.ForeignKey(Story, on_delete=models.CASCADE)
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, blank=True, null=True)
+    storyId = models.IntegerField(blank=True, null=True)
     to_user = models.ForeignKey(User, on_delete=models.CASCADE)
     notif_type = models.CharField(max_length=15,choices=STORY_NOTIF_TYPES)
     time_created = models.CharField(max_length=20)

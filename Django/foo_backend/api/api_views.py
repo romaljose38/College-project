@@ -320,6 +320,17 @@ def user_story_commented(request):
         print(e)
         return Response(status=400,data={'notif': str(e)})
 
+@api_view(['GET'])
+def story_delete_handler(request):
+    try:
+        print(request.data)
+        story = Story.objects.get(id=int(request.query_params['id']))
+        story.delete()
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400, data={'notif': str(e)})
+
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])

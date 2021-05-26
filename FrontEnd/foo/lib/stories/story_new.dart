@@ -744,8 +744,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                         context: context,
                         builder: (context) {
                           return ModalSheetContent(
-                            viewers: stories[_currentIndex].viewedUsers,
-                            comments: stories[_currentIndex].comments,
+                            story: stories[_currentIndex],
                           );
                         })
                       ..then((_) {

@@ -154,6 +154,8 @@ class SocketChannel {
       addStoryView(data);
     } else if (data['type'] == 'story_comment') {
       addStoryComment(data);
+    } else if (data['type'] == 'story_delete') {
+      deleteOldStory(data);
     }
   }
 
@@ -234,6 +236,16 @@ class SocketChannel {
         data['s_id'].toInt());
     userStory.save();
     sendToChannel(jsonEncode({'s_n_r': data['c_id']}));
+  }
+
+  void deleteOldStory(data) {
+    var storyBox = Hive.box('MyStories');
+    print(data);
+
+    var userStory = storyBox.get(data['u']);
+    userStory.deleteOldStory(id: data['s_id'].toInt());
+    userStory.save();
+    sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }
 
   void updateTypingStatus(data) {

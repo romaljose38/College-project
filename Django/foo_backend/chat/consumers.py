@@ -272,6 +272,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             'time':notif.time_created,
                         },
                 )
+            elif notif.notif_type=="story_delete":
+                final_list.append({
+                    'type':'story_delete',
+                    'u':notif.from_user.username,
+                    's_id':notif.storyId,
+                    'n_id':notif.id,
+                    },
+                )
            
 
         print(final_list)
@@ -638,6 +646,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event))
 
     async def story_add(self,event):
+        print(event)
+        print(self.room_group_name)
+        await self.send(text_data=json.dumps(event))
+
+    async def story_delete(self,event):
         print(event)
         print(self.room_group_name)
         await self.send(text_data=json.dumps(event))

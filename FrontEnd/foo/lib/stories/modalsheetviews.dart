@@ -6,15 +6,15 @@ import 'package:foo/models.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
 
 import 'dart:convert';
 
 class ModalSheetContent extends StatefulWidget {
-  final List<StoryUser> viewers;
-  final List<StoryComment> comments;
+  final Story story;
 
-  ModalSheetContent({this.viewers, this.comments});
+  ModalSheetContent({this.story});
 
   @override
   _ModalSheetContentState createState() => _ModalSheetContentState();
@@ -87,7 +87,7 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
                       }),
                   IconButton(
                     icon: Icon(Icons.delete),
-                    onPressed: null,
+                    onPressed: _submitDeleteHandler,
                   ),
                   SizedBox(width: 20),
                 ],
@@ -98,8 +98,8 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
                   controller: _pageController,
                   physics: NeverScrollableScrollPhysics(),
                   children: [
-                    seenUsersListView(widget.viewers),
-                    repliedUsersListView(widget.comments),
+                    seenUsersListView(widget.story.viewedUsers),
+                    repliedUsersListView(widget.story.comments),
                   ]),
               // child:
               //     _seenUsers ? seenUsersListView() : repliedUsersListView(),
@@ -140,6 +140,24 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
         );
       },
     );
+  }
+
+  Future<void> _submitDeleteHandler() async {
+    Map<String, String> deleteReq = {
+      'id': widget.story.storyId.toString(),
+    };
+
+    Uri url = Uri.http(localhost, 'api/story_delete', deleteReq);
+
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => LandingPage()),
+      );
+    } else {
+      print("Deletion Error!");
+    }
   }
 }
 
@@ -199,7 +217,7 @@ class _ReplyModalSheetState extends State<ReplyModalSheet> {
             )),
             IconButton(
               icon: Icon(Icons.send),
-              onPressed: submitReplyHandler,
+              onPressed: _submitReplyHandler,
             ),
           ],
         ),
@@ -207,7 +225,7 @@ class _ReplyModalSheetState extends State<ReplyModalSheet> {
     );
   }
 
-  Future<void> submitReplyHandler() async {
+  Future<void> _submitReplyHandler() async {
     _prefs = await SharedPreferences.getInstance();
     final username = _prefs.getString("username");
     final Map<String, dynamic> userReply = {
