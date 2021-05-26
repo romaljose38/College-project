@@ -18,6 +18,7 @@ class SocketChannel {
   String username;
   Timer _timer;
   SharedPreferences _prefs;
+  Timer _localTimer;
   AudioCache cache = AudioCache(respectSilence: true);
   static bool isConnected = false;
 
@@ -32,9 +33,18 @@ class SocketChannel {
 
   SocketChannel._internal() {
     setPrefs();
-
-    _timer = Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
+    _localTimer = Timer.periodic(Duration(seconds: 5), (timer) => localCheck());
   }
+
+  ///Timer to run the local checkup
+  localCheck() {
+    print("local check");
+    if (!isConnected && !(_timer?.isActive ?? false)) {
+      print("sanm poi");
+      _timer = Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
+    }
+  }
+  //
 
   Future<void> setPrefs() async {
     _prefs = await SharedPreferences.getInstance();
@@ -140,6 +150,15 @@ class SocketChannel {
         sendToChannel(jsonEncode({'received': data['message']['id']}));
         _createThread(data);
       }
+    } else if (data['type'] == 'chat_reply_message') {
+      if ((_prefs.containsKey('lastMsgId') &&
+              (_prefs.getInt('lastMsgId') != data['message']['id'])) ||
+          !_prefs.containsKey('lastMsgId')) {
+        _prefs.setInt("lastMsgId", data['message']['id']);
+
+        sendToChannel(jsonEncode({'received': data['message']['id']}));
+        _createReplyThread(data);
+      }
     } else if (data['type'] == 'notification') {
       addNotification(data);
     } else if (data['type'] == 'seen_ticker') {
@@ -153,6 +172,74 @@ class SocketChannel {
     } else if (data['type'] == 'story_view') {
       addStoryView(data);
     }
+  }
+
+  void _createReplyThread(data) async {
+    var threadBox = Hive.box('Threads');
+    var me = _prefs.getString('username');
+
+    //Creating thread with the given data
+    Thread thread;
+
+    //Thread is named in the format "self_sender" eg:anna_deepika
+    var threadName = me + '_' + data['message']['from'];
+
+    //Checking if thread already exists in box, if exists, the new chat messaeg if added else new thread is created and saved to box.
+
+    if (!threadBox.containsKey(threadName)) {
+      thread = Thread(
+          first: User(name: me), second: User(name: data['message']['from']));
+      await threadBox.put(threadName, thread);
+    } else {
+      thread = threadBox.get(threadName);
+
+      String currentUser = _prefs.getString("curUser");
+
+      if (currentUser != data['message']['from']) {
+        _handler.chatNotif(data['message']['from'], data['message']['message']);
+        if (thread.hasUnseen != null) {
+          thread.hasUnseen += 1;
+        } else {
+          thread.hasUnseen = 1;
+        }
+      } else if (currentUser == data['message']['from']) {
+        print("here");
+
+        var seenTicker = {
+          "type": "seen_ticker",
+          "to": data['message']['from'],
+          "id": data['message']['id'],
+        };
+        sendToChannel(jsonEncode(seenTicker));
+        _prefs.setInt("lastSeenId", data['message']['id']);
+        _prefs.setBool("${data['message']['from']}_hasNew", true);
+        playAudio();
+      }
+    }
+    ChatMessage obj;
+    if (data['msg_type'] == "reply_aud" || data['msg_type'] == "reply_img") {
+      obj = ChatMessage(
+          filePath: data['message']['file'],
+          id: data['message']['id'],
+          msgType: data['msg_type'],
+          replyMsgId: data['message']['reply_id'],
+          replyMsgTxt: data['message']['reply_txt'],
+          senderName: data['message']['from'],
+          isMe: false,
+          time: DateTime.parse(data['message']['time']));
+    } else {
+      obj = ChatMessage(
+          message: data['message']['message'],
+          id: data['message']['id'],
+          msgType: data['msg_type'],
+          replyMsgId: data['message']['reply_id'],
+          replyMsgTxt: data['message']['reply_txt'],
+          senderName: data['message']['from'],
+          isMe: false,
+          time: DateTime.parse(data['message']['time']));
+    }
+    thread.addChat(obj);
+    thread.save();
   }
 
   void changeUserStatus(data) {
@@ -268,7 +355,11 @@ class SocketChannel {
     String threadName = me + '_' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
-
+    print(existingThread.chatList);
+    existingThread.chatList.forEach((e) {
+      print(e.id.toString());
+      print(e.msgType);
+    });
     existingThread.updateChatId(id: id, newId: newId);
     existingThread.save();
     sendToChannel(jsonEncode({'n_r': data['r_s']['notif_id']}));

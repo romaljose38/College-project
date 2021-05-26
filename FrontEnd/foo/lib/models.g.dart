@@ -97,8 +97,8 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       senderName: fields[3] as String,
       isMe: fields[6] as bool,
       msgType: fields[7] as String,
-      base64string: fields[8] as String,
-      ext: fields[9] as String,
+      replyMsgTxt: fields[8] as String,
+      replyMsgId: fields[9] as int,
       filePath: fields[11] as String,
     )
       ..haveReceived = fields[4] as bool
@@ -127,9 +127,9 @@ class ChatMessageAdapter extends TypeAdapter<ChatMessage> {
       ..writeByte(7)
       ..write(obj.msgType)
       ..writeByte(8)
-      ..write(obj.base64string)
+      ..write(obj.replyMsgTxt)
       ..writeByte(9)
-      ..write(obj.ext)
+      ..write(obj.replyMsgId)
       ..writeByte(10)
       ..write(obj.haveReachedServer)
       ..writeByte(11)

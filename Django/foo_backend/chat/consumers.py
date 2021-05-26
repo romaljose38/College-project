@@ -351,72 +351,107 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'message': message
                     }
                     )
+                
+                elif(text_data_json['type']=='reply_txt'):           # This is the username of the user to which the message is to be sent
+                    msg = text_data_json['message']
 
-                elif(text_data_json['type']=='aud'):
-                    aud = text_data_json['audio']
-                    extension = text_data_json['ext']
-
-                    chat_msg_id = await self.create_chat_audio(aud_string=aud, to=to, ext=extension, time=time_str)
-                    
+                    chat_msg_id,notif_id = await self.create_chat_message(message=msg,to=to,time=time_str,ref_id=_id)
+                
                     message = {
-                        'aud':aud,
-                        'ext':extension,
-                        
+                        'message':msg,                        
+                        'id':chat_msg_id,
                         'time':time_str,
-                        'id':chat_msg_id,
+                        'reply_txt':text_data_json['reply_txt'],
+                        'reply_id':text_data_json['reply_id'],
                         'from':self.user.username  # This line is not needed in production; only for debugging
                     }
+
                     await self.send(text_data=json.dumps(
                         {
                         "r_s":{
                             'to':to,
                             'id':_id,
                             'n_id':chat_msg_id,
+                            'notif_id':notif_id,
                         }
                         }
                         )
                     )
-
                     await self.channel_layer.group_send(
-                    self.room_group_name,
+                    to,
                     {
-                        'type':'chat_message',
-                        'message': message
+                        'type':'chat_reply_message',
+                        'message': message,
+                        'msg_type':'reply_txt'
                     }
                     )
+                
+                
+                # elif(text_data_json['type']=='aud'):
+                #     aud = text_data_json['audio']
+                #     extension = text_data_json['ext']
 
-                elif(text_data_json['type']=='img'):
-                    img = text_data_json['image']
-                    extension = text_data_json['ext']
+                #     chat_msg_id = await self.create_chat_audio(aud_string=aud, to=to, ext=extension, time=time_str)
+                    
+                #     message = {
+                #         'aud':aud,
+                #         'ext':extension,
+                        
+                #         'time':time_str,
+                #         'id':chat_msg_id,
+                #         'from':self.user.username  # This line is not needed in production; only for debugging
+                #     }
+                #     await self.send(text_data=json.dumps(
+                #         {
+                #         "r_s":{
+                #             'to':to,
+                #             'id':_id,
+                #             'n_id':chat_msg_id,
+                #         }
+                #         }
+                #         )
+                #     )
 
-                    chat_msg_id = await self.create_chat_image(img_string=img,to=to,ext=extension, time=time_str)
+                #     await self.channel_layer.group_send(
+                #     self.room_group_name,
+                #     {
+                #         'type':'chat_message',
+                #         'message': message
+                #     }
+                #     )
+
+                # elif(text_data_json['type']=='img'):
+                #     img = text_data_json['image']
+                #     extension = text_data_json['ext']
+
+                #     chat_msg_id = await self.create_chat_image(img_string=img,to=to,ext=extension, time=time_str)
             
-                    message = {
-                        'img':img,
-                        'ext':extension,
-                        'time':time_str,                        
-                        'id':chat_msg_id,
-                        'from':self.user.username  # This line is not needed in production; only for debugging
-                    }
+                #     message = {
+                #         'img':img,
+                #         'ext':extension,
+                #         'time':time_str,                        
+                #         'id':chat_msg_id,
+                #         'from':self.user.username  # This line is not needed in production; only for debugging
+                #     }
 
-                    await self.send(text_data=json.dumps(
-                        {
-                        "r_s":{
-                            'to':to,
-                            'id':_id,
-                            'n_id':chat_msg_id,
-                        }
-                        }
-                        )
-                    )
+                #     await self.send(text_data=json.dumps(
+                #         {
+                #         "r_s":{
+                #             'to':to,
+                #             'id':_id,
+                #             'n_id':chat_msg_id,
+                #         }
+                #         }
+                #         )
+                #     )
 
-                    await self.channel_layer.group_send(
-                        to,
-                        {
-                            'type':'chat_message',
-                            'message': message
-                        }
-                    )
+                #     await self.channel_layer.group_send(
+                #         to,
+                #         {
+                #             'type':'chat_message',
+                #             'message': message
+                #         }
+                #     )
 
 
     @database_sync_to_async
@@ -434,7 +469,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return False, None, None, None
        
 
-
+    @database_sync_to_async
+    def create_chat_reply_message(self, message, to, time, ref_id, reply_txt, reply_id):
+        thread = Thread.objects.get_or_new(self.user,to)
+        cur_message = ChatMessage.objects.create(reply_id=reply_id,reply_txt=reply_txt,user=self.user, message=message, thread=thread, msg_type="msg",time_created=time)
+        cur_message.recipients.add(self.user)
+        cur_message.save()
+        notif = Notification(notif_to=self.user,chatmsg_id=cur_message.id,ref_id=str(ref_id), notif_type="s_reached")
+        notif.save()
+        return cur_message.id, notif.id
 
     @database_sync_to_async
     def create_chat_message(self, message, to, time, ref_id):
@@ -625,9 +668,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         print(self.room_group_name)
         await self.send(text_data=json.dumps(event))
 
-
-
-
+    async def chat_reply_message(self, event):
+        
+        await self.send(text_data=json.dumps(event))
 
 class TestConsumer(AsyncHttpConsumer):
     async def handle(self, body):

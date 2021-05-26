@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/test_cred.dart';
@@ -15,25 +16,27 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:swipe_to/swipe_to.dart';
 
-class AudioCloud extends StatefulWidget {
+class AudioReplyCloud extends StatefulWidget {
   final ChatMessage msgObj;
   final AnimationController controller;
   final String otherUser;
   final Function swipingHandler;
   final bool disableSwipe;
+  final Function scroller;
 
-  AudioCloud(
+  AudioReplyCloud(
       {this.msgObj,
       this.controller,
       this.otherUser,
       this.swipingHandler,
+      this.scroller,
       this.disableSwipe = false});
 
   @override
-  _AudioCloudState createState() => _AudioCloudState();
+  _AudioReplyCloudState createState() => _AudioReplyCloudState();
 }
 
-class _AudioCloudState extends State<AudioCloud> {
+class _AudioReplyCloudState extends State<AudioReplyCloud> {
   File file;
   bool fileExists = false;
   SharedPreferences _prefs;
@@ -163,6 +166,8 @@ class _AudioCloudState extends State<AudioCloud> {
           ..fields['u_id'] = curUserId.toString()
           ..fields['time'] = widget.msgObj.time.toString()
           ..fields['msg_id'] = widget.msgObj.id.toString()
+          ..fields['reply_txt'] = widget.msgObj.replyMsgTxt
+          ..fields['reply_id'] = widget.msgObj.replyMsgId.toString()
           ..fields['username'] = widget.otherUser
           ..files.add(await http.MultipartFile.fromPath(
               'file', widget.msgObj.filePath));
@@ -331,70 +336,102 @@ class _AudioCloudState extends State<AudioCloud> {
         ));
   }
 
-  cloudContent() => Column(
-        children: [
-          Row(
-            mainAxisAlignment: (this.widget.msgObj.isMe == true)
-                ? MainAxisAlignment.end
-                : MainAxisAlignment.start,
-            children: [
-              Wrap(
-                direction: Axis.vertical,
-                crossAxisAlignment: widget.msgObj.isMe
-                    ? WrapCrossAlignment.end
-                    : WrapCrossAlignment.start,
-                children: [
-                  Stack(
-                    children: [
-                      fileExists
-                          ? Player(
-                              file: file,
-                              notifier: tryingNotifier,
-                              reachedServer: reachedServer,
-                              uploadFunction: trySendingToServer,
-                              isMe: widget.msgObj.isMe,
-                            )
-                          : widget.msgObj.isMe
-                              ? noAudio()
-                              : noAudioHim(),
-                      Positioned(
-                        bottom: 7.0,
-                        right: 15.0,
-                        child: Row(
-                          children: <Widget>[
-                            Text(getTime(),
-                                textAlign: TextAlign.right,
-                                textDirection: TextDirection.rtl,
+  cloudContent() => Container(
+        margin: EdgeInsets.all(5),
+        child: Row(
+          mainAxisAlignment: (this.widget.msgObj.isMe == true)
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
+          children: [
+            Wrap(
+              direction: Axis.vertical,
+              crossAxisAlignment: widget.msgObj.isMe
+                  ? WrapCrossAlignment.end
+                  : WrapCrossAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => widget.scroller(widget.msgObj.replyMsgId),
+                  child: Container(
+                    width: 70,
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20)),
+                    ),
+                    padding: EdgeInsets.all(10),
+                    child: (widget.msgObj.replyMsgTxt == imageUTF)
+                        ? Row(children: [
+                            Icon(Icons.image, size: 15),
+                            Text("Image", style: TextStyle(fontSize: 11))
+                          ])
+                        : (widget.msgObj.replyMsgTxt == audioUTF)
+                            ? Row(children: [
+                                Icon(Icons.headset_rounded, size: 15),
+                                Text("Audio", style: TextStyle(fontSize: 11))
+                              ])
+                            : Text(
+                                widget.msgObj.replyMsgTxt,
                                 style: TextStyle(
-                                  color: this.widget.msgObj.isMe == true
-                                      ? Colors.white
-                                      : Colors.black,
-                                  fontSize: 10.0,
-                                )),
-                            SizedBox(width: 3.0),
-                            (widget.msgObj.isMe == true)
-                                ? Icon(
-                                    widget.msgObj.haveReachedServer
-                                        ? (widget.msgObj.haveReceived
-                                            ? (widget.msgObj.hasSeen == true)
-                                                ? Icons.done_outline_sharp
-                                                : Icons.done_all
-                                            : Icons.done)
-                                        : Icons.timelapse_outlined,
-                                    size: 12.0,
-                                    color: Colors.black38,
-                                  )
-                                : Container(),
-                          ],
-                        ),
-                      )
-                    ],
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                   ),
-                ],
-              ),
-            ],
-          ),
-        ],
+                ),
+
+                //
+
+                Stack(
+                  children: [
+                    fileExists
+                        ? Player(
+                            file: file,
+                            notifier: tryingNotifier,
+                            reachedServer: reachedServer,
+                            uploadFunction: trySendingToServer,
+                            isMe: widget.msgObj.isMe,
+                          )
+                        : widget.msgObj.isMe
+                            ? noAudio()
+                            : noAudioHim(),
+                    Positioned(
+                      bottom: 7.0,
+                      right: 15.0,
+                      child: Row(
+                        children: <Widget>[
+                          Text(getTime(),
+                              textAlign: TextAlign.right,
+                              textDirection: TextDirection.rtl,
+                              style: TextStyle(
+                                color: widget.msgObj.isMe == true
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 10.0,
+                              )),
+                          SizedBox(width: 3.0),
+                          (widget.msgObj.isMe == true)
+                              ? Icon(
+                                  widget.msgObj.haveReachedServer
+                                      ? (widget.msgObj.haveReceived
+                                          ? (widget.msgObj.hasSeen == true)
+                                              ? Icons.done_outline_sharp
+                                              : Icons.done_all
+                                          : Icons.done)
+                                      : Icons.timelapse_outlined,
+                                  size: 12.0,
+                                  color: Colors.black38,
+                                )
+                              : Container(),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       );
 
   swipeAble() => SwipeTo(
@@ -522,7 +559,11 @@ class _PlayerState extends State<Player> {
 
   BoxDecoration _getDecoration() {
     return BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.only(
+            topLeft: widget.isMe ? Radius.circular(20) : Radius.circular(0),
+            topRight: widget.isMe ? Radius.circular(0) : Radius.circular(20),
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20)),
         gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
@@ -541,7 +582,7 @@ class _PlayerState extends State<Player> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: EdgeInsets.all(5),
+        // margin: EdgeInsets.all(5),
         height: 60,
         width: 240,
         decoration: _getDecoration(),
