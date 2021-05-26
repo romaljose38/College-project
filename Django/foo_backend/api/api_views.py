@@ -323,7 +323,7 @@ def upload_chat_media(request):
         cur_message = ChatMessage.objects.create(user=from_user, thread=thread, msg_type="img",time_created=time, file=file)
         cur_message.recipients.add(from_user)
         cur_message.save()
-        notif = Notification(notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
         notif.save()
         channel = get_channel_layer()
         msg= {
@@ -371,7 +371,7 @@ def upload_chat_audio(request):
         cur_message = ChatMessage.objects.create(user=from_user, thread=thread, msg_type="aud",time_created=time, file=file)
         cur_message.recipients.add(from_user)
         cur_message.save()
-        notif = Notification(notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
         notif.save()
         channel =get_channel_layer()
         msg= {
@@ -422,7 +422,7 @@ def upload_chat_image_reply(request):
         cur_message = ChatMessage.objects.create(reply_id=int(reply_id),reply_txt=reply_txt,user=from_user, thread=thread, msg_type="reply_img",time_created=time, file=file)
         cur_message.recipients.add(from_user)
         cur_message.save()
-        notif = Notification(notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
         notif.save()
         channel = get_channel_layer()
         msg= {
@@ -473,7 +473,7 @@ def upload_chat_audio_reply(request):
         cur_message = ChatMessage.objects.create(reply_id=int(reply_id),reply_txt=reply_txt,user=from_user, thread=thread, msg_type="reply_img",time_created=time, file=file)
         cur_message.recipients.add(from_user)
         cur_message.save()
-        notif = Notification(notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
         notif.save()
         channel = get_channel_layer()
         msg= {

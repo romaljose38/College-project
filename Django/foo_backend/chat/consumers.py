@@ -235,6 +235,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             'notif_id':i.id,
                         }
                 )
+            elif i.notif_type=="s_reached":
+                final_list.append({                        
+                            'r_s':{
+                                'to':i.chat_username,
+                                'notif_id':i.id,
+                                'id':int(i.ref_id),
+                                'n_id':i.chatmsg_id,
+        
+                            },
+                            
+                        }
+                )
 
         print(final_list)
         return final_list

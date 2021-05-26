@@ -355,11 +355,7 @@ class SocketChannel {
     String threadName = me + '_' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
-    print(existingThread.chatList);
-    existingThread.chatList.forEach((e) {
-      print(e.id.toString());
-      print(e.msgType);
-    });
+
     existingThread.updateChatId(id: id, newId: newId);
     existingThread.save();
     sendToChannel(jsonEncode({'n_r': data['r_s']['notif_id']}));

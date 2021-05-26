@@ -181,6 +181,7 @@ class Notification(models.Model):
     notif_from = models.ForeignKey(User, related_name="from_user_chat", on_delete=models.CASCADE, null=True)
     notif_to = models.ForeignKey(User, related_name="to_user_chat", on_delete=models.CASCADE)
     notif_type = models.CharField(max_length=10,choices=NOTIF_TYPES)
+    chat_username = models.CharField(max_length=100,null=True,blank=True)
 
 def user_directory_path(instance, filename):
     extension = filename.split(".")[-1]

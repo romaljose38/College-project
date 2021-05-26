@@ -51,7 +51,9 @@ class _ImageReplyCloudState extends State<ImageReplyCloud> {
     if (widget.msgObj.isMe == true) {
       processMyImage();
       if (widget.msgObj.haveReachedServer != true) {
-        hasUploaded = false;
+        setState(() {
+          hasUploaded = false;
+        });
         trySendingImageAgain();
       }
       print(widget.otherUser);
