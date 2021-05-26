@@ -3,12 +3,14 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.generic.http import AsyncHttpConsumer
 from channels.db import database_sync_to_async
 from .models import (
+    Story,
     Thread,
     Profile,
     ChatMessage,
     FriendRequest,
     Notification,
-    StoryNotification
+    StoryNotification,
+    StoryComment
 )
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -111,6 +113,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             pending_msg_status = await self.get_pending_notifications()
             pending_requests = await self.get_pending_requests()
             pending_story_notifs = await self.get_pending_story_notifications()
+            pending_story_comment_notifs = await self.get_pending_story_comment_notification()
             
             
             if len(informing_list)>0:
@@ -126,6 +129,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             if len(pending_story_notifs)>0:
                 for msg in pending_story_notifs:
+                    await self.send(text_data=json.dumps(msg))
+
+            if len(pending_story_comment_notifs)>0:
+                for msg in pending_story_comment_notifs:
                     await self.send(text_data=json.dumps(msg))
 
             if len(pending_requests)>0:
@@ -270,6 +277,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
         print(final_list)
         return final_list
 
+    @database_sync_to_async
+    def get_pending_story_comment_notification(self):
+        final_list = []
+        qs = Story.objects.filter(user=self.user)
+        for story in qs:
+            for comment in story.story_comment.all():
+                final_list.append({
+                    'type':'story_comment', #For the client to identify
+                    'u':comment.username,
+                    'comment':comment.comment,
+                    'c_id':comment.id,
+                    's_id':story.id,
+                    'time':comment.time_created.strftime("%Y-%m-%d %H:%M:%S"),
+                },
+            )
+
+        print(final_list)
+        return final_list
+
     async def receive(self, text_data):
         print(text_data)
         text_data_json = json.loads(text_data)
@@ -294,6 +320,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.delete_notification(text_data_json['n_r'])
         elif 's_r' in text_data_json:
             await self.delete_story_notification(text_data_json['s_r'])
+        elif 's_n_r' in text_data_json:
+            await self.delete_story_comment_notification(text_data_json['s_n_r'])
         else:
             if text_data_json['type']=="seen_ticker":
                 print(text_data_json)
@@ -491,7 +519,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(e)
 
-
+    @database_sync_to_async
+    def delete_story_comment_notification(self, id):
+        try:
+            comment = StoryComment.objects.get(id=id)
+            comment.delete()
+        except Exception as e:
+            print(e)
 
     async def chat_message(self,event):
         print(event)
@@ -615,6 +649,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
     async def story_view(self,event):
+        print(event)
+        print(self.room_group_name)
+        await self.send(text_data=json.dumps(event))
+
+    async def story_comment(self,event):
         print(event)
         print(self.room_group_name)
         await self.send(text_data=json.dumps(event))

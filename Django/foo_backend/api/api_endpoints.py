@@ -22,6 +22,7 @@ urlpatterns = [
     path('ping', api_views.ping, name="ping"),
     path('<str:username>/get_previous_posts', api_views.get_previous_posts, name="previous_posts"),
     path('add_view', api_views.user_story_viewed, name="story_views"),
+    path('add_story_comment', api_views.user_story_commented, name="story_comments"),
     path('upload_chat_image',api_views.upload_chat_media, name="chat_image_upload"),
     path('upload_chat_audio',api_views.upload_chat_audio, name="chat_audio_upload"),
 

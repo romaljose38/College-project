@@ -71,7 +71,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         localhost,
         '/api/$curUser/get_previous_posts',
         {'id': postsList.last.postId.toString()}));
-    var respJson = jsonDecode(response.body);
+    var respJson = jsonDecode(utf8.decode(response.bodyBytes));
 
     respJson.forEach((e) {
       Post post = Post(
@@ -145,7 +145,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
     if (isConnected) {
       var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
-      var respJson = jsonDecode(response.body);
+      var respJson = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
         respJson.reversed.toList().forEach((e) {
@@ -440,7 +440,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   Future<void> _getNewPosts() async {
     var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
-    var respJson = jsonDecode(response.body);
+    var respJson = jsonDecode(utf8.decode(response.bodyBytes));
 
     var feedBox = Hive.box("Feed");
     var feed;

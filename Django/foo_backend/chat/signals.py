@@ -5,6 +5,7 @@ from .models import (
     FriendRequest, 
     Story,
     StoryNotification,
+    StoryComment
     )
 from django.conf import settings
 from django.dispatch import receiver
@@ -125,3 +126,21 @@ def story_viewed(sender, instance, **kwargs):
             async_to_sync(channel_layer.group_send)(instance.user.username,_dict)
     
     # pass
+
+@receiver(post_save,sender=StoryComment)
+def story_comment(sender, instance, **kwargs):
+    if(kwargs['created']==True):
+        channel_layer = get_channel_layer()
+        story = instance.story
+        user = story.user
+        time = timezone.now().strftime("%Y-%m-%d %H:%M:%S") 
+        if instance.story.user.profile.online:
+            _dict = {
+                'type':'story_comment',
+                'u':instance.username,
+                'comment':instance.comment,
+                'c_id':instance.id,
+                's_id':instance.story.id,
+                'time':time
+            }
+            async_to_sync(channel_layer.group_send)(user.username,_dict)
