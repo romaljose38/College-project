@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/models.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,23 +15,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:swipe_to/swipe_to.dart';
 
-class MediaCloud extends StatefulWidget {
+class ImageReplyCloud extends StatefulWidget {
   final ChatMessage msgObj;
   final String otherUser;
   final bool disableSwipe;
+  final Function scroller;
   final Function swipingHandler;
 
-  MediaCloud(
+  ImageReplyCloud(
       {this.msgObj,
       this.otherUser,
+      this.scroller,
       this.disableSwipe = false,
       this.swipingHandler});
 
   @override
-  _MediaCloudState createState() => _MediaCloudState();
+  _ImageReplyCloudState createState() => _ImageReplyCloudState();
 }
 
-class _MediaCloudState extends State<MediaCloud> {
+class _ImageReplyCloudState extends State<ImageReplyCloud> {
   File file;
   bool hasUploaded = true;
   bool processed = false;
@@ -48,7 +51,9 @@ class _MediaCloudState extends State<MediaCloud> {
     if (widget.msgObj.isMe == true) {
       processMyImage();
       if (widget.msgObj.haveReachedServer != true) {
-        hasUploaded = false;
+        setState(() {
+          hasUploaded = false;
+        });
         trySendingImageAgain();
       }
       print(widget.otherUser);
@@ -75,6 +80,8 @@ class _MediaCloudState extends State<MediaCloud> {
     var request = http.MultipartRequest('POST', uri)
       ..fields['u_id'] = curUserId.toString()
       ..fields['time'] = widget.msgObj.time.toString()
+      ..fields['reply_txt'] = widget.msgObj.replyMsgTxt
+      ..fields['reply_id'] = widget.msgObj.replyMsgId.toString()
       ..fields['msg_id'] = widget.msgObj.id.toString()
       ..fields['username'] = widget.otherUser
       ..files.add(
@@ -275,9 +282,17 @@ class _MediaCloudState extends State<MediaCloud> {
         child: Hero(
           tag: (fileExists ?? false) ? file.path : "",
           child: Container(
-            margin: EdgeInsets.all(5),
+            // margin: EdgeInsets.all(5),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.only(
+                  topLeft: widget.msgObj.isMe
+                      ? Radius.circular(20)
+                      : Radius.circular(0),
+                  topRight: widget.msgObj.isMe
+                      ? Radius.circular(0)
+                      : Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20)),
               child: Stack(
                 children: [
                   (hasDownloaded ?? false)
@@ -387,9 +402,17 @@ class _MediaCloudState extends State<MediaCloud> {
         child: Hero(
           tag: widget.msgObj.time.toString(),
           child: Container(
-            margin: EdgeInsets.all(5),
+            // margin: EdgeInsets.all(5),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.only(
+                  topLeft: widget.msgObj.isMe
+                      ? Radius.circular(20)
+                      : Radius.circular(0),
+                  topRight: widget.msgObj.isMe
+                      ? Radius.circular(0)
+                      : Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20)),
               child: Stack(
                 children: [
                   processed
@@ -464,15 +487,60 @@ class _MediaCloudState extends State<MediaCloud> {
             : () => widget.swipingHandler(widget.msgObj),
         child: cloudContent(),
       );
-  cloudContent() => Row(
-        mainAxisAlignment: (this.widget.msgObj.isMe == true)
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        children: [widget.msgObj.isMe == true ? myImage() : hisImage()],
+
+  cloudContent() => Container(
+        margin: EdgeInsets.all(5),
+        child: Row(
+          mainAxisAlignment: (this.widget.msgObj.isMe == true)
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
+          children: [
+            Wrap(
+              direction: Axis.vertical,
+              crossAxisAlignment: (widget.msgObj.isMe == true)
+                  ? WrapCrossAlignment.end
+                  : WrapCrossAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => widget.scroller(widget.msgObj.replyMsgId),
+                  child: Container(
+                    width: 70,
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20)),
+                    ),
+                    padding: EdgeInsets.all(10),
+                    child: (widget.msgObj.replyMsgTxt == imageUTF)
+                        ? Row(children: [
+                            Icon(Icons.image, size: 15),
+                            Text("Image", style: TextStyle(fontSize: 11))
+                          ])
+                        : (widget.msgObj.replyMsgTxt == audioUTF)
+                            ? Row(children: [
+                                Icon(Icons.headset_rounded, size: 15),
+                                Text("Audio", style: TextStyle(fontSize: 11))
+                              ])
+                            : Text(
+                                widget.msgObj.replyMsgTxt,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                  ),
+                ),
+                widget.msgObj.isMe == true ? myImage() : hisImage(),
+              ],
+            )
+          ],
+        ),
       );
 
   @override
   Widget build(BuildContext context) {
+    print(widget.msgObj.filePath);
     return widget.disableSwipe ? cloudContent() : swipeAble();
   }
 }

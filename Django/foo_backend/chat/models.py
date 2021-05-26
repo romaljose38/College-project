@@ -155,17 +155,17 @@ def media_path(instance, filename):
 
 class ChatMessage(models.Model):
 
-    MSG_TYPES = (('msg','msg'),('img','img'),('aud','aud'))
+    MSG_TYPES = (('msg','msg'),('img','img'),('aud','aud'),('reply_txt','reply_txt'),('reply_img','reply_img'),('reply_txt','reply_txt'))
 
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     user   = models.ForeignKey(User, related_name="sender", on_delete=models.CASCADE)
     message = models.TextField(null=True,blank=True)
     time_created = models.CharField(max_length=30,null=True)
     recipients = models.ManyToManyField(User, blank=True)
-    msg_type = models.CharField(max_length=3,null=True,blank=True,choices=MSG_TYPES)
-    base64string = models.TextField(null=True,blank=True)
+    msg_type = models.CharField(max_length=10,null=True,blank=True,choices=MSG_TYPES)
     file = models.FileField(upload_to=media_path,null=True)
-    extension = models.CharField(max_length=10,null=True,blank=True)
+    reply_txt = models.TextField(blank=True,null=True)
+    reply_id = models.IntegerField(blank=True,null=True)
 
     def received(self):
         if self.recipients.all().count() == 2:
@@ -181,6 +181,7 @@ class Notification(models.Model):
     notif_from = models.ForeignKey(User, related_name="from_user_chat", on_delete=models.CASCADE, null=True)
     notif_to = models.ForeignKey(User, related_name="to_user_chat", on_delete=models.CASCADE)
     notif_type = models.CharField(max_length=10,choices=NOTIF_TYPES)
+    chat_username = models.CharField(max_length=100,null=True,blank=True)
 
 def user_directory_path(instance, filename):
     extension = filename.split(".")[-1]

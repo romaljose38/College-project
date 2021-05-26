@@ -37,10 +37,10 @@ class ChatMessage extends HiveObject {
   String msgType;
 
   @HiveField(8)
-  String base64string;
+  String replyMsgTxt;
 
   @HiveField(9)
-  String ext;
+  int replyMsgId;
 
   @HiveField(10)
   bool haveReachedServer = false;
@@ -59,8 +59,8 @@ class ChatMessage extends HiveObject {
     this.senderName,
     this.isMe = false,
     this.msgType,
-    this.base64string,
-    this.ext,
+    this.replyMsgTxt,
+    this.replyMsgId,
     this.filePath,
   });
 }

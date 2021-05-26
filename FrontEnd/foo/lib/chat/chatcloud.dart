@@ -1,11 +1,14 @@
 import 'package:intl/intl.dart' as intl;
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
+import 'package:swipe_to/swipe_to.dart';
 
 class ChatCloud extends StatelessWidget {
   final ChatMessage msgObj;
+  final Function swipingHandler;
+  final bool disableSwipe;
 
-  ChatCloud({this.msgObj});
+  ChatCloud({this.msgObj, this.swipingHandler, this.disableSwipe = false});
 
   String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
 
@@ -17,7 +20,7 @@ class ChatCloud extends StatelessWidget {
         children: [
           Container(
               margin: EdgeInsets.all(5),
-              alignment: Alignment.topLeft,
+              // alignment: Alignment.topLeft,
               padding: EdgeInsets.all(5),
               decoration: BoxDecoration(
                   gradient: (this.msgObj.isMe == true)
@@ -109,10 +112,17 @@ class ChatCloud extends StatelessWidget {
         ]);
   }
 
+  swipeAble(context) => SwipeTo(
+        offsetDx: .2,
+        iconColor: Colors.black54,
+        iconSize: 16,
+        child: cloudContent(context),
+        onLeftSwipe: msgObj.isMe ? () => swipingHandler(this.msgObj) : null,
+        onRightSwipe: msgObj.isMe ? null : () => swipingHandler(this.msgObj),
+      );
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [cloudContent(context)],
-    );
+    return this.disableSwipe ? cloudContent(context) : swipeAble(context);
   }
 }

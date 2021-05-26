@@ -26,6 +26,9 @@ urlpatterns = [
     path('story_delete', api_views.story_delete_handler, name="story_delete"),
     path('upload_chat_image',api_views.upload_chat_media, name="chat_image_upload"),
     path('upload_chat_audio',api_views.upload_chat_audio, name="chat_audio_upload"),
+    path('upload_chat_audio_reply',api_views.upload_chat_audio_reply, name="chat_audio_reply_upload"),
+    path('upload_chat_image_reply',api_views.upload_chat_image_reply, name="chat_image_reply_upload"),
+    
 
 
 ]

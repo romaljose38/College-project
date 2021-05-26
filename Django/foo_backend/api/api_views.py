@@ -349,9 +349,9 @@ def upload_chat_media(request):
         cur_message = ChatMessage.objects.create(user=from_user, thread=thread, msg_type="img",time_created=time, file=file)
         cur_message.recipients.add(from_user)
         cur_message.save()
-        notif = Notification(notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
         notif.save()
-        channel =get_channel_layer()
+        channel = get_channel_layer()
         msg= {
             "type":"server_response",
             "r_s":{
@@ -397,7 +397,7 @@ def upload_chat_audio(request):
         cur_message = ChatMessage.objects.create(user=from_user, thread=thread, msg_type="aud",time_created=time, file=file)
         cur_message.recipients.add(from_user)
         cur_message.save()
-        notif = Notification(notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
         notif.save()
         channel =get_channel_layer()
         msg= {
@@ -420,6 +420,110 @@ def upload_chat_audio(request):
                     }
 
         async_to_sync(channel.group_send)(other_user_username,{'type':'chat_message','message':message})
+        return Response(status=200)
+
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def upload_chat_image_reply(request):
+    try:
+        print(request.data)
+        user_id = int(request.data['u_id'])
+        time = request.data['time']
+        fake_id = request.data['msg_id']
+        other_user_username = request.data['username']
+        file = request.data['file']
+        reply_id = request.data['reply_id']
+        reply_txt = request.data['reply_txt']
+        print(other_user_username)
+        print(user_id)
+        from_user = User.objects.get(id=user_id)
+        thread = Thread.objects.get_or_new(from_user,other_user_username)
+        cur_message = ChatMessage.objects.create(reply_id=int(reply_id),reply_txt=reply_txt,user=from_user, thread=thread, msg_type="reply_img",time_created=time, file=file)
+        cur_message.recipients.add(from_user)
+        cur_message.save()
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif.save()
+        channel = get_channel_layer()
+        msg= {
+            "type":"server_response",
+            "r_s":{
+                'to':other_user_username,
+                'id':int(fake_id),
+                'n_id':cur_message.id,
+                'notif_id':notif.id,
+            }
+            }
+        async_to_sync(channel.group_send)(from_user.username,msg)
+
+
+        message = {      
+                        'reply_txt':reply_txt,
+                        'reply_id':int(reply_id),
+                        'file':cur_message.file.url,                        
+                        'time':time,
+                        'id':cur_message.id,
+                        'from':from_user.username  # This line is not needed in production; only for debugging
+                    }
+
+        async_to_sync(channel.group_send)(other_user_username,{'type':'chat_reply_message','message':message,'msg_type':'reply_img'})
+        return Response(status=200)
+
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def upload_chat_audio_reply(request):
+    try:
+        print(request.data)
+        user_id = int(request.data['u_id'])
+        time = request.data['time']
+        fake_id = request.data['msg_id']
+        other_user_username = request.data['username']
+        file = request.data['file']
+        reply_id = request.data['reply_id']
+        reply_txt = request.data['reply_txt']
+        print(other_user_username)
+        print(user_id)
+        from_user = User.objects.get(id=user_id)
+        thread = Thread.objects.get_or_new(from_user,other_user_username)
+        cur_message = ChatMessage.objects.create(reply_id=int(reply_id),reply_txt=reply_txt,user=from_user, thread=thread, msg_type="reply_img",time_created=time, file=file)
+        cur_message.recipients.add(from_user)
+        cur_message.save()
+        notif = Notification(chat_username=other_user_username,notif_to=from_user,chatmsg_id=cur_message.id,ref_id=int(fake_id), notif_type="s_reached")
+        notif.save()
+        channel = get_channel_layer()
+        msg= {
+            "type":"server_response",
+            "r_s":{
+                'to':other_user_username,
+                'id':int(fake_id),
+                'n_id':cur_message.id,
+                'notif_id':notif.id,
+            }
+            }
+        async_to_sync(channel.group_send)(from_user.username,msg)
+
+
+        message = {      
+                        'reply_txt':reply_txt,
+                        'reply_id':int(reply_id),
+                        'file':cur_message.file.url,                        
+                        'time':time,
+                        'id':cur_message.id,
+                        'from':from_user.username  # This line is not needed in production; only for debugging
+                    }
+
+        async_to_sync(channel.group_send)(other_user_username,{'type':'chat_reply_message','message':message,'msg_type':'reply_aud'})
         return Response(status=200)
 
     except Exception as e:

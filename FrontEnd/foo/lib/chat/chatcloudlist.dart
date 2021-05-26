@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:foo/chat/replyaudiocloud.dart';
+import 'package:foo/chat/replycloud.dart';
+import 'package:foo/chat/replyimagecloud.dart';
 // import 'package:foo/chat/socket.dart';
 import 'package:foo/models.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,23 +9,28 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'audiocloud.dart';
 import 'chatcloud.dart';
-
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'mediacloud.dart';
 
 class ChatCloudList extends StatefulWidget {
   final List chatList;
-  final ScrollController scrollController;
+  final ItemScrollController scrollController;
   final String curUser;
   final String otherUser;
   final SharedPreferences prefs;
+  final Function swipingHandler;
+  final ItemPositionsListener positionsListener;
 
-  ChatCloudList(
-      {Key key,
-      this.chatList,
-      this.scrollController,
-      this.curUser,
-      this.otherUser,
-      this.prefs});
+  ChatCloudList({
+    Key key,
+    this.chatList,
+    this.scrollController,
+    this.curUser,
+    this.otherUser,
+    this.prefs,
+    this.swipingHandler,
+    this.positionsListener,
+  });
 
   @override
   _ChatCloudListState createState() => _ChatCloudListState();
@@ -32,6 +40,8 @@ class _ChatCloudListState extends State<ChatCloudList>
     with SingleTickerProviderStateMixin {
   int day;
   AnimationController _controller;
+
+  Map<int, int> checkingList = <int, int>{};
 
   @override
   void initState() {
@@ -49,37 +59,80 @@ class _ChatCloudListState extends State<ChatCloudList>
   //   }
   // }
 
+  scroller(id) async {
+    print(checkingList);
+    print("scroll to index");
+    if (checkingList.containsKey(id)) {
+      await widget.scrollController.scrollTo(
+          index: checkingList[id],
+          duration: Duration(milliseconds: 300),
+          alignment: .33);
+    }
+
+    // await widget.scrollController
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-        cacheExtent: 300,
+    // return ListView.builder(
+    //     cacheExtent: 300,
+    //     reverse: true,
+    //     physics: BouncingScrollPhysics(),
+    //     controller: widget.scrollController,
+    //     itemCount: widget.chatList.length ?? 0,
+    return ScrollablePositionedList.builder(
+        itemPositionsListener: widget.positionsListener,
         reverse: true,
-        physics: BouncingScrollPhysics(),
-        controller: widget.scrollController,
         itemCount: widget.chatList.length ?? 0,
+        physics: BouncingScrollPhysics(),
+        itemScrollController: widget.scrollController,
         itemBuilder: (context, index) {
           final reversedIndex = widget.chatList.length - 1 - index;
-
+          checkingList[widget.chatList[reversedIndex].id] = index;
           if (widget.chatList[reversedIndex].msgType == "txt") {
             return ChatCloud(
               msgObj: widget.chatList[reversedIndex],
+              swipingHandler: widget.swipingHandler,
             );
           } else if (widget.chatList[reversedIndex].msgType == "aud") {
             return AudioCloud(
               msgObj: widget.chatList[reversedIndex],
               controller: _controller,
+              swipingHandler: widget.swipingHandler,
               otherUser: widget.otherUser,
             );
           } else if (widget.chatList[reversedIndex].msgType == "date") {
             return DateCloud(
               msgObj: widget.chatList[reversedIndex],
             );
-          } else {
+          } else if (widget.chatList[reversedIndex].msgType == "reply_txt") {
+            return ReplyCloud(
+              msgObj: widget.chatList[reversedIndex],
+              scroller: scroller,
+            );
+          } else if (widget.chatList[reversedIndex].msgType == "reply_aud") {
+            return AudioReplyCloud(
+              msgObj: widget.chatList[reversedIndex],
+              controller: _controller,
+              swipingHandler: widget.swipingHandler,
+              otherUser: widget.otherUser,
+              scroller: scroller,
+            );
+          } else if (widget.chatList[reversedIndex].msgType == "reply_img") {
+            return ImageReplyCloud(
+              msgObj: widget.chatList[reversedIndex],
+              swipingHandler: widget.swipingHandler,
+              otherUser: widget.otherUser,
+              scroller: scroller,
+            );
+          } else if (widget.chatList[reversedIndex].msgType == "img") {
             return MediaCloud(
               msgObj: widget.chatList[reversedIndex],
               otherUser: widget.otherUser,
+              swipingHandler: widget.swipingHandler,
             );
           }
+          return Container();
         });
   }
 

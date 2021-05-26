@@ -5,9 +5,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:foo/chat/audiocloud.dart';
+import 'package:foo/chat/chatcloud.dart';
+import 'package:foo/chat/mediacloud.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:foo/landing_page.dart';
 import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'chatcloudlist.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -21,6 +26,10 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
+String imageUTF = "\x69\x6d\x61\x67\x65";
+String audioUTF = "\x61\x75\x64\x69\x6f";
 
 class ChatScreen extends StatefulWidget {
   // final SocketChannel controller;
@@ -37,52 +46,83 @@ class ChatScreen extends StatefulWidget {
   _ChatScreenState createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen>
+    with SingleTickerProviderStateMixin {
   String curUser;
   String otherUser;
   String threadName;
   TextEditingController _chatController = TextEditingController();
-  ScrollController _scrollController = ScrollController();
+  // AutoScrollController _scrollController;
+  AnimationController _animationController;
   Thread thread;
   SharedPreferences _prefs;
   Timer timer;
-  String userStatus = "";
   bool keyboardUp;
   bool overlayVisible = false;
   OverlayEntry entry;
   StreamSubscription test;
+  ItemScrollController _scrollController = ItemScrollController();
+  ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
+
+  //
+  bool lastSeenHidden = false;
+  String userStatus = "";
+
+  //
+  Widget replyingMsg;
+  FocusNode focusNode = FocusNode();
+  ChatMessage replyingMsgObj;
 
   @override
   void initState() {
     super.initState();
     _prefs = widget.prefs;
     _getUserName();
+
+    // _scrollController = AutoScrollController(
+    //     // viewportBoundaryGetter: () => Rect.fromLTRB(0, 100, 0, 70),
+    //     axis: Axis.vertical);
+
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+
     otherUser = widget.thread.second.name;
     curUser = widget.thread.first.name;
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     thread = Hive.box('threads').get(threadName);
     sendSeenTickerIfNeeded();
-    listenToHive();
+
+    setPreferences();
+
     obtainStatus();
     updateLastChatMsgStatus();
+    //
     timer = Timer.periodic(
         Duration(seconds: 5), (Timer t) => _checkConnectionStatus());
+
+    //
+    // listenToHive();
+  }
+
+  void listenToHive() {
     test = Hive.box('threads').watch(key: threadName).listen((BoxEvent event) {
       print("hive listen");
 
       Thread existingThread = Hive.box('threads').get(threadName);
       if (mounted) {
-        if (existingThread.isOnline) {
+        if (existingThread.isOnline ?? false) {
           print("hes online");
 
           setState(() {
             userStatus = "Online";
           });
         } else {
-          setState(() {
-            userStatus = timeago.format(existingThread.lastSeen);
-          });
+          if ((existingThread.lastSeen ?? null) != null) {
+            setState(() {
+              userStatus = timeago.format(existingThread.lastSeen);
+            });
+          }
         }
       }
       if (existingThread.isTyping ?? false == true) {
@@ -110,8 +150,6 @@ class _ChatScreenState extends State<ChatScreen> {
       print('done');
     });
   }
-
-  void listenToHive() {}
 
   void sendSeenTickerIfNeeded() async {
     _prefs = await SharedPreferences.getInstance();
@@ -151,7 +189,8 @@ class _ChatScreenState extends State<ChatScreen> {
     timer?.cancel();
     test?.cancel();
     _chatController.dispose();
-    _scrollController.dispose();
+    // _scrollController.dispose();
+    _animationController?.dispose();
   }
 
   Future<void> obtainStatus() async {
@@ -166,6 +205,11 @@ class _ChatScreenState extends State<ChatScreen> {
             userStatus = "Online";
           });
         }
+      } else if (body['status'] == 'nope') {
+        setState(() {
+          userStatus = "";
+          lastSeenHidden = true;
+        });
       } else {
         DateTime time = DateTime.parse(body['status']);
         if (mounted) {
@@ -180,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _checkConnectionStatus() async {
     bool result = await DataConnectionChecker().hasConnection;
 
-    if ((result == true) && (userStatus == "")) {
+    if ((result == true) && (userStatus == "") && (lastSeenHidden != true)) {
       obtainStatus();
     } else if ((result == false) && (userStatus != "")) {
       setState(() {
@@ -196,29 +240,61 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _sendMessage(TextEditingController _chatController) {
-    var _id = DateTime.now().microsecondsSinceEpoch;
-    var curTime = DateTime.now();
-    // print(widget.channel.protocol);
-    var data = jsonEncode({
-      'message': _chatController.text,
-      'id': _id,
-      'time': curTime.toString(),
-      'from': curUser,
-      'to': otherUser,
-      'type': 'msg',
-    });
     if (_chatController.text.isNotEmpty) {
-      var threadBox = Hive.box('Threads');
+      var _id = DateTime.now().microsecondsSinceEpoch;
+      var curTime = DateTime.now();
 
+      var threadBox = Hive.box('Threads');
       Thread currentThread = threadBox.get(threadName);
-      currentThread.addChat(ChatMessage(
-        message: _chatController.text,
-        id: _id,
-        time: curTime,
-        senderName: curUser,
-        msgType: "txt",
-        isMe: true,
-      ));
+
+      var data;
+      ChatMessage obj;
+      if (replyingMsgObj != null) {
+        data = jsonEncode({
+          'message': _chatController.text,
+          'id': _id,
+          'time': curTime.toString(),
+          'to': otherUser,
+          'reply_id': replyingMsgObj.id,
+          'reply_txt': replyingMsgObj.msgType == "txt"
+              ? replyingMsgObj.message
+              : (replyingMsgObj.msgType == "img")
+                  ? imageUTF
+                  : audioUTF,
+          'type': 'reply_txt',
+        });
+
+        obj = ChatMessage(
+            message: _chatController.text,
+            isMe: true,
+            id: _id,
+            msgType: "reply_txt",
+            time: curTime,
+            senderName: curUser,
+            replyMsgId: replyingMsgObj.id,
+            replyMsgTxt: replyingMsgObj.msgType == "txt"
+                ? replyingMsgObj.message
+                : (replyingMsgObj.msgType == "img")
+                    ? imageUTF
+                    : audioUTF);
+      } else {
+        data = jsonEncode({
+          'message': _chatController.text,
+          'id': _id,
+          'time': curTime.toString(),
+          'to': otherUser,
+          'type': 'msg',
+        });
+        obj = ChatMessage(
+          message: _chatController.text,
+          id: _id,
+          time: curTime,
+          senderName: curUser,
+          msgType: "txt",
+          isMe: true,
+        );
+      }
+      currentThread.addChat(obj);
       currentThread.save();
 
       if (SocketChannel.isConnected) {
@@ -226,6 +302,10 @@ class _ChatScreenState extends State<ChatScreen> {
       } else {
         print("not connected");
       }
+      setState(() {
+        replyingMsg = null;
+        replyingMsgObj = null;
+      });
       _chatController.text = "";
     }
   }
@@ -234,50 +314,42 @@ class _ChatScreenState extends State<ChatScreen> {
     var _id = DateTime.now().microsecondsSinceEpoch;
     var curTime = DateTime.now();
 
+    ChatMessage obj;
+
+    if (replyingMsgObj != null) {
+      obj = ChatMessage(
+          filePath: path,
+          id: _id,
+          time: curTime,
+          senderName: curUser,
+          msgType: "reply_aud",
+          isMe: true,
+          replyMsgId: replyingMsgObj.id,
+          replyMsgTxt: replyingMsgObj.msgType == "txt"
+              ? replyingMsgObj.message
+              : (replyingMsgObj.msgType == "img")
+                  ? imageUTF
+                  : audioUTF);
+    } else {
+      obj = ChatMessage(
+        filePath: path,
+        id: _id,
+        time: curTime,
+        senderName: curUser,
+        msgType: "aud",
+        isMe: true,
+      );
+    }
+
     var threadBox = Hive.box('Threads');
     Thread currentThread = threadBox.get(threadName);
-    currentThread.addChat(ChatMessage(
-      filePath: path,
-      id: _id,
-      time: curTime,
-      // base64string: imgString,
-      senderName: curUser,
-      msgType: "aud",
-      isMe: true,
-    ));
+    currentThread.addChat(obj);
     currentThread.save();
-    // File file = File(path);
-    // String _extension = path.split('.').last;
-    // var bytes = await file.readAsBytes();
-    // String audString = base64Encode(bytes);
-    // print(audString);
-
-    // var data = jsonEncode({
-    //   'type': 'aud',
-    //   'ext': _extension,
-    //   'audio': audString,
-    //   'from': curUser,
-    //   'id': _id,
-    //   'to': otherUser,
-    //   'time': curTime.toString(),
-    // });
-    // print(data);
-    // if (SocketChannel.isConnected) {
-    //   var threadBox = Hive.box('Threads');
-
-    //   Thread currentThread = threadBox.get(threadName);
-    //   currentThread.addChat(ChatMessage(
-    //     filePath: file.path,
-    //     id: _id,
-    //     time: curTime,
-    //     base64string: audString,
-    //     senderName: curUser,
-    //     msgType: "aud",
-    //     isMe: true,
-    //   ));
-    //   currentThread.save();
-    //   SocketChannel.sendToChannel(data);
-    // }
+    setState(() {
+      replyingMsg = null;
+      replyingMsgObj = null;
+    });
+    _chatController.text = "";
   }
 
   void _sendImage() async {
@@ -285,70 +357,43 @@ class _ChatScreenState extends State<ChatScreen> {
     var curTime = DateTime.now();
     FilePickerResult result =
         await FilePicker.platform.pickFiles(withData: true);
-    File file = File(result.files.single.path);
-    // String _extension = result.files.single.extension;
-    // var bytes = result.files.single.bytes;
-    // print(bytes);
-    // Directory appDir = await getApplicationDocumentsDirectory();
-    // String path = appDir.path +
-    //     '/images/sent/' +
-    //     '${curUser}_${otherUser}_${curTime.toString()}' +
-    //     '.$_extension';
-    // File(path).createSync(recursive: true);
-    // File savedFile = await file.copy(path);
-    int curUserId = _prefs.getInt('id');
-    // var uri = Uri.http(localhost, '/api/upload_chat_media');
-    // var request = http.MultipartRequest('POST', uri)
-    //   ..fields['u_id'] = curUserId.toString()
-    //   ..fields['username'] = otherUser
-    //   ..files.add(await http.MultipartFile.fromPath('file', file.path));
-    // var response = await request.send();
-    // print(response.statusCode);
-    print(_id);
-    var threadBox = Hive.box('Threads');
-    Thread currentThread = threadBox.get(threadName);
-    currentThread.addChat(ChatMessage(
-      filePath: file.path,
-      id: _id,
-      time: curTime,
-      // base64string: imgString,
-      senderName: curUser,
-      msgType: "img",
-      isMe: true,
-    ));
-    currentThread.save();
 
-    // print(savedFile.path);
-
-    // String imgString = base64Encode(bytes);
-    // print(imgString);
-
-    // var data = jsonEncode({
-    //   'type': 'img',
-    //   'ext': _extension,
-    //   'image': imgString,
-    //   'from': curUser,
-    //   'id': _id,
-    //   'to': otherUser,
-    //   'time': curTime.toString(),
-    // });
-    // print(data);
-    // if (SocketChannel.isConnected) {
-    //   var threadBox = Hive.box('Threads');
-
-    //   Thread currentThread = threadBox.get(threadName);
-    //   currentThread.addChat(ChatMessage(
-    //     filePath: savedFile.path,
-    //     id: _id,
-    //     time: curTime,
-    //     base64string: imgString,
-    //     senderName: curUser,
-    //     msgType: "img",
-    //     isMe: true,
-    //   ));
-    //   currentThread.save();
-    //   SocketChannel.sendToChannel(data);
-    // }
+    if (result.files.length > 0) {
+      ChatMessage obj;
+      File file = File(result.files.single.path);
+      if (replyingMsgObj != null) {
+        obj = ChatMessage(
+            filePath: file.path,
+            id: _id,
+            time: curTime,
+            senderName: curUser,
+            msgType: "reply_img",
+            isMe: true,
+            replyMsgId: replyingMsgObj.id,
+            replyMsgTxt: replyingMsgObj.msgType == "txt"
+                ? replyingMsgObj.message
+                : (replyingMsgObj.msgType == "img")
+                    ? imageUTF
+                    : audioUTF);
+      } else {
+        obj = ChatMessage(
+            filePath: file.path,
+            id: _id,
+            time: curTime,
+            senderName: curUser,
+            msgType: "img",
+            isMe: true);
+      }
+      var threadBox = Hive.box('Threads');
+      Thread currentThread = threadBox.get(threadName);
+      currentThread.addChat(obj);
+      currentThread.save();
+      setState(() {
+        replyingMsg = null;
+        replyingMsgObj = null;
+      });
+      _chatController.text = "";
+    }
   }
 
   removeKey() {
@@ -366,10 +411,12 @@ class _ChatScreenState extends State<ChatScreen> {
           onTap: () {
             _prefs.setBool("${otherUser}_hasNew", false);
             overlayVisible = false;
-            _scrollController.animateTo(
-                _scrollController.position.minScrollExtent,
-                duration: Duration(milliseconds: 100),
-                curve: Curves.bounceIn);
+            _scrollController.scrollTo(
+                index: 0, duration: Duration(milliseconds: 400));
+            // _scrollController.animateTo(
+            //     _scrollController.position.minScrollExtent,
+            //     duration: Duration(milliseconds: 100),
+            //     curve: Curves.bounceIn);
             entry.remove();
           },
           child: Container(
@@ -427,6 +474,106 @@ class _ChatScreenState extends State<ChatScreen> {
     SocketChannel.sendToChannel(jsonEncode(data));
   }
 
+  //Fetches the preferences when the screen renders;
+  void setPreferences() {
+    String key = "am_i_hiding_last_seen_from_$otherUser";
+    if (_prefs.containsKey(key)) {
+      print("test");
+      setState(() {
+        hidingLastSeen = _prefs.getBool(key);
+      });
+    } else {
+      _prefs.setBool(key, false);
+      setState(() {
+        hidingLastSeen = false;
+      });
+    }
+  }
+
+  //Changes the preferences;
+  Future<void> changePreferences(bool val, Function innerSetState) async {
+    String key = "am_i_hiding_last_seen_from_$otherUser";
+
+    String action = "";
+    if (val) {
+      action = "add";
+    } else {
+      action = "remove";
+    }
+    var id = _prefs.getInt('id');
+    try {
+      var response = await http.get(Uri.http(localhost, '/api/last_seen',
+          {'id': id.toString(), 'username': otherUser, 'action': action}));
+
+      if (response.statusCode == 200) {
+        _prefs.setBool(key, val);
+        innerSetState(() {
+          hidingLastSeen = val;
+        });
+      } else {
+        CustomOverlay overlay = CustomOverlay(
+            context: context, animationController: _animationController);
+        overlay.show("Sorry. Something went wrong.\n Please try again later.");
+      }
+    } catch (e) {
+      CustomOverlay overlay = CustomOverlay(
+          context: context, animationController: _animationController);
+      overlay.show("Sorry. Something went wrong.\n Please try again later.");
+    }
+  }
+
+  //
+  bool hidingLastSeen;
+
+  showSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, tester) {
+          return Container(
+            height: 300,
+            child: Column(
+              children: [
+                Container(
+                  child: Text(
+                    "Settings",
+                    style: GoogleFonts.lato(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  alignment: Alignment.centerLeft,
+                  margin: EdgeInsets.fromLTRB(20, 20, 0, 8),
+                ),
+                Divider(),
+                Container(
+                  // height: 70,
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Spacer(),
+                      Text("Hide last seen",
+                          style: GoogleFonts.openSans(
+                            fontSize: 16,
+                          )),
+                      Spacer(flex: 4),
+                      Switch(
+                        value: hidingLastSeen,
+                        onChanged: (val) => changePreferences(val, tester),
+                      ),
+                      Spacer(),
+                    ],
+                  ),
+                ),
+                Divider(),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
   void checkAndSendKeyboardStatus() {
     if (MediaQuery.of(context).viewInsets.bottom != 0) {
       if ((keyboardUp == false) || (keyboardUp == null)) {
@@ -440,6 +587,36 @@ class _ChatScreenState extends State<ChatScreen> {
         keyboardUp = false;
         sendTypingStopped();
       }
+    }
+  }
+
+  swipingHandler(ChatMessage msgObj) {
+    if (msgObj.msgType == "txt") {
+      setState(() {
+        replyingMsgObj = msgObj;
+        replyingMsg = ChatCloud(
+          disableSwipe: true,
+          msgObj: msgObj,
+        );
+      });
+    } else if (msgObj.msgType == "img") {
+      setState(() {
+        replyingMsgObj = msgObj;
+        replyingMsg = ImageThumb(
+          msgObj: msgObj,
+        );
+      });
+    } else if (msgObj.msgType == "aud") {
+      setState(() {
+        replyingMsgObj = msgObj;
+        replyingMsg = AudioCloud(
+          disableSwipe: true,
+          msgObj: msgObj,
+        );
+      });
+    }
+    if (!focusNode.hasFocus) {
+      focusNode.requestFocus();
     }
   }
 
@@ -537,9 +714,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: CircleAvatar(
-                              radius: 35,
-                              child: Text(widget.thread.second.name),
+                            child: GestureDetector(
+                              onTap: () => showSettings(context),
+                              child: CircleAvatar(
+                                radius: 35,
+                                child: Text(widget.thread.second.name),
+                              ),
                             ),
                           )
                         ]),
@@ -565,13 +745,19 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (_prefs.containsKey("${otherUser}_hasNew") &&
                     _prefs.getBool("${otherUser}_hasNew") &&
                     !overlayVisible) {
-                  if (_scrollController.hasClients) {
-                    if ((_scrollController?.offset ?? 0) < 300) {
-                      removeKey();
-                    } else if (_scrollController.offset > 300) {
-                      showOverlay();
-                    }
+                  if (_itemPositionsListener.itemPositions.value.last.index >
+                      4) {
+                    showOverlay();
+                  } else {
+                    removeKey();
                   }
+                  // if (_scrollController.hasClients) {
+                  //   if ((_scrollController?.offset ?? 0) < 300) {
+                  //     removeKey();
+                  //   } else if (_scrollController.offset > 300) {
+                  //     showOverlay();
+                  //   }
+                  // }
                 }
                 print("rerender");
                 return ChatCloudList(
@@ -579,14 +765,48 @@ class _ChatScreenState extends State<ChatScreen> {
                     curUser: curUser,
                     otherUser: otherUser,
                     prefs: _prefs,
+                    swipingHandler: swipingHandler,
+                    positionsListener: _itemPositionsListener,
                     scrollController: _scrollController);
               },
             ),
           ),
+          Container(
+              // height: 70,
+              width: double.infinity,
+              // color: Colors.black,
+              color: Colors.transparent,
+              child: Dismissible(
+                key: UniqueKey(),
+                direction: DismissDirection.startToEnd,
+                onDismissed: (DismissDirection direction) {
+                  setState(() {
+                    replyingMsg = null;
+                    replyingMsgObj = null;
+                  });
+                },
+                confirmDismiss: (DismissDirection direction) {
+                  setState(() {
+                    replyingMsg = null;
+                    replyingMsgObj = null;
+                  });
+                  return Future.value(true);
+                },
+                child: Container(
+                  color: Colors.transparent,
+                  child: Row(children: [
+                    replyingMsg != null
+                        ? Icon(Icons.reply_rounded)
+                        : Container(),
+                    replyingMsg ?? Container(),
+                  ]),
+                ),
+              )),
           RecordApp(
             sendMessage: _sendMessage,
             sendImage: _sendImage,
             sendAudio: _sendAudio,
+            focusNode: focusNode,
           ),
         ]),
       ),
@@ -598,8 +818,9 @@ class RecordApp extends StatefulWidget {
   final Function sendMessage;
   final Function sendImage;
   final Function sendAudio;
+  final FocusNode focusNode;
 
-  RecordApp({this.sendMessage, this.sendImage, this.sendAudio});
+  RecordApp({this.sendMessage, this.sendImage, this.sendAudio, this.focusNode});
 
   @override
   _RecordAppState createState() => _RecordAppState();
@@ -765,6 +986,7 @@ class _RecordAppState extends State<RecordApp>
               ),
               Expanded(
                 child: TextField(
+                  focusNode: widget.focusNode,
                   controller: _chatController,
                   decoration: InputDecoration.collapsed(
                       hintText: "Send a message",
@@ -966,6 +1188,46 @@ class _RecordAppState extends State<RecordApp>
                 )
               : Container(),
         ],
+      ),
+    );
+  }
+}
+
+class ImageThumb extends StatelessWidget {
+  final ChatMessage msgObj;
+  ImageThumb({this.msgObj});
+
+  FutureOr getImage() async {
+    if (await File(this.msgObj.filePath).exists()) {
+      return File(this.msgObj.filePath);
+    } else {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      width: 70,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: FutureBuilder(
+            future: getImage(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.data == null) {
+                  return Container(
+                    width: 70,
+                    child: Row(
+                      children: [Icon(Icons.image), Text("Image")],
+                    ),
+                  );
+                }
+                return Image.file(snapshot.data, fit: BoxFit.cover);
+              }
+              return Container();
+            }),
       ),
     );
   }
