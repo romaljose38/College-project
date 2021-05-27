@@ -3,16 +3,32 @@ import 'package:intl/intl.dart' as intl;
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
 
-class ReplyCloud extends StatelessWidget {
+class ReplyCloud extends StatefulWidget {
   final ChatMessage msgObj;
   final Function scroller;
-  ReplyCloud({this.msgObj, this.scroller});
+  bool hasSelectedSomething;
+  final Function outerSetState;
+  Map forwardMap;
+  Function forwardRemover;
 
-  String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
+  ReplyCloud(
+      {this.msgObj,
+      this.scroller,
+      this.forwardRemover,
+      this.hasSelectedSomething,
+      this.outerSetState,
+      this.forwardMap});
+
+  @override
+  _ReplyCloudState createState() => _ReplyCloudState();
+}
+
+class _ReplyCloudState extends State<ReplyCloud> {
+  String getTime() => intl.DateFormat('hh:mm').format(this.widget.msgObj.time);
 
   cloudContent(BuildContext context) {
     return Row(
-        mainAxisAlignment: (this.msgObj.isMe == true)
+        mainAxisAlignment: (this.widget.msgObj.isMe == true)
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         children: [
@@ -26,13 +42,15 @@ class ReplyCloud extends StatelessWidget {
                       minWidth: 70),
                   child: Stack(children: <Widget>[
                     Wrap(
-                      crossAxisAlignment: msgObj.isMe
+                      crossAxisAlignment: widget.msgObj.isMe
                           ? WrapCrossAlignment.end
                           : WrapCrossAlignment.start,
                       direction: Axis.vertical,
                       children: [
                         GestureDetector(
-                          onTap: () => this.scroller(this.msgObj.replyMsgId),
+                          onTap: () => this
+                              .widget
+                              .scroller(this.widget.msgObj.replyMsgId),
                           child: Container(
                             width: 70,
                             decoration: BoxDecoration(
@@ -42,20 +60,20 @@ class ReplyCloud extends StatelessWidget {
                                   topRight: Radius.circular(20)),
                             ),
                             padding: EdgeInsets.all(10),
-                            child: (this.msgObj.replyMsgTxt == imageUTF)
+                            child: (this.widget.msgObj.replyMsgTxt == imageUTF)
                                 ? Row(children: [
                                     Icon(Icons.image, size: 15),
                                     Text("Image",
                                         style: TextStyle(fontSize: 11))
                                   ])
-                                : (this.msgObj.replyMsgTxt == audioUTF)
+                                : (this.widget.msgObj.replyMsgTxt == audioUTF)
                                     ? Row(children: [
                                         Icon(Icons.headset_rounded, size: 15),
                                         Text("Audio",
                                             style: TextStyle(fontSize: 11))
                                       ])
                                     : Text(
-                                        this.msgObj.replyMsgTxt,
+                                        this.widget.msgObj.replyMsgTxt,
                                         style: TextStyle(
                                           fontSize: 12,
                                         ),
@@ -69,7 +87,7 @@ class ReplyCloud extends StatelessWidget {
                               maxWidth: MediaQuery.of(context).size.width * .7,
                               minWidth: 90),
                           decoration: BoxDecoration(
-                              gradient: (this.msgObj.isMe == true)
+                              gradient: (this.widget.msgObj.isMe == true)
                                   ? LinearGradient(
                                       begin: Alignment.topRight,
                                       end: Alignment.bottomLeft,
@@ -93,10 +111,10 @@ class ReplyCloud extends StatelessWidget {
                                           Color.fromRGBO(240, 247, 255, 1)
                                         ]),
                               borderRadius: BorderRadius.only(
-                                topLeft: msgObj.isMe
+                                topLeft: widget.msgObj.isMe
                                     ? Radius.circular(20)
                                     : Radius.circular(0),
-                                topRight: msgObj.isMe
+                                topRight: widget.msgObj.isMe
                                     ? Radius.circular(0)
                                     : Radius.circular(20),
                                 bottomLeft: Radius.circular(20),
@@ -107,7 +125,7 @@ class ReplyCloud extends StatelessWidget {
                                     blurRadius: 6,
                                     spreadRadius: .5,
                                     offset: Offset(1, 5),
-                                    color: (this.msgObj.isMe == true)
+                                    color: (this.widget.msgObj.isMe == true)
                                         ? Color.fromRGBO(248, 198, 220, 1)
                                         : Color.fromRGBO(218, 228, 237, 1))
                               ]),
@@ -116,9 +134,9 @@ class ReplyCloud extends StatelessWidget {
                             child: Container(
                               margin: EdgeInsets.only(left: 5, top: 5),
                               child: Text(
-                                this.msgObj.message,
+                                this.widget.msgObj.message,
                                 style: TextStyle(
-                                  color: this.msgObj.isMe == true
+                                  color: this.widget.msgObj.isMe == true
                                       ? Colors.white
                                       : Colors.black,
                                 ),
@@ -139,17 +157,18 @@ class ReplyCloud extends StatelessWidget {
                                 textAlign: TextAlign.right,
                                 textDirection: TextDirection.rtl,
                                 style: TextStyle(
-                                  color: this.msgObj.isMe == true
+                                  color: this.widget.msgObj.isMe == true
                                       ? Colors.white70
                                       : Colors.black,
                                   fontSize: 9.0,
                                 )),
                             SizedBox(width: 3.0),
-                            (this.msgObj.isMe == true)
+                            (this.widget.msgObj.isMe == true)
                                 ? (Icon(
-                                    this.msgObj.haveReachedServer
-                                        ? (this.msgObj.haveReceived
-                                            ? (this.msgObj.hasSeen == true)
+                                    this.widget.msgObj.haveReachedServer
+                                        ? (this.widget.msgObj.haveReceived
+                                            ? (this.widget.msgObj.hasSeen ==
+                                                    true)
                                                 ? Icons.done_outline_sharp
                                                 : Icons.done_all
                                             : Icons.done)
@@ -164,15 +183,53 @@ class ReplyCloud extends StatelessWidget {
         ]);
   }
 
+  bool hasSelected = false;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-        // color: Colors.black,
-        // margin: EdgeInsets.all(5),
-        width: double.infinity,
-        // height: 15,
-        // alignment: Alignment.centerRight,
-        child: cloudContent(context));
+    return GestureDetector(
+      onLongPress: (widget.msgObj.haveReachedServer ?? false)
+          ? () {
+              print("on long press");
+              // widget.outerSetState(() {
+              //   widget.hasSelectedSomething = true;
+              // });
+              widget.outerSetState();
+              setState(() {
+                hasSelected = true;
+              });
+              widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+              print(widget.forwardMap);
+            }
+          : null,
+      onTap: (widget.msgObj.haveReachedServer ?? false)
+          ? (widget.hasSelectedSomething
+              ? () {
+                  if (hasSelected == true) {
+                    widget.forwardMap.remove(widget.msgObj.id);
+                    if (widget.forwardMap.length == 0) {
+                      widget.forwardRemover();
+                    }
+                    setState(() {
+                      hasSelected = false;
+                    });
+                  } else if (hasSelected == false) {
+                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                    setState(() {
+                      hasSelected = true;
+                    });
+                  }
+                  print(widget.forwardMap);
+                }
+              : null)
+          : null,
+      child: Container(
+          color: (widget.hasSelectedSomething && hasSelected)
+              ? Colors.blue.withOpacity(.3)
+              : Colors.transparent,
+          width: double.infinity,
+          child: cloudContent(context)),
+    );
     // return Row(mainAxisAlignment: MainAxisAlignment.start,
     //     // msgObj.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
     //     children: [cloudContent(context)]);

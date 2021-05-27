@@ -7,12 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:foo/chat/audiocloud.dart';
 import 'package:foo/chat/chatcloud.dart';
-import 'package:foo/chat/mediacloud.dart';
+import 'package:foo/chat/forward_screen.dart';
 import 'package:foo/custom_overlay.dart';
-import 'package:foo/landing_page.dart';
 import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'chatcloudlist.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -27,6 +27,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:foo/screens/feed_icons.dart' as icons;
 
 String imageUTF = "\x69\x6d\x61\x67\x65";
 String audioUTF = "\x61\x75\x64\x69\x6f";
@@ -73,6 +74,10 @@ class _ChatScreenState extends State<ChatScreen>
   FocusNode focusNode = FocusNode();
   ChatMessage replyingMsgObj;
 
+  //
+  bool isForwarding = false;
+  Map<int, ChatMessage> forwardedMsgs = <int, ChatMessage>{};
+
   @override
   void initState() {
     super.initState();
@@ -102,7 +107,7 @@ class _ChatScreenState extends State<ChatScreen>
         Duration(seconds: 5), (Timer t) => _checkConnectionStatus());
 
     //
-    // listenToHive();
+    listenToHive();
   }
 
   void listenToHive() {
@@ -522,6 +527,112 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
+  deleteforMe() {
+    var threadBox = Hive.box('Threads');
+    Thread currentThread = threadBox.get(threadName);
+    forwardedMsgs.forEach((key, value) {
+      currentThread.deleteChat(key);
+    });
+    setState(() {
+      isForwarding = false;
+    });
+    currentThread.save();
+    forwardedMsgs.clear();
+  }
+
+  deleteForEveryone() {
+    forwardedMsgs.forEach((key, value) {
+      var data = jsonEncode({
+        'type': "chat_delete",
+        'id': value.id,
+        'to': otherUser,
+      });
+      SocketChannel.sendToChannel(data);
+    });
+  }
+
+  showDeletionSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          height: 300,
+          child: Column(
+            children: [
+              Container(
+                child: Text(
+                  "Settings",
+                  style: GoogleFonts.lato(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                alignment: Alignment.centerLeft,
+                margin: EdgeInsets.fromLTRB(20, 20, 0, 8),
+              ),
+              Divider(),
+              Container(
+                // height: 70,
+                width: double.infinity,
+                child: Row(
+                  children: [
+                    Spacer(),
+                    TextButton(
+                      child: Text(
+                        "Delete for me",
+                        style: GoogleFonts.openSans(
+                          fontSize: 16,
+                        ),
+                      ),
+                      onPressed: () {
+                        deleteforMe();
+                        Navigator.pop(context);
+                      },
+                    ),
+                    Spacer(flex: 4),
+                  ],
+                ),
+              ),
+              Divider(),
+              Container(
+                // height: 70,
+                width: double.infinity,
+                child: Row(
+                  children: [
+                    Spacer(),
+                    TextButton(
+                      child: Text(
+                        "Delete for everyone",
+                        style: GoogleFonts.openSans(
+                          fontSize: 16,
+                        ),
+                      ),
+                      onPressed: () {
+                        if (SocketChannel.isConnected) {
+                          deleteForEveryone();
+                          deleteforMe();
+                          Navigator.pop(context);
+                        } else {
+                          CustomOverlay overlay = CustomOverlay(
+                              context: context,
+                              animationController: _animationController);
+                          overlay.show(
+                              "Something went wrong.\n Please check your network connection and try again later");
+                        }
+                      },
+                    ),
+                    Spacer(flex: 4),
+                  ],
+                ),
+              ),
+              Divider(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   //
   bool hidingLastSeen;
 
@@ -620,12 +731,26 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
+  forwardMessage() {
+    setState(() {
+      isForwarding = !isForwarding;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     checkAndSendKeyboardStatus();
     return WillPopScope(
       onWillPop: () async {
+        print("outer");
         _prefs.setString("curUser", "");
+        // Navigator.push(context,);
+        // if (isForwarding) {
+        //   setState(() {
+        //     isForwarding = false;
+        //   });
+        //   return false;
+        // }
         return true;
       },
       child: Scaffold(
@@ -635,95 +760,106 @@ class _ChatScreenState extends State<ChatScreen>
             preferredSize: Size(double.infinity, 100),
             child: SafeArea(
               child: Container(
-                  height: 100,
+                  height: 80,
                   decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          stops: [
-                            .3,
-                            1
-                          ],
-                          colors: [
-                            Color.fromRGBO(248, 251, 255, 1),
-                            Color.fromRGBO(240, 247, 255, 1)
-                          ]),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow: [
-                        BoxShadow(
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: Offset(0, 3),
-                          color: Color.fromRGBO(226, 235, 243, 1),
-                        )
-                      ]),
+                    color: Colors.white,
+                    // gradient: LinearGradient(
+                    //     begin: Alignment.topLeft,
+                    //     end: Alignment.bottomRight,
+                    //     stops: [
+                    //       .3,
+                    //       1
+                    //     ],
+                    //     colors: [
+                    //       Color.fromRGBO(248, 251, 255, 1),
+                    //       Color.fromRGBO(240, 247, 255, 1)
+                    //     ]),
+                    // borderRadius: BorderRadius.all(Radius.circular(10)),
+                    // boxShadow: [
+                    //   BoxShadow(
+                    //     spreadRadius: 2,
+                    //     blurRadius: 5,
+                    //     offset: Offset(0, 3),
+                    //     color: Color.fromRGBO(226, 235, 243, 1),
+                    //   )
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      padding: const EdgeInsets.all(10.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Column(
+                          Icon(Icons.arrow_back_rounded,
+                              color: Colors.black, size: 23),
+                          Spacer(),
+                          CircleAvatar(
+                            child: Text(curUser[0]),
+                            radius: 20,
+                          ),
+                          Spacer(),
+                          Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ValueListenableBuilder(
-                                //     valueListenable: Hive.box("Threads")
-                                //         .listenable(keys: [threadName]),
-                                //     builder: (context, box, widget) {
-                                //       var existingThread = box.get(threadName);
-                                //       var lastSeen = existingThread.lastSeen;
-                                //       String time;
-                                //       if (lastSeen != null) {
-                                //         String time = timeago
-                                //             .format(existingThread.lastSeen);
-                                //       }
-
-                                //       print("value listenable chck");
-
-                                //       var text = (existingThread.isTyping ==
-                                //               true)
-                                //           ? "typing"
-                                //           : (existingThread.isOnline ?? false
-                                //               ? "Online"
-                                //               : time ?? userStatus);
-                                //       return Text(
-                                //         text,
-                                //         style: TextStyle(
-                                //             fontSize: 15,
-                                //             color: Color.fromRGBO(
-                                //                 180, 190, 255, 1)),
-                                //       );
-                                //     }),
                                 Text(
-                                  userStatus,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Color.fromRGBO(180, 190, 255, 1),
-                                  ),
+                                  otherUser,
+                                  textAlign: TextAlign.left,
+                                  textDirection: TextDirection.ltr,
+                                  style: GoogleFonts.lato(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600),
                                 ),
-                                SizedBox(height: 7),
-                                Text(widget.thread.second.name,
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color.fromRGBO(59, 79, 108, 1)))
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: GestureDetector(
-                              onTap: () => showSettings(context),
-                              child: CircleAvatar(
-                                radius: 35,
-                                child: Text(widget.thread.second.name),
-                              ),
-                            ),
-                          )
-                        ]),
-                  )),
+                                SizedBox(height: 6),
+                                Text(userStatus,
+                                    textDirection: TextDirection.ltr,
+                                    textAlign: TextAlign.left,
+                                    style: GoogleFonts.lato(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600)),
+                              ]),
+                          Spacer(flex: 7),
+                          isForwarding
+                              ? Container(
+                                  width: 70,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      GestureDetector(
+                                          onTap: showDeletionSheet,
+                                          child: Icon(Icons.delete_rounded,
+                                              size: 23)),
+                                      GestureDetector(
+                                          onTap: () {
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => ForwardScreen(
+                                                  msgs: this.forwardedMsgs,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          child: Icon(Icons.forward_rounded,
+                                              size: 23)),
+                                    ],
+                                  ))
+                              : GestureDetector(
+                                  onTap: () => showOverlay(),
+                                  child: Container(
+                                      width: 70,
+                                      // transform: Matrix4.identity()..rotateZ(pi / 2),
+                                      // transformAlignment: Alignment.center,
+                                      child: RotatedBox(
+                                        quarterTurns: 3,
+                                        child: Icon(icons.Feed.colon,
+                                            color: Colors.black, size: 26),
+                                      )
+                                      // child: Icon(icons.Feed.colon,
+                                      //     color: Colors.black, size: 20),
+                                      ),
+                                )
+                        ],
+                      ))),
             )),
         body: Column(children: <Widget>[
           Expanded(
@@ -767,7 +903,9 @@ class _ChatScreenState extends State<ChatScreen>
                     prefs: _prefs,
                     swipingHandler: swipingHandler,
                     positionsListener: _itemPositionsListener,
-                    scrollController: _scrollController);
+                    scrollController: _scrollController,
+                    msgMap: forwardedMsgs,
+                    forwardMsgHandler: forwardMessage);
               },
             ),
           ),

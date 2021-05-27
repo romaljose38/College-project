@@ -254,6 +254,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             
                         }
                 )
+            elif i.notif_type=="delete":
+                final_list.append({
+                    'type':'chat_delete',
+                    'from':i.notif_from.username,
+                    'id':i.chatmsg_id,
+                    'notif_id':i.id,
+                })
 
         print(final_list)
         return final_list
@@ -360,6 +367,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 to = text_data_json['to']
                 self.recent_chat_with  = to
                 text_data_json.pop("to")
+                await self.channel_layer.group_send(
+                        to,
+                        text_data_json
+                    )
+            elif text_data_json['type'] == "chat_delete":
+                text_data_json['from'] = self.room_group_name
+                to = text_data_json['to']
+                text_data_json.pop('to')
+                await self.create_chat_delete_notif(to,text_data_json['id'])
                 await self.channel_layer.group_send(
                         to,
                         text_data_json
@@ -515,7 +531,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
  
             return False, None, None, None
         return False, None, None, None
-       
+    
+    @database_sync_to_async
+    def create_chat_delete_notif(self,to,id):
+        user = User.objects.get(username=to)
+        notification = Notification(chatmsg_id=int(id),notif_from=self.user,notif_to=user,notif_type="delete")
+        
+
+
 
     @database_sync_to_async
     def create_chat_reply_message(self, message, to, time, ref_id, reply_txt, reply_id):
@@ -612,6 +635,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         #     print(to_user_obj.username,from_user_obj.username)
         json_data = json.dumps(event)
         await self.send(text_data=json_data)
+
+
+    async def chat_delete(self,event):
+        await self.send(text_data=json.dumps(event))
+
 
     async def notification(self,event):
         print(event)

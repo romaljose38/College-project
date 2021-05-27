@@ -27,6 +27,8 @@ class CustomOverlay {
             child: FadeTransition(
               opacity: this._animation,
               child: Container(
+                constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(this.context).size.width * .7),
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                     color: Colors.black,

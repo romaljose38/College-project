@@ -3,18 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
 import 'package:swipe_to/swipe_to.dart';
 
-class ChatCloud extends StatelessWidget {
+class ChatCloud extends StatefulWidget {
   final ChatMessage msgObj;
   final Function swipingHandler;
   final bool disableSwipe;
+  final Function outerSetState;
+  bool hasSelectedSomething;
+  Map forwardMap;
+   Function forwardRemover;
 
-  ChatCloud({this.msgObj, this.swipingHandler, this.disableSwipe = false});
+  ChatCloud(
+      {this.msgObj,
+      this.swipingHandler,
+      this.forwardRemover,
+      this.disableSwipe = false,
+      this.outerSetState,
+      this.forwardMap,
+      this.hasSelectedSomething});
 
-  String getTime() => intl.DateFormat('hh:mm').format(this.msgObj.time);
+  @override
+  _ChatCloudState createState() => _ChatCloudState();
+}
+
+class _ChatCloudState extends State<ChatCloud> {
+  String getTime() => intl.DateFormat('hh:mm').format(this.widget.msgObj.time);
 
   Row cloudContent(BuildContext context) {
     return Row(
-        mainAxisAlignment: (this.msgObj.isMe == true)
+        mainAxisAlignment: (this.widget.msgObj.isMe == true)
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         children: [
@@ -23,7 +39,7 @@ class ChatCloud extends StatelessWidget {
               // alignment: Alignment.topLeft,
               padding: EdgeInsets.all(5),
               decoration: BoxDecoration(
-                  gradient: (this.msgObj.isMe == true)
+                  gradient: (this.widget.msgObj.isMe == true)
                       ? LinearGradient(
                           begin: Alignment.topRight,
                           end: Alignment.bottomLeft,
@@ -46,13 +62,13 @@ class ChatCloud extends StatelessWidget {
                               Color.fromRGBO(248, 251, 255, 1),
                               Color.fromRGBO(240, 247, 255, 1)
                             ]),
-                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
                   boxShadow: [
                     BoxShadow(
                         blurRadius: 6,
                         spreadRadius: .5,
                         offset: Offset(1, 5),
-                        color: (this.msgObj.isMe == true)
+                        color: (this.widget.msgObj.isMe == true)
                             ? Color.fromRGBO(248, 198, 220, 1)
                             : Color.fromRGBO(218, 228, 237, 1))
                   ]),
@@ -65,9 +81,9 @@ class ChatCloud extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.fromLTRB(5, 5, 5, 15),
                       child: Text(
-                        this.msgObj.message,
+                        this.widget.msgObj.message,
                         style: TextStyle(
-                          color: this.msgObj.isMe == true
+                          color: this.widget.msgObj.isMe == true
                               ? Colors.white
                               : Colors.black,
                         ),
@@ -84,17 +100,17 @@ class ChatCloud extends StatelessWidget {
                               textAlign: TextAlign.right,
                               textDirection: TextDirection.rtl,
                               style: TextStyle(
-                                color: this.msgObj.isMe == true
+                                color: this.widget.msgObj.isMe == true
                                     ? Colors.white70
                                     : Colors.black,
                                 fontSize: 9.0,
                               )),
                           SizedBox(width: 3.0),
-                          (this.msgObj.isMe == true)
+                          (this.widget.msgObj.isMe == true)
                               ? (Icon(
-                                  this.msgObj.haveReachedServer
-                                      ? (this.msgObj.haveReceived
-                                          ? (this.msgObj.hasSeen == true)
+                                  this.widget.msgObj.haveReachedServer
+                                      ? (this.widget.msgObj.haveReceived
+                                          ? (this.widget.msgObj.hasSeen == true)
                                               ? Icons.done_outline_sharp
                                               : Icons.done_all
                                           : Icons.done)
@@ -117,12 +133,60 @@ class ChatCloud extends StatelessWidget {
         iconColor: Colors.black54,
         iconSize: 16,
         child: cloudContent(context),
-        onLeftSwipe: msgObj.isMe ? () => swipingHandler(this.msgObj) : null,
-        onRightSwipe: msgObj.isMe ? null : () => swipingHandler(this.msgObj),
+        onLeftSwipe: widget.msgObj.isMe
+            ? () => widget.swipingHandler(this.widget.msgObj)
+            : null,
+        onRightSwipe: widget.msgObj.isMe
+            ? null
+            : () => widget.swipingHandler(this.widget.msgObj),
       );
+
+  bool hasSelected = false;
 
   @override
   Widget build(BuildContext context) {
-    return this.disableSwipe ? cloudContent(context) : swipeAble(context);
+    return GestureDetector(
+        onLongPress: (widget.msgObj.haveReachedServer ?? false)
+          ? () {
+              print("on long press");
+              // widget.outerSetState(() {
+              //   widget.hasSelectedSomething = true;
+              // });
+              widget.outerSetState();
+              setState(() {
+                hasSelected = true;
+              });
+              widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+              print(widget.forwardMap);
+            }
+          : null,
+      onTap: (widget.msgObj.haveReachedServer ?? false)
+          ? (widget.hasSelectedSomething
+              ? () {
+                  if (hasSelected == true) {
+                    widget.forwardMap.remove(widget.msgObj.id);
+                    if (widget.forwardMap.length == 0) {
+                      widget.forwardRemover();
+                    }
+                    setState(() {
+                      hasSelected = false;
+                    });
+                  } else if (hasSelected == false) {
+                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                    setState(() {
+                      hasSelected = true;
+                    });
+                  }
+                  print(widget.forwardMap);
+                }
+              : null)
+          : null,
+        child: Container(
+            color: (widget.hasSelectedSomething && hasSelected)
+                ? Colors.blue.withOpacity(.3)
+                : Colors.transparent,
+            child: this.widget.disableSwipe
+                ? cloudContent(context)
+                : swipeAble(context)));
   }
 }
