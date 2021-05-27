@@ -41,7 +41,7 @@ class SocketChannel {
     print("local check");
     if (!isConnected && !(_timer?.isActive ?? false)) {
       print("sanm poi");
-      _timer = Timer.periodic(Duration(seconds: 10), (timer) => handleSocket());
+      _timer = Timer.periodic(Duration(seconds: 5), (timer) => handleSocket());
     }
   }
   //
@@ -171,7 +171,19 @@ class SocketChannel {
       changeUserStatus(data);
     } else if (data['type'] == 'story_view') {
       addStoryView(data);
+    } else if (data['type'] == 'chat_delete') {
+      deleteChat(data);
     }
+  }
+
+  void deleteChat(data) async {
+    var me = _prefs.getString('username');
+    String threadName = me + '_' + data['from'];
+    var threadBox = Hive.box('Threads');
+    var existingThread = threadBox.get(threadName);
+    existingThread.deleteChat(data['id']);
+    existingThread.save();
+    sendToChannel(jsonEncode({'n_r': data['notif_id']}));
   }
 
   void _createReplyThread(data) async {
@@ -322,6 +334,11 @@ class SocketChannel {
     String threadName = me + '_' + data['from'];
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
+    existingThread.chatList.forEach((e) {
+      print(e.msgType);
+      print(e.id);
+      print(e.id.runtimeType);
+    });
     existingThread.updateChatSeenStatus(data['id']);
     existingThread.save();
     sendToChannel(jsonEncode({'n_r': data['notif_id']}));
@@ -340,7 +357,7 @@ class SocketChannel {
           timeCreated: curTime,
           userId: data['user_id'],
           notifId: data['id']);
-      print("reache here");
+
       var notifBox = await Hive.openBox('Notifications');
       await notifBox.put(curTime.toString(), notif);
     }

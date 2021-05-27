@@ -63,6 +63,17 @@ class ChatMessage extends HiveObject {
     this.replyMsgId,
     this.filePath,
   });
+
+  factory ChatMessage.fromObj(obj) {
+    return ChatMessage(
+        message: obj.message,
+        id: obj.id,
+        senderName: obj.senderName,
+        isMe: obj.isMe,
+        msgType: obj.msgType,
+        filePath: obj.filePath,
+        time: obj.time);
+  }
 }
 
 @HiveType(typeId: 2)
@@ -114,17 +125,41 @@ class Thread extends HiveObject {
 
   bool updateChatStatus(id) {
     for (int i = 0; i < chatList.length; i++) {
-      if (chatList[chatList.length - 1 - i].id == id) {
-        chatList[chatList.length - 1 - i].haveReceived = true;
+      var index = chatList.length - 1 - i;
+
+      if (chatList[index].msgType == "date") {
+        continue;
+      }
+      if (chatList[index].id == id) {
+        chatList[index].haveReceived = true;
         return true;
       }
     }
     return false;
   }
 
+  void deleteChat(id) {
+    for (int i = 0; i < chatList.length; i++) {
+      var index = chatList.length - 1 - i;
+      if (chatList[index].msgType == "date") {
+        continue;
+      }
+      if (chatList[index].id == id) {
+        if (chatList[index + 1].msgType == "date" &&
+            chatList[index - 1].msgType == "date") {
+          chatList.removeAt(index - 1);
+        }
+        chatList.removeAt(index);
+      }
+    }
+  }
+
   bool updateChatSeenStatus(id) {
     for (int i = 0; i < chatList.length; i++) {
       var index = chatList.length - 1 - i;
+      if (chatList[index].msgType == "date") {
+        continue;
+      }
       if (chatList[index].id <= id) {
         if (chatList[index].hasSeen != true) {
           chatList[index].hasSeen = true;
@@ -137,9 +172,10 @@ class Thread extends HiveObject {
 
   bool updateChatId({id, newId}) {
     for (int i = 0; i < chatList.length; i++) {
-      print(chatList[chatList.length - 1 - i].id);
+      if (chatList[chatList.length - 1 - i].msgType == "date") {
+        continue;
+      }
       if (chatList[chatList.length - 1 - i].id == id) {
-        print("yep inside model the updation is happening");
         chatList[chatList.length - 1 - i].id = newId;
         chatList[chatList.length - 1 - i].haveReachedServer = true;
         return true;

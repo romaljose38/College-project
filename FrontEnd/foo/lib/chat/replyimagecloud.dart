@@ -21,11 +21,19 @@ class ImageReplyCloud extends StatefulWidget {
   final bool disableSwipe;
   final Function scroller;
   final Function swipingHandler;
+  bool hasSelectedSomething;
+  final Function outerSetState;
+  Map forwardMap;
+  Function forwardRemover;
 
   ImageReplyCloud(
       {this.msgObj,
       this.otherUser,
+      this.forwardRemover,
       this.scroller,
+      this.hasSelectedSomething,
+      this.outerSetState,
+      this.forwardMap,
       this.disableSwipe = false,
       this.swipingHandler});
 
@@ -538,10 +546,52 @@ class _ImageReplyCloudState extends State<ImageReplyCloud> {
         ),
       );
 
+  bool hasSelected = false;
+
   @override
   Widget build(BuildContext context) {
     print(widget.msgObj.filePath);
-    return widget.disableSwipe ? cloudContent() : swipeAble();
+    return GestureDetector(
+        onLongPress: (widget.msgObj.haveReachedServer ?? false)
+            ? () {
+                print("on long press");
+                // widget.outerSetState(() {
+                //   widget.hasSelectedSomething = true;
+                // });
+                widget.outerSetState();
+                setState(() {
+                  hasSelected = true;
+                });
+                widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                print(widget.forwardMap);
+              }
+            : null,
+        onTap: (widget.msgObj.haveReachedServer ?? false)
+            ? (widget.hasSelectedSomething
+                ? () {
+                    if (hasSelected == true) {
+                      widget.forwardMap.remove(widget.msgObj.id);
+                      if (widget.forwardMap.length == 0) {
+                        widget.forwardRemover();
+                      }
+                      setState(() {
+                        hasSelected = false;
+                      });
+                    } else if (hasSelected == false) {
+                      widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                      setState(() {
+                        hasSelected = true;
+                      });
+                    }
+                    print(widget.forwardMap);
+                  }
+                : null)
+            : null,
+        child: Container(
+            color: (widget.hasSelectedSomething && hasSelected)
+                ? Colors.blue.withOpacity(.3)
+                : Colors.transparent,
+            child: widget.disableSwipe ? cloudContent() : swipeAble()));
   }
 }
 

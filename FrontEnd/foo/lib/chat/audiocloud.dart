@@ -21,12 +21,20 @@ class AudioCloud extends StatefulWidget {
   final String otherUser;
   final Function swipingHandler;
   final bool disableSwipe;
+  final Function outerSetState;
+  bool hasSelectedSomething;
+  Map forwardMap;
+  Function forwardRemover;
 
   AudioCloud(
       {this.msgObj,
       this.controller,
+      this.forwardRemover,
       this.otherUser,
       this.swipingHandler,
+      this.outerSetState,
+      this.hasSelectedSomething,
+      this.forwardMap,
       this.disableSwipe = false});
 
   @override
@@ -409,10 +417,52 @@ class _AudioCloudState extends State<AudioCloud> {
           : () => widget.swipingHandler(widget.msgObj),
       child: cloudContent());
 
+  bool hasSelected = false;
+
   @override
   Widget build(BuildContext context) {
     print(widget.msgObj.filePath);
-    return widget.disableSwipe ? cloudContent() : swipeAble();
+    return GestureDetector(
+        onLongPress: (widget.msgObj.haveReachedServer ?? false)
+            ? () {
+                print("on long press");
+                // widget.outerSetState(() {
+                //   widget.hasSelectedSomething = true;
+                // });
+                widget.outerSetState();
+                setState(() {
+                  hasSelected = true;
+                });
+                widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                print(widget.forwardMap);
+              }
+            : null,
+        onTap: (widget.msgObj.haveReachedServer ?? false)
+            ? (widget.hasSelectedSomething
+                ? () {
+                    if (hasSelected == true) {
+                      widget.forwardMap.remove(widget.msgObj.id);
+                      if (widget.forwardMap.length == 0) {
+                        widget.forwardRemover();
+                      }
+                      setState(() {
+                        hasSelected = false;
+                      });
+                    } else if (hasSelected == false) {
+                      widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                      setState(() {
+                        hasSelected = true;
+                      });
+                    }
+                    print(widget.forwardMap);
+                  }
+                : null)
+            : null,
+        child: Container(
+            color: (widget.hasSelectedSomething && hasSelected)
+                ? Colors.blue.withOpacity(.3)
+                : Colors.transparent,
+            child: widget.disableSwipe ? cloudContent() : swipeAble()));
   }
 }
 

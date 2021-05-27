@@ -20,6 +20,8 @@ class ChatCloudList extends StatefulWidget {
   final SharedPreferences prefs;
   final Function swipingHandler;
   final ItemPositionsListener positionsListener;
+  final Function forwardMsgHandler;
+  final Map msgMap;
 
   ChatCloudList({
     Key key,
@@ -28,7 +30,9 @@ class ChatCloudList extends StatefulWidget {
     this.curUser,
     this.otherUser,
     this.prefs,
+    this.msgMap,
     this.swipingHandler,
+    this.forwardMsgHandler,
     this.positionsListener,
   });
 
@@ -40,12 +44,14 @@ class _ChatCloudListState extends State<ChatCloudList>
     with SingleTickerProviderStateMixin {
   int day;
   AnimationController _controller;
-
+  bool hasSelectedSomething = false;
+  Map<int, ChatMessage> forwardedMsgs = <int, ChatMessage>{};
   Map<int, int> checkingList = <int, int>{};
-
+  ValueNotifier notifer;
   @override
   void initState() {
     super.initState();
+    notifer = ValueNotifier(hasSelectedSomething);
     _controller =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     // _setname();
@@ -58,6 +64,11 @@ class _ChatCloudListState extends State<ChatCloudList>
   //         duration: Duration(milliseconds: 100), curve: Curves.linear);
   //   }
   // }
+
+  removeForward() {
+    widget.forwardMsgHandler();
+    print("function works");
+  }
 
   scroller(id) async {
     print(checkingList);
@@ -80,60 +91,118 @@ class _ChatCloudListState extends State<ChatCloudList>
     //     physics: BouncingScrollPhysics(),
     //     controller: widget.scrollController,
     //     itemCount: widget.chatList.length ?? 0,
-    return ScrollablePositionedList.builder(
-        itemPositionsListener: widget.positionsListener,
-        reverse: true,
-        itemCount: widget.chatList.length ?? 0,
-        physics: BouncingScrollPhysics(),
-        itemScrollController: widget.scrollController,
-        itemBuilder: (context, index) {
-          final reversedIndex = widget.chatList.length - 1 - index;
-          checkingList[widget.chatList[reversedIndex].id] = index;
-          if (widget.chatList[reversedIndex].msgType == "txt") {
-            return ChatCloud(
+    return WillPopScope(
+      onWillPop: () async {
+        if (hasSelectedSomething) {
+          setState(() {
+            hasSelectedSomething = false;
+          });
+          widget.forwardMsgHandler();
+          return Future.value(false);
+        }
+        return Future.value(true);
+      },
+      child: ScrollablePositionedList.builder(
+          itemPositionsListener: widget.positionsListener,
+          reverse: true,
+          itemCount: widget.chatList.length ?? 0,
+          physics: BouncingScrollPhysics(),
+          itemScrollController: widget.scrollController,
+          itemBuilder: (context, index) {
+            final reversedIndex = widget.chatList.length - 1 - index;
+            checkingList[widget.chatList[reversedIndex].id] = index;
+
+            var chat = ChatCloud(
               msgObj: widget.chatList[reversedIndex],
               swipingHandler: widget.swipingHandler,
+              outerSetState: outersetState,
+              hasSelectedSomething: hasSelectedSomething,
+              forwardMap: widget.msgMap,
+              forwardRemover: removeForward,
             );
-          } else if (widget.chatList[reversedIndex].msgType == "aud") {
-            return AudioCloud(
+            var audio = AudioCloud(
               msgObj: widget.chatList[reversedIndex],
               controller: _controller,
               swipingHandler: widget.swipingHandler,
               otherUser: widget.otherUser,
+              hasSelectedSomething: hasSelectedSomething,
+              outerSetState: outersetState,
+              forwardMap: widget.msgMap,
+              forwardRemover: removeForward,
             );
-          } else if (widget.chatList[reversedIndex].msgType == "date") {
-            return DateCloud(
+            var date = DateCloud(
               msgObj: widget.chatList[reversedIndex],
             );
-          } else if (widget.chatList[reversedIndex].msgType == "reply_txt") {
-            return ReplyCloud(
+            var txtReply = ReplyCloud(
               msgObj: widget.chatList[reversedIndex],
+              hasSelectedSomething: hasSelectedSomething,
+              outerSetState: outersetState,
+              forwardMap: widget.msgMap,
               scroller: scroller,
+              forwardRemover: removeForward,
             );
-          } else if (widget.chatList[reversedIndex].msgType == "reply_aud") {
-            return AudioReplyCloud(
+            var audReply = AudioReplyCloud(
               msgObj: widget.chatList[reversedIndex],
               controller: _controller,
               swipingHandler: widget.swipingHandler,
               otherUser: widget.otherUser,
               scroller: scroller,
+              hasSelectedSomething: hasSelectedSomething,
+              outerSetState: outersetState,
+              forwardMap: widget.msgMap,
+              forwardRemover: removeForward,
             );
-          } else if (widget.chatList[reversedIndex].msgType == "reply_img") {
-            return ImageReplyCloud(
+
+            var imgReply = ImageReplyCloud(
               msgObj: widget.chatList[reversedIndex],
               swipingHandler: widget.swipingHandler,
               otherUser: widget.otherUser,
+              hasSelectedSomething: hasSelectedSomething,
+              outerSetState: outersetState,
+              forwardMap: widget.msgMap,
               scroller: scroller,
+              forwardRemover: removeForward,
             );
-          } else if (widget.chatList[reversedIndex].msgType == "img") {
-            return MediaCloud(
+            var image = MediaCloud(
               msgObj: widget.chatList[reversedIndex],
               otherUser: widget.otherUser,
               swipingHandler: widget.swipingHandler,
+              hasSelectedSomething: hasSelectedSomething,
+              outerSetState: outersetState,
+              forwardMap: widget.msgMap,
+              forwardRemover: removeForward,
             );
-          }
-          return Container();
-        });
+            return Container(child: (() {
+              if (widget.chatList[reversedIndex].msgType == "txt") {
+                return chat;
+              } else if (widget.chatList[reversedIndex].msgType == "aud") {
+                return audio;
+              } else if (widget.chatList[reversedIndex].msgType == "date") {
+                return date;
+              } else if (widget.chatList[reversedIndex].msgType ==
+                  "reply_txt") {
+                return txtReply;
+              } else if (widget.chatList[reversedIndex].msgType ==
+                  "reply_aud") {
+                return audReply;
+              } else if (widget.chatList[reversedIndex].msgType ==
+                  "reply_img") {
+                return imgReply;
+              } else if (widget.chatList[reversedIndex].msgType == "img") {
+                return image;
+              } else {
+                return Container();
+              }
+            })());
+          }),
+    );
+  }
+
+  outersetState() {
+    widget.forwardMsgHandler();
+    setState(() {
+      hasSelectedSomething = true;
+    });
   }
 
   @override

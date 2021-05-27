@@ -38,15 +38,18 @@ class ChatTile extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(.1),
-              offset: Offset(0, 0),
-              blurRadius: 8,
-            )
-          ]),
+        color: Colors.white,
+        // borderRadius: BorderRadius.circular(15),
+        border: Border.symmetric(
+            horizontal: BorderSide(color: Colors.grey.shade100, width: .6)),
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.black.withOpacity(.1),
+        //     offset: Offset(0, 0),
+        //     blurRadius: 8,
+        //   )
+        // ],
+      ),
       padding: EdgeInsets.symmetric(vertical: 13),
       width: MediaQuery.of(context).size.width,
       child: ListTile(
