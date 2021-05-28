@@ -171,6 +171,10 @@ class SocketChannel {
       changeUserStatus(data);
     } else if (data['type'] == 'story_view') {
       addStoryView(data);
+    } else if (data['type'] == 'story_comment') {
+      addStoryComment(data);
+    } else if (data['type'] == 'story_delete') {
+      deleteOldStory(data);
     } else if (data['type'] == 'chat_delete') {
       deleteChat(data);
     }
@@ -311,6 +315,34 @@ class SocketChannel {
           viewedTime: DateTime.parse(data['time']),
         ),
         data['id'].toInt());
+    userStory.save();
+    sendToChannel(jsonEncode({'s_r': data['n_id']}));
+  }
+
+  void addStoryComment(data) {
+    String me = _prefs.getString('username');
+    var storyBox = Hive.box('MyStories');
+    print(data);
+
+    var userStory = storyBox.get(me);
+    userStory.addComment(
+        StoryComment(
+          username: data['u'],
+          viewedTime: DateTime.parse(data['time']),
+          commentId: data['c_id'],
+          comment: data['comment'],
+        ),
+        data['s_id'].toInt());
+    userStory.save();
+    sendToChannel(jsonEncode({'s_n_r': data['c_id']}));
+  }
+
+  void deleteOldStory(data) {
+    var storyBox = Hive.box('MyStories');
+    print(data);
+
+    var userStory = storyBox.get(data['u']);
+    userStory.deleteOldStory(id: data['s_id'].toInt());
     userStory.save();
     sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }

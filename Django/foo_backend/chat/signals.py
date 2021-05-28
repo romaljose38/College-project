@@ -1,10 +1,11 @@
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import post_save, pre_delete, m2m_changed
 from .models import (
     Profile, 
     ChatMessage, 
     FriendRequest, 
     Story,
     StoryNotification,
+    StoryComment
     )
 from django.conf import settings
 from django.dispatch import receiver
@@ -125,3 +126,41 @@ def story_viewed(sender, instance, **kwargs):
             async_to_sync(channel_layer.group_send)(instance.user.username,_dict)
     
     # pass
+
+@receiver(post_save,sender=StoryComment)
+def story_comment(sender, instance, **kwargs):
+    if(kwargs['created']==True):
+        channel_layer = get_channel_layer()
+        story = instance.story
+        user = story.user
+        time = timezone.now().strftime("%Y-%m-%d %H:%M:%S") 
+        if instance.story.user.profile.online:
+            _dict = {
+                'type':'story_comment',
+                'u':instance.username,
+                'comment':instance.comment,
+                'c_id':instance.id,
+                's_id':instance.story.id,
+                'time':time
+            }
+            async_to_sync(channel_layer.group_send)(user.username,_dict)
+
+@receiver(pre_delete, sender=Story)
+def story_deleted_notif(sender, instance, **kwargs):
+    friends_qs = instance.user.profile.friends.all()
+    channel_layer = get_channel_layer()
+    test=[]
+    for user in friends_qs:
+        notification = StoryNotification.objects.create(storyId=instance.id,notif_type="story_delete",to_user=user,from_user=instance.user)
+        notification.save()
+        if user.profile.online:
+            print(user.username)
+            _dict = {
+                'type':'story_delete',
+                'u':instance.user.username,
+                's_id':instance.id,
+                'n_id':notification.id,
+            }
+            test.append(_dict)
+            async_to_sync(channel_layer.group_send)(user.username,_dict)
+    print(test)

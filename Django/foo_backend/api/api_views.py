@@ -15,6 +15,7 @@ from chat.models import (
     Comment,
     FriendRequest,
     Story,
+    StoryComment,
     Thread,
     ChatMessage,
     Notification
@@ -304,6 +305,31 @@ def user_story_viewed(request):
         print(e)
         return Response(status=400)
 
+@api_view(['POST'])
+def user_story_commented(request):
+    try:
+        print(request.data)
+        username = request.data['username']
+        story = Story.objects.get(id=int(request.data['id']))
+        commentInstance = StoryComment.objects.create(
+            username=username, story=story, comment=request.data['comment'])
+        commentInstance.save()
+
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400,data={'notif': str(e)})
+
+@api_view(['GET'])
+def story_delete_handler(request):
+    try:
+        print(request.data)
+        story = Story.objects.get(id=int(request.query_params['id']))
+        story.delete()
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400, data={'notif': str(e)})
 
 
 @api_view(['POST'])

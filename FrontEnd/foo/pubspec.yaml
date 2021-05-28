@@ -60,6 +60,7 @@ dependencies:
   video_thumbnail: ^0.3.3
   swipe_to: ^0.0.1+8
   scrollable_positioned_list: ^0.1.10
+  better_player: ^0.0.68
   
 
 dev_dependencies:

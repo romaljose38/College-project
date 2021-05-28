@@ -389,6 +389,9 @@ class Story extends HiveObject {
   @HiveField(6)
   List<StoryUser> viewedUsers = <StoryUser>[];
 
+  @HiveField(7)
+  List<StoryComment> comments = <StoryComment>[];
+
   Story(
       {this.file,
       this.views,
@@ -450,6 +453,28 @@ class UserStoryModel extends HiveObject {
     }
   }
 
+  void addComment(StoryComment comment, int storyId) {
+    bool doesNotExist = true;
+
+    for (int i = 0; i < stories.length; i++) {
+      if (stories[i].storyId == storyId) {
+        if (stories[i].comments == null) {
+          stories[i].comments = [];
+        }
+        for (int j = stories[i].comments.length - 1; j >= 0; j--) {
+          if (stories[i].comments[j].commentId == comment.commentId) {
+            doesNotExist = false;
+            break;
+          }
+        }
+        if (doesNotExist) {
+          stories[i].comments.add(comment);
+          break;
+        }
+      }
+    }
+  }
+
   bool isEmpty() {
     if (stories != null) {
       if (stories.length == 0) {
@@ -458,6 +483,14 @@ class UserStoryModel extends HiveObject {
       return false; //returns false if length > 0 as length is non-negative
     }
     return true; //return true if stories is null
+  }
+
+  void deleteOldStory({int id}) {
+    for (int i = 0; i < stories.length; i++) {
+      if (stories[i].storyId == id) {
+        stories.removeAt(i);
+      }
+    }
   }
 }
 
@@ -479,4 +512,24 @@ class StoryUser extends HiveObject {
   DateTime viewedTime;
 
   StoryUser({this.username, this.viewedTime});
+}
+
+@HiveType(typeId: 10)
+class StoryComment extends HiveObject {
+  @HiveField(0)
+  String username;
+
+  @HiveField(1)
+  String profilePicture;
+
+  @HiveField(2)
+  DateTime viewedTime;
+
+  @HiveField(3)
+  String comment;
+
+  @HiveField(4)
+  int commentId;
+
+  StoryComment({this.username, this.viewedTime, this.comment, this.commentId});
 }

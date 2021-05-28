@@ -237,18 +237,26 @@ class FriendRequest(models.Model):
 def user_story_directory_path(instance, filename):
     extension = filename.split(".")[-1]
     return 'user_{0}/stories/{1}'.format(instance.user.id, filename[:4]+'.'+extension)
-  
+
 class Story(models.Model):
 
     user = models.ForeignKey(User, related_name="stories", on_delete=models.CASCADE)
     file = models.FileField(upload_to=user_story_directory_path)
     time_created = models.DateTimeField(auto_now_add=True)
     views = models.ManyToManyField(User, related_name="story_views", blank=True)
+    
+class StoryComment(models.Model):
+
+    username = models.CharField(max_length=50)
+    story = models.ForeignKey(Story, related_name="story_comment", on_delete=models.CASCADE)
+    comment = models.TextField(max_length=1000)
+    time_created = models.DateTimeField(auto_now_add=True)
 
 class StoryNotification(models.Model):
     STORY_NOTIF_TYPES = (('story_add','story_add'),('story_del','story_del'),('story_view','story_view'))
 
-    story = models.ForeignKey(Story, on_delete=models.CASCADE)
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, blank=True, null=True)
+    storyId = models.IntegerField(blank=True, null=True)
     to_user = models.ForeignKey(User, on_delete=models.CASCADE)
     notif_type = models.CharField(max_length=15,choices=STORY_NOTIF_TYPES)
     time_created = models.CharField(max_length=20)

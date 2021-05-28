@@ -357,13 +357,14 @@ class _StoryScreenState extends State<StoryScreen>
                 child: TextButton(
                   child: Text("Reply", style: TextStyle(color: Colors.white)),
                   onPressed: () {
-                    _animController.forward();
+                    _animController.stop();
                     if (mediaType == 'video') videoController?.pause();
                     showModalBottomSheet(
                         backgroundColor: Colors.transparent,
                         context: context,
                         builder: (context) {
-                          return ReplyModalSheet();
+                          return ReplyModalSheet(
+                              storyId: stories[_currentIndex].storyId);
                         })
                       ..then((_) {
                         _animController.forward();
@@ -743,7 +744,8 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                         context: context,
                         builder: (context) {
                           return ModalSheetContent(
-                              viewers: stories[_currentIndex].viewedUsers);
+                            story: stories[_currentIndex],
+                          );
                         })
                       ..then((_) {
                         _animController.forward();

@@ -65,6 +65,16 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='StoryComment',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('username', models.CharField(max_length=50)),
+                ('comment', models.TextField(max_length=1000)),
+                ('time_created', models.DateTimeField(auto_now_add=True)),
+                ('story', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='story_comment', to='chat.story')),
+            ],
+        ),
+        migrations.CreateModel(
             name='Profile',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),

@@ -13,6 +13,7 @@ import 'package:video_player/video_player.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:better_player/better_player.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:ionicons/ionicons.dart';
@@ -28,95 +29,11 @@ class VideoUploadScreen extends StatefulWidget {
 }
 
 class _VideoUploadScreenState extends State<VideoUploadScreen> {
-  final TextEditingController captionController = TextEditingController();
-  SharedPreferences prefs;
-  VideoPlayerController _controller1;
-  VideoPlayerController _controller2;
-  File _thumbnail;
+  bool hasImage = false;
+  bool _isBlurred = false;
+  File imageFile;
   File _generatedThumbnail;
-  bool uploading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller1 = VideoPlayerController.file(widget.mediaInserted)
-      ..initialize().then((_) {
-        _generateThumbnail();
-        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-        setState(() {});
-      })
-      ..setLooping(true)
-      ..setVolume(0.8);
-    _controller2 = VideoPlayerController.file(widget.mediaInserted)
-      ..initialize().then((_) {
-        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-        setState(() {});
-      });
-  }
-
-  @override
-  void dispose() {
-    _controller1.dispose();
-    _controller2.dispose();
-
-    super.dispose();
-  }
-
-  Future<void> _generateThumbnail() async {
-    final Duration duration = _controller1.value.duration;
-    final int timeOfMiddleThumbnail = duration.inMilliseconds ~/ 2;
-    final fileName = await VideoThumbnail.thumbnailFile(
-      video: widget.mediaInserted.path,
-      thumbnailPath: (await getApplicationDocumentsDirectory()).path,
-      imageFormat: ImageFormat.JPEG,
-      timeMs: timeOfMiddleThumbnail,
-      quality: 75,
-    );
-
-    setState(() {
-      _generatedThumbnail = File(fileName);
-    });
-  }
-
-  Future<void> _uploadThumbnail() async {
-    if (await Permission.storage.request().isGranted) {
-      FilePickerResult result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-      );
-
-      setState(() {
-        _thumbnail = File(result.files.single.path);
-      });
-      Navigator.pop(context);
-    }
-  }
-
-  void _revertToGeneratedThumbnail() async {
-    setState(() {
-      _thumbnail = null;
-    });
-    Navigator.pop(context);
-  }
-
-  Future<void> _upload(BuildContext context) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String username = prefs.getString('username');
-    var uri =
-        Uri.http(localhost, '/api/upload'); //This web address has to be changed
-    var request = http.MultipartRequest('POST', uri)
-      ..fields['username'] = username
-      ..fields['type'] = 'vid'
-      ..fields['caption'] = captionController.text
-      ..files.add(await http.MultipartFile.fromPath(
-        'file',
-        widget.mediaInserted.path,
-      ));
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      print('Uploaded');
-      Navigator.push(context, MaterialPageRoute(builder: (_) => FeedScreen()));
-    }
-  }
+  // VideoPlayerController _controller;
 
   GestureDetector bottomSheetTile(
           String type, Color color, IconData icon, Function onTap) =>
@@ -208,274 +125,298 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         });
   }
 
+  Future<void> _generateThumbnail() async {
+    await Permission.storage.request();
+    final VideoPlayerController _controller =
+        VideoPlayerController.file(widget.mediaInserted);
+    final Duration duration = _controller.value.duration;
+    final int timeOfMiddleThumbnail = duration.inMilliseconds ~/ 2;
+    final fileName = await VideoThumbnail.thumbnailFile(
+      video: widget.mediaInserted.path,
+      thumbnailPath: (await getApplicationDocumentsDirectory()).path,
+      imageFormat: ImageFormat.JPEG,
+      timeMs: timeOfMiddleThumbnail, //timeOfMiddleThumbnail,
+      quality: 75,
+    );
+
+    setState(() {
+      print("Thumbnail is being generated!");
+      _generatedThumbnail = File(fileName);
+      print("Thumbnail = $_generatedThumbnail");
+    });
+  }
+
+  Future<void> _uploadThumbnail() async {
+    if (await Permission.storage.request().isGranted) {
+      FilePickerResult result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+      );
+
+      setState(() {
+        imageFile = File(result.files.single.path);
+      });
+      Navigator.pop(context);
+    }
+  }
+
+  void _revertToGeneratedThumbnail() async {
+    setState(() {
+      imageFile = null;
+    });
+    Navigator.pop(context);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _generateThumbnail();
+  }
+
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
     return Scaffold(
-      body: SingleChildScrollView(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(20.0),
         child: Container(
-          child: Column(
+          padding: EdgeInsets.only(top: 30.0, left: 4.0),
+          color: Colors.transparent,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Container(
-                margin: EdgeInsets.all(10),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(25),
-                      child: ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          padding: EdgeInsets.only(top: 10.0),
-                          width: double.infinity,
-                          height: 465.0,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                          ),
-                          child: _controller2.value.isInitialized
-                              ? Container(
-                                  height: 330,
-                                  // decoration: B,
-                                  child: AspectRatio(
-                                    aspectRatio: _controller2.value.aspectRatio,
-                                    child: VideoPlayer(_controller2),
-                                  ),
-                                )
-                              : Container(),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.only(top: 10.0),
-                      width: double.infinity,
-                      height: 471.0,
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(25.0),
-                      ),
-                      child: Column(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10.0),
-                            child: Column(
-                              children: <Widget>[
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: <Widget>[
-                                    IconButton(
-                                      icon: Icon(Icons.arrow_back),
-                                      iconSize: 20.0,
-                                      color: Colors.white,
-                                      onPressed: () => Navigator.pop(context),
-                                    ),
-                                    Container(
-                                      width: 30.0,
-                                      height: 30.0,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black45,
-                                            offset: Offset(0, 2),
-                                            blurRadius: 6.0,
-                                          ),
-                                        ],
-                                      ),
-                                      child: CircleAvatar(
-                                        child: ClipOval(
-                                          child: Image(
-                                            height: 50.0,
-                                            width: 50.0,
-                                            image: AssetImage(stories[2]),
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Feed.colon),
-                                      color: Colors.white,
-                                      onPressed: () => print('More'),
-                                    ),
-                                  ],
-                                ),
-                                InkWell(
-                                  onDoubleTap: () => print('Like post'),
-                                  child: _controller1.value.isInitialized
-                                      ? Container(
-                                          height: 330,
-                                          // decoration: B,
-                                          child: AspectRatio(
-                                            aspectRatio:
-                                                _controller1.value.aspectRatio,
-                                            child: Stack(
-                                              children: [
-                                                VideoPlayer(_controller1),
-                                                Positioned.fill(
-                                                  //   child: GestureDetector(
-                                                  // behavior:
-                                                  //     HitTestBehavior.opaque,
-                                                  // onTap: () {
-                                                  //   setState(() {
-                                                  //     _controller1
-                                                  //             .value.isPlaying
-                                                  //         ? _controller1.pause()
-                                                  //         : _controller1.play();
-                                                  //   });
-                                                  // },
-                                                  // onHorizontalDragUpdate:
-                                                  //     movePosition,
-                                                  // onVerticalDragUpdate:
-                                                  //     changeVolume,
-                                                  child: BasicOverlayWidget(
-                                                      controller: _controller1),
-                                                ) //),
-                                              ],
-                                            ),
-                                          ),
-                                        )
-                                      : Container(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: null,
               ),
-              SizedBox(
-                height: 20,
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 100,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black26, width: 1),
-                        //borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: TextField(
-                        controller: captionController,
-                        maxLength: 30,
-                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                        decoration: InputDecoration(
-                          hintText: "Describe your video",
-                          contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black26, width: 1),
-                      ),
-                      child: Stack(
-                        children: [
-                          _generatedThumbnail != null
-                              ? Center(
-                                  child: Image(
-                                      image: FileImage(_thumbnail == null
-                                          ? _generatedThumbnail
-                                          : _thumbnail),
-                                      fit: BoxFit.cover),
-                                )
-                              : CircularProgressIndicator(),
-                          Positioned(
-                              left: 0,
-                              bottom: 0,
-                              height: 20,
-                              width: 100,
-                              child: GestureDetector(
-                                onTap: () {
-                                  showOverlay();
-                                  print("Change Thumbnail");
-                                },
-                                child: ClipRRect(
-                                  child: BackdropFilter(
-                                    filter:
-                                        ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                                    child: Container(
-                                      color: Colors.black.withOpacity(0.4),
-                                      child: Center(
-                                        child: Text("Select cover",
-                                            style:
-                                                TextStyle(color: Colors.white)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ))
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              // Padding(
-              //   padding:
-              //       const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              //   child: Container(
-              //     decoration: BoxDecoration(
-              //       border: Border.all(color: Colors.black26, width: 1),
-              //       borderRadius: BorderRadius.circular(10),
-              //     ),
-              //     child: TextField(
-              //       controller: captionController,
-              //       maxLength: 30,
-              //       maxLengthEnforcement: MaxLengthEnforcement.enforced,
-              //       decoration: InputDecoration(
-              //         hintText: "Caption",
-              //         contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
-              //         border: InputBorder.none,
-              //       ),
-              //     ),
-              //   ),
-              // ),
-              uploading
-                  ? Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1,
-                      ))
-                  : Container(),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: BottomAppBar(
+      body: Stack(
+        children: [
+          Row(
+            children: [
+              Container(
+                  height: size.height,
+                  width: size.width * .5,
+                  color: Color.fromRGBO(0, 1, 25, 1)),
+              Container(
+                height: size.height,
+                width: size.width * .5,
+              )
+            ],
+          ),
+          Positioned(
+              top: 0,
+              left: 0,
+              child: Container(
+                  height: size.height * .4,
+                  width: size.width,
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(0, 1, 25, 1),
+                    borderRadius: BorderRadius.only(
+                      bottomRight: Radius.circular(70),
+                    ),
+                  ))),
+          Positioned(
+            top: size.height * .4,
+            child: Container(
+              height: size.height * .6,
+              width: size.width,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(70),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: size.width,
+            height: size.height - 50,
+            color: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 100),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Container(
+                        width: size.width * 0.9,
+                        height: size.width * 0.9,
+                        margin:
+                            //EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                            EdgeInsets.only(
+                                top: 40, bottom: 10, left: 20, right: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25.0),
+                          boxShadow: [
+                            BoxShadow(
+                                // color: Color.fromRGBO(190, 205, 232, .5),
+                                color: Colors.black.withOpacity(.2),
+                                blurRadius: 4,
+                                spreadRadius: 1,
+                                offset: Offset(0, 3)),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 500),
+                                  height: size.height * 0.7,
+                                  width: size.height * 0.7,
+                                  decoration: _generatedThumbnail != null
+                                      ? BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          image: DecorationImage(
+                                            image: imageFile == null
+                                                ? FileImage(
+                                                    _generatedThumbnail) //FileImage(imageFile)
+                                                : FileImage(imageFile),
+                                            fit: BoxFit.cover,
+                                          ))
+                                      : BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          color: Colors.cyan,
+                                        ),
+                                  // decoration: hasImage
+                                  //     ? backgroundImage()
+                                  //     : backgroundColor(),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: _isBlurred ? 5 : 0,
+                                      sigmaY: _isBlurred ? 5 : 0,
+                                    ),
+                                    child: Center(
+                                      child: IconButton(
+                                          icon: Icon(Icons.play_arrow),
+                                          color: Colors.white,
+                                          iconSize: 80,
+                                          onPressed: () {
+                                            Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        VideoPlayerProvider(
+                                                          videoFile: widget
+                                                              .mediaInserted,
+                                                        )));
+                                          }),
+                                    ),
+                                  ),
+                                )),
+                            Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Align(
+                                alignment: Alignment.topRight,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(30),
+                                  child: GestureDetector(
+                                    onTap: showOverlay,
+                                    child: Container(
+                                      height: 35,
+                                      width: 40,
+                                      color: Colors.black.withOpacity(0.2),
+                                      child: BackdropFilter(
+                                        child: Icon(Icons.edit,
+                                            size: 18, color: Colors.white),
+                                        filter: ImageFilter.blur(
+                                          sigmaX: _isBlurred ? 0.0 : 2.0,
+                                          sigmaY: _isBlurred ? 0.0 : 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )),
+                    SizedBox(height: 20),
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: EdgeInsets.only(left: 4),
+                              child: Text(
+                                "Blurred background",
+                                style: GoogleFonts.lato(
+                                  fontSize: 13,
+                                  color: Color.fromRGBO(6, 8, 53, 1),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Switch(
+                            value: _isBlurred,
+                            onChanged: (bool val) {
+                              print(val);
+                              setState(() {
+                                _isBlurred = !_isBlurred;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Container(
+                      height: 45,
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      decoration: BoxDecoration(
+                        // borderRadius: BorderRadius.only(
+                        //   topLeft: Radius.circular(10),
+                        //   bottomLeft: Radius.circular(10),
+                        // ),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        border: Border.all(
+                          width: 0.2,
+                          color: Colors.black.withOpacity(.3),
+                        ),
+                      ),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: "Add a caption",
+                          hintStyle: GoogleFonts.lato(
+                              fontSize: 12, color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(5),
+                        ),
+                        cursorColor: Colors.green,
+                        cursorWidth: 1,
+                      ),
+                    ),
+                    // Text
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        height: 70,
+        width: MediaQuery.of(context).size.width,
         color: Colors.white,
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                child: Text("Cancel"),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+            TextButton(
+              onPressed: () {},
+              child: Text(
+                "Next",
+                style:
+                    GoogleFonts.lato(fontSize: 17, fontWeight: FontWeight.w500),
               ),
-            ),
-            Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                child: Text("Upload"),
-                onPressed: () {
-                  setState(() {
-                    uploading = true;
-                  });
-                  return _upload(context);
-                },
-              ),
-            ),
+            )
           ],
         ),
       ),
@@ -483,116 +424,105 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   }
 }
 
-class BasicOverlayWidget extends StatefulWidget {
-  final VideoPlayerController controller;
-
-  BasicOverlayWidget({@required this.controller});
-
-  @override
-  _BasicOverlayWidgetState createState() => _BasicOverlayWidgetState();
-}
-
-class _BasicOverlayWidgetState extends State<BasicOverlayWidget> {
-  // Controller functions for the video
-
-  Future<void> movePosition(DragUpdateDetails details) async {
-    Duration currPosition = await widget.controller.position;
-    Duration newPosition;
-
-    if (details.primaryDelta > 0) {
-      newPosition = Duration(milliseconds: currPosition.inMilliseconds + 1000);
-    } else {
-      newPosition = Duration(milliseconds: currPosition.inMilliseconds - 1000);
-    }
-    setState(() {
-      widget.controller.seekTo(newPosition);
-    });
-  }
-
-  double videoVolume = 0.8;
-  bool isChangingVolume = false;
-
-  Future<void> changeVolume(DragUpdateDetails details) async {
-    if (details.primaryDelta < 0 && videoVolume < 1) {
-      //Drag up is negative
-      videoVolume += 0.01;
-    } else if (details.primaryDelta > 0 && videoVolume > 0) {
-      videoVolume -= 0.01;
-    }
-    setState(() {
-      widget.controller.setVolume(videoVolume);
-    });
-  }
-
-  //
-
-  Widget buildIndicator() {
-    return VideoProgressIndicator(
-      widget.controller,
-      allowScrubbing: true,
-    );
-  }
-
-  Widget buildPlay() => widget.controller.value.isPlaying
-      ? Container()
-      : Container(
-          alignment: Alignment.center,
-          color: Colors.black26,
-          child: Icon(
-            Icons.play_arrow,
-            color: Colors.white,
-            size: 80,
-          ),
-        );
-
-  Widget buildVolume() => isChangingVolume
-      ? Container(
-          alignment: Alignment.center,
-          color: Colors.black26,
-          child: Text(
-            "${(videoVolume * 100).toInt()}",
-            style: GoogleFonts.raleway(
-              color: Colors.white,
-              fontSize: 40,
-            ),
-          ),
-        )
-      : Container();
-
+class CurvedBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          setState(() {
-            widget.controller.value.isPlaying
-                ? widget.controller.pause()
-                : widget.controller.play();
-          });
-        },
-        onHorizontalDragUpdate: movePosition,
-        onVerticalDragUpdate: changeVolume,
-        onVerticalDragStart: (DragStartDetails details) {
-          setState(() {
-            isChangingVolume = true;
-          });
-        },
-        onVerticalDragEnd: (DragEndDetails details) {
-          setState(() {
-            isChangingVolume = false;
-          });
-        },
-        child: Stack(children: <Widget>[
-          buildPlay(),
-          buildVolume(),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: buildIndicator(),
+    var size = MediaQuery.of(context).size;
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Container(
+          //     height: size.height * .3,
+          //     width: size.width,
+          //     color: Color.fromRGBO(0, 1, 25, 1)),
+          // Positioned(
+          //   top: size.height * .3,
+          //   child: Container(
+          //     height: size.height * .7,
+          //     width: size.width,
+          //     color: Colors.white,
+          //   ),
+          // ),
+          Row(
+            children: [
+              Container(
+                  height: size.height,
+                  width: size.width * .5,
+                  color: Color.fromRGBO(0, 1, 25, 1)),
+              Container(
+                height: size.height,
+                width: size.width * .5,
+              )
+            ],
           ),
-        ]),
+          Positioned(
+              top: 0,
+              left: 0,
+              child: Container(
+                  height: size.height * .3,
+                  width: size.width,
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(0, 1, 25, 1),
+                    borderRadius: BorderRadius.only(
+                      bottomRight: Radius.circular(70),
+                    ),
+                  ))),
+          Positioned(
+            top: size.height * .3,
+            child: Container(
+              height: size.height * .7,
+              width: size.width,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(70),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: size.width,
+            height: size.height,
+            color: Colors.transparent,
+            // child:
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class VideoPlayerProvider extends StatefulWidget {
+  File videoFile;
+
+  VideoPlayerProvider({@required this.videoFile});
+
+  @override
+  _VideoPlayerProviderState createState() => _VideoPlayerProviderState();
+}
+
+class _VideoPlayerProviderState extends State<VideoPlayerProvider> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+      ),
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        width: MediaQuery.of(context).size.width,
+        alignment: Alignment.center,
+        child: BetterPlayer.file(
+          widget.videoFile.path,
+          betterPlayerConfiguration: BetterPlayerConfiguration(
+            aspectRatio: 5 / 4,
+            allowedScreenSleep: false,
+            autoDispose: true,
+            autoPlay: true,
+            fit: BoxFit.contain,
+          ),
+        ),
       ),
     );
   }
