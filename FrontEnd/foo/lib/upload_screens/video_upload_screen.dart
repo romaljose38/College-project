@@ -30,7 +30,6 @@ class VideoUploadScreen extends StatefulWidget {
 
 class _VideoUploadScreenState extends State<VideoUploadScreen> {
   bool hasImage = false;
-  bool _isBlurred = false;
   File imageFile;
   File _generatedThumbnail;
   // VideoPlayerController _controller;
@@ -188,7 +187,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
             children: [
               IconButton(
                 icon: Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: null,
+                onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
@@ -288,26 +287,20 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                                   // decoration: hasImage
                                   //     ? backgroundImage()
                                   //     : backgroundColor(),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                      sigmaX: _isBlurred ? 5 : 0,
-                                      sigmaY: _isBlurred ? 5 : 0,
-                                    ),
-                                    child: Center(
-                                      child: IconButton(
-                                          icon: Icon(Icons.play_arrow),
-                                          color: Colors.white,
-                                          iconSize: 80,
-                                          onPressed: () {
-                                            Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        VideoPlayerProvider(
-                                                          videoFile: widget
-                                                              .mediaInserted,
-                                                        )));
-                                          }),
-                                    ),
+                                  child: Center(
+                                    child: IconButton(
+                                        icon: Icon(Icons.play_arrow),
+                                        color: Colors.white,
+                                        iconSize: 80,
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      VideoPlayerProvider(
+                                                        videoFile: widget
+                                                            .mediaInserted,
+                                                      )));
+                                        }),
                                   ),
                                 )),
                             Padding(
@@ -326,8 +319,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                                         child: Icon(Icons.edit,
                                             size: 18, color: Colors.white),
                                         filter: ImageFilter.blur(
-                                          sigmaX: _isBlurred ? 0.0 : 2.0,
-                                          sigmaY: _isBlurred ? 0.0 : 2.0,
+                                          sigmaX: 2.0,
+                                          sigmaY: 2.0,
                                         ),
                                       ),
                                     ),
@@ -338,35 +331,26 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                           ],
                         )),
                     SizedBox(height: 20),
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              padding: EdgeInsets.only(left: 4),
-                              child: Text(
-                                "Blurred background",
-                                style: GoogleFonts.lato(
-                                  fontSize: 13,
-                                  color: Color.fromRGBO(6, 8, 53, 1),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Switch(
-                            value: _isBlurred,
-                            onChanged: (bool val) {
-                              print(val);
-                              setState(() {
-                                _isBlurred = !_isBlurred;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Container(
+                    //   margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    //   child: Row(
+                    //     children: [
+                    //       Expanded(
+                    //         child: Container(
+                    //           padding: EdgeInsets.only(left: 4),
+                    //           child: Text(
+                    //             "Blurred background",
+                    //             style: GoogleFonts.lato(
+                    //               fontSize: 13,
+                    //               color: Color.fromRGBO(6, 8, 53, 1),
+                    //               fontWeight: FontWeight.w600,
+                    //             ),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
                     SizedBox(height: 20),
                     Container(
                       height: 45,
