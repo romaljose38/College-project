@@ -482,6 +482,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
+    var heightFactor = (height - 48) / height;
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(

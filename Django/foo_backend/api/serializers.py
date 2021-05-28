@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = User
-        fields = ['f_name','l_name','email','password','uprn','username','token']
+        fields = ['email','password','uprn','username','token']
         extra_kwargs = {
             'password':{'write_only':True},
             'uprn':{'required':True},
@@ -28,8 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
                                             password=validated_data['password']
                                         )
         user.uprn = validated_data['uprn']
-        user.f_name = validated_data['f_name']
-        user.l_name = validated_data['l_name']
         user.username = validated_data['username']
         user.token = validated_data['token']
         user.save()
@@ -38,6 +36,8 @@ class UserSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance);
         representation['id'] = instance.id
+        if(instance.dob is None):
+            representation['dobVerified'] = False
         return representation
 
 
