@@ -10,6 +10,3 @@ websocket_urlpatterns = [
 
 ]
 
-async_urlpatterns = [
-      path('http_consumer', consumers.TestConsumer.as_asgi()),
-]

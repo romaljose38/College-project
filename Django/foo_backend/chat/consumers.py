@@ -712,15 +712,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
         await self.send(text_data=json.dumps(event))
 
-class TestConsumer(AsyncHttpConsumer):
-    async def handle(self, body):
-        # await self.send_headers(status=400,headers=[
-        #     (b"Content-Type", b"multipart/form-data"),
-        # ])
-        print(self.scope)
-        # Headers are only sent after the first body event.
-        # Set "more_body" to tell the interface server to not
-        # finish the response yet:
-        print(self.body['name'])
-        await self.send_response(200, b"{'status':'test'}")
-        await self.send_body(b"hello", more_body=True)

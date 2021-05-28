@@ -38,11 +38,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   List<Post> postsList = <Post>[];
   var myStoryList = [];
   AnimationController _animationController;
+  AnimationController _tileAnimationController;
   //
 
   @override
   initState() {
     _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _tileAnimationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     listKey = GlobalKey<SliverAnimatedListState>();
     setInitialData();
@@ -486,7 +489,37 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         // extendBody: true,
         // backgroundColor: Color.fromRGBO(24, 4, 29, 1),
         // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
-
+        floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
+        floatingActionButton: TextButton(
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  var feedBox = Hive.box("Feed");
+                  Feed feed = feedBox.get("feed");
+                  listKey.currentState.insertItem(0);
+                  postsList.insert(0, feed.posts[0]);
+                },
+                child: Text(
+                  "hoi",
+                  style: TextStyle(color: Colors.black, fontSize: 30),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _tileAnimationController
+                      .forward()
+                      .whenComplete(() => _tileAnimationController.reverse());
+                },
+                child: Text(
+                  "anm",
+                  style: TextStyle(color: Colors.black, fontSize: 30),
+                ),
+              ),
+            ],
+          ),
+          onPressed: () {},
+        ),
         backgroundColor: Colors.white,
         body: Container(
           // margin: EdgeInsets.only(bottom: 40),
@@ -517,61 +550,28 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                       child: FadeTransition(
                         opacity:
                             Tween<double>(begin: 0, end: 1).animate(animation),
-                        child: PostTile(
-                            post: postsList[index],
-                            index: index,
-                            isLast:
-                                index == (postsList.length - 1) ? true : false),
+                        child: AnimatedBuilder(
+                            animation: _tileAnimationController,
+                            builder: (context, child) {
+                              var val = _tileAnimationController.value;
+                              var value = .08 * val;
+                              return Align(
+                                heightFactor: 1 - value,
+                                alignment: Alignment.topCenter,
+                                child: PostTile(
+                                    post: postsList[index],
+                                    index: index,
+                                    isLast: index == (postsList.length - 1)
+                                        ? true
+                                        : false),
+                              );
+                            }),
                       ),
                     );
                   },
                 ),
               ],
             ),
-            // child: NestedScrollView(
-            //   floatHeaderSlivers: true,
-            //   controller: _scrollController,
-            //   headerSliverBuilder: (ctx, val) {
-            //     print(val);
-            //     return [];
-            //   },
-            //   body: AnimatedList(
-            //     initialItemCount: itemCount,
-            //     key: listKey,
-            //     controller: _scrollController,
-            //     itemBuilder: (context, index, animation) {
-            //       return SlideTransition(
-            //         position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
-            //             .animate(animation),
-            //         child: PostTile(post: postsList[index], index: index),
-            //       );
-            //     },
-            //   ),
-            // ),
-            // child: AnimatedList(
-            //   initialItemCount: 1,
-            //   key: listKey,
-            //   controller: _scrollController,
-            //   itemBuilder: (context, index, animation) {
-            //     return SlideTransition(
-            //       position: Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
-            //           .animate(animation),
-            //       child: (index == 0)
-            //           ?
-            //           : PostTile(post: postsList[index - 1], index: index - 1),
-            //     );
-            //   },
-            // )
-            // child: ListView.builder(
-            //     cacheExtent: 200,
-            //     controller: _scrollController,
-            //     itemCount: itemCount + 1,
-            //     itemBuilder: (context, index) {
-            //       if (index == 0) {
-            //         return _horiz();
-            //       }
-            //       return PostTile(post: postsList[index - 1], index: index - 1);
-            //     }),
           ),
         ),
       ),

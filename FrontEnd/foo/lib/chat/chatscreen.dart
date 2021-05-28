@@ -844,7 +844,7 @@ class _ChatScreenState extends State<ChatScreen>
                                     ],
                                   ))
                               : GestureDetector(
-                                  onTap: () => showOverlay(),
+                                  onTap: () => showSettings(context),
                                   child: Container(
                                       width: 70,
                                       // transform: Matrix4.identity()..rotateZ(pi / 2),
