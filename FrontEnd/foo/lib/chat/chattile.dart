@@ -36,7 +36,7 @@ class ChatTile extends StatelessWidget {
     print("has Unseen");
     print(thread.hasUnseen);
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white,
         // borderRadius: BorderRadius.circular(15),

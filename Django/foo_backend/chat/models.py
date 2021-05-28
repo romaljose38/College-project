@@ -99,11 +99,16 @@ class User(AbstractBaseUser):
         "Is the user a admin member?"
         return self.admin
 
+def profile_pic_path(instance, filename):
+
+    return 'user_{0}/profile/{1}'.format(instance.user.id, filename)
+  
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(auto_now=False, auto_now_add=True)
+    profile_pic = models.FileField(upload_to=profile_pic_path, null=True)
     people_i_should_inform = models.ManyToManyField(User, related_name="cctvs", blank=True)
     people_i_peek = models.ManyToManyField(User, related_name="watching", blank=True)
     friends = models.ManyToManyField(User, related_name="friends", blank=True)
