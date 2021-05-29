@@ -2,6 +2,7 @@ import 'package:foo/chat/chatscreen.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
+import 'package:swipe_to/swipe_to.dart';
 
 class ReplyCloud extends StatefulWidget {
   final ChatMessage msgObj;
@@ -10,11 +11,15 @@ class ReplyCloud extends StatefulWidget {
   final Function outerSetState;
   Map forwardMap;
   Function forwardRemover;
+  bool disableSwipe;
+  Function swipingHandler;
 
   ReplyCloud(
       {this.msgObj,
       this.scroller,
       this.forwardRemover,
+      this.disableSwipe = false,
+      this.swipingHandler,
       this.hasSelectedSomething,
       this.outerSetState,
       this.forwardMap});
@@ -183,6 +188,19 @@ class _ReplyCloudState extends State<ReplyCloud> {
         ]);
   }
 
+  swipeAble(context) => SwipeTo(
+        offsetDx: .2,
+        iconColor: Colors.black54,
+        iconSize: 16,
+        child: cloudContent(context),
+        onLeftSwipe: widget.msgObj.isMe
+            ? () => widget.swipingHandler(this.widget.msgObj)
+            : null,
+        onRightSwipe: widget.msgObj.isMe
+            ? null
+            : () => widget.swipingHandler(this.widget.msgObj),
+      );
+
   bool hasSelected = false;
 
   @override
@@ -228,7 +246,8 @@ class _ReplyCloudState extends State<ReplyCloud> {
               ? Colors.blue.withOpacity(.3)
               : Colors.transparent,
           width: double.infinity,
-          child: cloudContent(context)),
+          child:
+              widget.disableSwipe ? cloudContent(context) : swipeAble(context)),
     );
     // return Row(mainAxisAlignment: MainAxisAlignment.start,
     //     // msgObj.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,

@@ -8,6 +8,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:foo/chat/audiocloud.dart';
 import 'package:foo/chat/chatcloud.dart';
 import 'package:foo/chat/forward_screen.dart';
+import 'package:foo/chat/listscreen.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
@@ -277,9 +278,11 @@ class _ChatScreenState extends State<ChatScreen>
             time: curTime,
             senderName: curUser,
             replyMsgId: replyingMsgObj.id,
-            replyMsgTxt: replyingMsgObj.msgType == "txt"
+            replyMsgTxt: (replyingMsgObj.msgType == "txt" ||
+                    replyingMsgObj.msgType == "reply_txt")
                 ? replyingMsgObj.message
-                : (replyingMsgObj.msgType == "img")
+                : (replyingMsgObj.msgType == "img" ||
+                        replyingMsgObj.msgType == "reply_img")
                     ? imageUTF
                     : audioUTF);
       } else {
@@ -702,7 +705,7 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   swipingHandler(ChatMessage msgObj) {
-    if (msgObj.msgType == "txt") {
+    if (msgObj.msgType == "txt" || msgObj.msgType == "reply_txt") {
       setState(() {
         replyingMsgObj = msgObj;
         replyingMsg = ChatCloud(
@@ -710,14 +713,14 @@ class _ChatScreenState extends State<ChatScreen>
           msgObj: msgObj,
         );
       });
-    } else if (msgObj.msgType == "img") {
+    } else if (msgObj.msgType == "img" || msgObj.msgType == "reply_img") {
       setState(() {
         replyingMsgObj = msgObj;
         replyingMsg = ImageThumb(
           msgObj: msgObj,
         );
       });
-    } else if (msgObj.msgType == "aud") {
+    } else if (msgObj.msgType == "aud" || msgObj.msgType == "reply_aud") {
       setState(() {
         replyingMsgObj = msgObj;
         replyingMsg = AudioCloud(
@@ -744,6 +747,8 @@ class _ChatScreenState extends State<ChatScreen>
       onWillPop: () async {
         print("outer");
         _prefs.setString("curUser", "");
+        // Navigator.pushNamedAndRemoveUntil(
+        // context, '/chatlist', (Route route) => route is ChatListScreen);
         // Navigator.push(context,);
         // if (isForwarding) {
         //   setState(() {
@@ -788,8 +793,13 @@ class _ChatScreenState extends State<ChatScreen>
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Icon(Icons.arrow_back_rounded,
-                              color: Colors.black, size: 23),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Icon(Icons.arrow_back_rounded,
+                                color: Colors.black, size: 23),
+                          ),
                           Spacer(),
                           CircleAvatar(
                             child: Text(curUser[0]),

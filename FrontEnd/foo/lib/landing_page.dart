@@ -374,7 +374,9 @@ class LandingPageState extends State<LandingPage>
         ),
       ),
       SearchScreen(),
-      Profile(),
+      Profile(
+        myProfile: true,
+      ),
       NotificationScreen(),
     ];
     return Scaffold(

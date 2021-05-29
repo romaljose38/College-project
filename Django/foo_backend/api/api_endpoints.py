@@ -28,7 +28,9 @@ urlpatterns = [
     path('upload_chat_audio',api_views.upload_chat_audio, name="chat_audio_upload"),
     path('upload_chat_audio_reply',api_views.upload_chat_audio_reply, name="chat_audio_reply_upload"),
     path('upload_chat_image_reply',api_views.upload_chat_image_reply, name="chat_image_reply_upload"),
-    
+    path('people_you_may_know', api_views.people_you_may_know, name="suggestions"),
+    path('delete_post', api_views.delete_post, name="delete_post"),
+    path('dob_upload', api_views.dob_upload,  name="dob_upload")    
 
 
 ]

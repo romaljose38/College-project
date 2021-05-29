@@ -10,7 +10,7 @@ class ChatCloud extends StatefulWidget {
   final Function outerSetState;
   bool hasSelectedSomething;
   Map forwardMap;
-   Function forwardRemover;
+  Function forwardRemover;
 
   ChatCloud(
       {this.msgObj,
@@ -147,42 +147,42 @@ class _ChatCloudState extends State<ChatCloud> {
   Widget build(BuildContext context) {
     return GestureDetector(
         onLongPress: (widget.msgObj.haveReachedServer ?? false)
-          ? () {
-              print("on long press");
-              // widget.outerSetState(() {
-              //   widget.hasSelectedSomething = true;
-              // });
-              widget.outerSetState();
-              setState(() {
-                hasSelected = true;
-              });
-              widget.forwardMap[widget.msgObj.id] = widget.msgObj;
-              print(widget.forwardMap);
-            }
-          : null,
-      onTap: (widget.msgObj.haveReachedServer ?? false)
-          ? (widget.hasSelectedSomething
-              ? () {
-                  if (hasSelected == true) {
-                    widget.forwardMap.remove(widget.msgObj.id);
-                    if (widget.forwardMap.length == 0) {
-                      widget.forwardRemover();
+            ? () {
+                print("on long press");
+                // widget.outerSetState(() {
+                //   widget.hasSelectedSomething = true;
+                // });
+                widget.outerSetState();
+                setState(() {
+                  hasSelected = true;
+                });
+                widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                print(widget.forwardMap);
+              }
+            : null,
+        onTap: (widget.msgObj.haveReachedServer ?? false)
+            ? (widget.hasSelectedSomething ?? false
+                ? () {
+                    if (hasSelected == true) {
+                      widget.forwardMap.remove(widget.msgObj.id);
+                      if (widget.forwardMap.length == 0) {
+                        widget.forwardRemover();
+                      }
+                      setState(() {
+                        hasSelected = false;
+                      });
+                    } else if (hasSelected == false) {
+                      widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                      setState(() {
+                        hasSelected = true;
+                      });
                     }
-                    setState(() {
-                      hasSelected = false;
-                    });
-                  } else if (hasSelected == false) {
-                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
-                    setState(() {
-                      hasSelected = true;
-                    });
+                    print(widget.forwardMap);
                   }
-                  print(widget.forwardMap);
-                }
-              : null)
-          : null,
+                : null)
+            : null,
         child: Container(
-            color: (widget.hasSelectedSomething && hasSelected)
+            color: ((widget.hasSelectedSomething ?? false) && hasSelected)
                 ? Colors.blue.withOpacity(.3)
                 : Colors.transparent,
             child: this.widget.disableSwipe

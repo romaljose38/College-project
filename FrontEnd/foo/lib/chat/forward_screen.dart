@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/chat/chattile.dart';
+import 'package:foo/chat/listscreen.dart';
+import 'package:foo/landing_page.dart';
 import 'package:foo/models.dart';
 import 'package:foo/socket.dart';
 import 'package:hive/hive.dart';
@@ -102,12 +104,16 @@ class ForwardTile extends StatelessWidget {
             sendMsgs();
             var prefs = await getPrefs();
             Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                        prefs: prefs,
-                        // controller:this.controller,
-                        thread: this.thread)));
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ChatScreen(
+                      prefs: prefs,
+                      // controller:this.controller,
+                      thread: this.thread)),
+            );
+            // Navigator.pushReplacement(
+            //     context,
+            //    );
           },
           leading: CircleAvatar(
             radius: 35,

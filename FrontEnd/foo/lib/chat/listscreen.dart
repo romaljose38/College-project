@@ -109,8 +109,9 @@ class _ChatListScreenState extends State<ChatListScreen>
                       flex: 3,
                     ),
                     IconButton(
-                        icon:
-                            Icon(isSearching ? Ionicons.chatbox : Icons.search),
+                        icon: Icon(isSearching
+                            ? Ionicons.chatbox_outline
+                            : Icons.search),
                         onPressed: () {
                           if (!isSearching) {
                             _animationController

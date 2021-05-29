@@ -459,7 +459,7 @@ class _AudioCloudState extends State<AudioCloud> {
                 : null)
             : null,
         child: Container(
-            color: (widget.hasSelectedSomething && hasSelected)
+            color: ((widget.hasSelectedSomething ?? false) && hasSelected)
                 ? Colors.blue.withOpacity(.3)
                 : Colors.transparent,
             child: widget.disableSwipe ? cloudContent() : swipeAble()));

@@ -72,7 +72,7 @@ class PostRelatedField(serializers.RelatedField):
 
     def to_representation(self,instance):
       
-        return {'id':instance.id,'url':instance.file.url,'likes':instance.likes.count()}
+        return {'id':instance.id,'url':instance.file.url,'likes':instance.likes.count(),'comments':instance.comment_set.all().count()}
 
     def get_queryset(self):
         return Post.objects.all()
@@ -98,6 +98,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         else:
             representation['isMe'] = False
         print(request.count())
+        representation['post_count'] = instance.posts.count()
+        representation['friends_count'] = instance.profile.friends.count()
         if (request.count() == 1):
             if request.first().status == "accepted":
                 representation['requestStatus'] = "accepted"

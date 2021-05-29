@@ -307,6 +307,10 @@ class Feed extends HiveObject {
     return true;
   }
 
+  deletePost(id) {
+    posts.removeWhere((element) => (element.postId == id));
+  }
+
   updatePostStatus(int id, bool status) {
     this.posts.forEach((element) {
       if (element.postId == id) {
