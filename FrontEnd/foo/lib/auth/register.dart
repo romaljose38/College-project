@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'elevatedgradientbutton.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +10,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:ionicons/ionicons.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:foo/test_cred.dart';
 
@@ -300,33 +303,6 @@ class _RegisterFormState extends State<RegisterForm> {
   }
 }
 
-// class FormCheck extends StatelessWidget {
-//   final String userJson;
-//   FormCheck({Key key, @required this.userJson}) : super(key: key);
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Foo Register'),
-//       ),
-//       body: Column(
-//         children: [
-//           Text("$userJson"),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-/*
-suffix: InkWell(
-          onTap: _isTogglePassword,
-          child: Icon(
-            _passwordHidden ? Icons.visibility : Icons.visibility_off,
-          ),
-        ),
-*/
-
 class CalendarBackground extends StatefulWidget {
   @override
   _CalendarBackgroundState createState() => _CalendarBackgroundState();
@@ -338,10 +314,11 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
   FixedExtentScrollController _dateController;
   FixedExtentScrollController _monthController;
   FixedExtentScrollController _yearController;
+  TextEditingController _fNameController;
+  TextEditingController _lNameController;
   int date = 1, month = 1, year = 1980;
   String dateString = '01', monthString = '01', yearString = '1980';
   String finalDateString;
-
   Map months = {
     1: 'Jan',
     2: 'Feb',
@@ -360,9 +337,16 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
   @override
   void initState() {
     super.initState();
+    _setPreference();
     _dateController = FixedExtentScrollController();
     _monthController = FixedExtentScrollController();
     _yearController = FixedExtentScrollController();
+    _fNameController = TextEditingController();
+    _lNameController = TextEditingController();
+  }
+
+  void _setPreference() async {
+    _prefs = await SharedPreferences.getInstance();
   }
 
   @override
@@ -373,10 +357,73 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
     super.dispose();
   }
 
-  void _submitHandler() {
+  Future<File> testCompressAndGetFile(File file) async {
+    String targetPath = '/storage/emulated/0/foo/profile_pic/dp.jpg';
+    await Permission.storage.request();
+    try {
+      File(targetPath).createSync(recursive: true);
+      var result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path,
+        targetPath,
+        quality: 80,
+      );
+      print(file.lengthSync());
+      print(result.lengthSync());
+
+      return result;
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<File> getImageFileFromAssets() async {
+    String path = 'images/user0.png';
+    final byteData = await rootBundle.load('assets/$path');
+
+    File('${(await getTemporaryDirectory()).path}/$path')
+        .createSync(recursive: true);
+    final file = File('${(await getTemporaryDirectory()).path}/$path');
+    await file.writeAsBytes(byteData.buffer
+        .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+
+    return file;
+  }
+
+  void _submitHandler() async {
     finalDateString = '$dateString/$monthString/$yearString 00:00:00';
-    _prefs.setBool('loggedIn', true);
-    Navigator.pushNamed(context, '/landingPage');
+    int userId = _prefs.getInt('id');
+    File file;
+    if (imageFile != null) {
+      file = await testCompressAndGetFile(imageFile);
+    } else {
+      file = await getImageFileFromAssets();
+    }
+
+    print(file.path);
+    print(_fNameController.value.text);
+    print(_lNameController.value.text);
+    print(finalDateString);
+    print(userId);
+    var url = Uri.http(localhost, '/api/dob_upload');
+    var request = http.MultipartRequest('POST', url)
+      ..fields['f_name'] = _fNameController.text
+      ..fields['l_name'] = _lNameController.text
+      ..fields['date'] = finalDateString
+      ..fields['id'] = userId.toString()
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    try {
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        _prefs.setBool('loggedIn', true);
+        Navigator.pushNamed(context, '/landingPage');
+      } else {
+        print("Invalid upload credentials");
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<void> _setProfilePic() async {
@@ -404,71 +451,136 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
     }
   }
 
-  // final cropKey = GlobalKey<CropState>();
+  void revertToDefaultPic() {
+    setState(() {
+      imageFile = null;
+    });
+  }
 
-  // Future<File> _cropImage() async {
-  //   final scale = cropKey.currentState.scale;
-  //   final area = cropKey.currentState.area;
-  //   if (area == null) {
-  //     // cannot crop, widget is not setup
-  //     return null;
-  //   }
+  GestureDetector bottomSheetTile(
+          String type, Color color, IconData icon, Function onTap) =>
+      GestureDetector(
+        onTap: () {
+          onTap();
+          Navigator.of(context).pop();
+        },
+        child: Column(
+          children: [
+            Container(
+              height: 70,
+              width: 70,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey.shade600,
+                size: 30,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              type,
+              style: GoogleFonts.raleway(
+                color: Color.fromRGBO(176, 183, 194, 1),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
 
-  //   // scale up to use maximum possible number of pixels
-  //   // this will sample image in higher resolution to make cropped image larger
-  //   final sample = await ImageCrop.sampleImage(
-  //     file: imageFile,
-  //     preferredSize: (2000 / scale).round(),
-  //   );
+  showOverlay() {
+    showModalBottomSheet(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
+        context: context,
+        builder: (context) {
+          return Container(
+            height: 200,
+            margin: EdgeInsets.fromLTRB(10, 20, 10, 0),
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Change Video Cover",
+                        style: GoogleFonts.lato(
+                            fontSize: 20, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                SizedBox(height: 30),
+                Expanded(
+                  child: Container(
+                    child: Center(
+                      child: Row(
+                        children: [
+                          Spacer(),
+                          bottomSheetTile(
+                              "Reset Cover",
+                              Color.fromRGBO(232, 252, 246, 1),
+                              Ionicons.trash_outline,
+                              revertToDefaultPic),
+                          Spacer(),
+                          bottomSheetTile(
+                              "Set Cover",
+                              Color.fromRGBO(235, 221, 217, 1),
+                              Ionicons.images_outline,
+                              _setProfilePic),
+                          Spacer(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+  }
 
-  //   final file = await ImageCrop.cropImage(
-  //     file: sample,
-  //     area: area,
-  //   );
-
-  //   sample.delete();
-
-  //   debugPrint('$file');
-
-  //   return file;
-  // }
-
-  // void _buildCroppingImage() {
-  //   _setProfilePic().then((_) {
-  //     return Overlay.of(context).insert(
-  //       OverlayEntry(
-  //         builder: (context) => Column(
-  //           children: <Widget>[
-  //             Expanded(
-  //               child: Crop.file(imageFile, key: cropKey),
-  //             ),
-  //             Container(
-  //               padding: const EdgeInsets.only(top: 20.0),
-  //               alignment: AlignmentDirectional.center,
-  //               child: Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-  //                 children: <Widget>[
-  //                   TextButton(
-  //                     child: Text(
-  //                       'Crop Image',
-  //                       style: Theme.of(context)
-  //                           .textTheme
-  //                           .button
-  //                           .copyWith(color: Colors.white),
-  //                     ),
-  //                     onPressed: () async {
-  //                       returnFile = await _cropImage();
-  //                     },
-  //                   ),
-  //                 ],
-  //               ),
-  //             )
-  //           ],
-  //         ),
-  //       ),
-  //     );
-  //   });
-  // }
+  TextField nameField(String labeltext, TextEditingController controller) =>
+      TextField(
+        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: labeltext,
+          labelStyle: TextStyle(
+              color: Color.fromRGBO(176, 183, 194, 1),
+              fontSize: 15,
+              fontWeight: FontWeight.w400),
+          disabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(width: 1, color: Colors.black),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide:
+                BorderSide(width: 1, color: Color.fromRGBO(131, 146, 166, .5)),
+          ),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              width: 1,
+              color: Colors.black,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide:
+                BorderSide(width: 1, color: Color.fromRGBO(250, 87, 142, .7)),
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -491,7 +603,8 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 GestureDetector(
                   onTap: () {
-                    _setProfilePic();
+                    // _setProfilePic();
+                    showOverlay();
                   },
                   child: Stack(
                     children: [
@@ -503,6 +616,10 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                                 borderRadius: BorderRadius.circular(30),
                                 border: Border.all(
                                     color: Colors.grey.shade400, width: 1),
+                                image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: AssetImage('assets/images/user0.png'),
+                                ),
 
                                 // color: Colors.grey.shade100,
                               )
@@ -514,12 +631,12 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                                     fit: BoxFit.cover,
                                     image: FileImage(imageFile)),
                               ),
-                        child: Center(
-                          child: imageFile == null
-                              ? Icon(Icons.person_add_alt_1,
-                                  size: 50, color: Colors.black)
-                              : Container(),
-                        ),
+                        // child: Center(
+                        //   child: imageFile == null
+                        //       ? Icon(Icons.person_add_alt_1,
+                        //           size: 50, color: Colors.black)
+                        //       : Container(),
+                        // ),
                       ),
                       // Positioned(
                       //   child: Container(
@@ -635,30 +752,14 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                 children: [
                   Padding(
                     padding: EdgeInsets.all(10.0),
-                    child: FormTextField(
-                      fieldName: 'f_name',
-                      labeltext: 'First Name',
-                      passwordHidden: false,
-                      whenSaved: null,
-                    ),
+                    child: nameField("First Name", _fNameController),
                   ),
                   Padding(
                     padding: EdgeInsets.all(10.0),
-                    child: FormTextField(
-                      fieldName: 'l_name',
-                      labeltext: 'Last Name',
-                      passwordHidden: false,
-                      whenSaved: null,
-                    ),
+                    child: nameField("Last Name", _lNameController),
                   ),
                 ],
               ),
-              // CalendarDatePicker(
-              //   initialDate: DateTime.utc(2001, 1, 9),
-              //   firstDate: DateTime.utc(1995, 1, 1),
-              //   lastDate: DateTime.utc(2020, 12, 12),
-              //   onDateChanged: (value) => print(value),
-              // ),
             ],
           ),
         ),

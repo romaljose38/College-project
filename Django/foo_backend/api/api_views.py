@@ -576,6 +576,7 @@ def delete_post(request):
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
 def dob_upload(request):
+    print(request.data)
     try:
         id = int(request.data['id'])
         file = request.data['file']
@@ -587,7 +588,8 @@ def dob_upload(request):
         cur_user.f_name = f_name
         cur_user.l_name = l_name
         cur_user.dob = dob
-        cur_user.profile_pic = file
+        cur_user.profile.profile_pic = file
+        cur_user.profile.save()
         cur_user.save()
         return Response(status=200)
 
