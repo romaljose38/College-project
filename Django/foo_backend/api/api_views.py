@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
+from datetime import datetime
 from django.db.models import Q
 from chat.models import (
     Post,
@@ -548,4 +548,50 @@ def get_user_from_friends_list(request):
     except Exception as e:
         print(e)
         return Response(status=400)
+
+
+@api_view(['GET'])
+def people_you_may_know(request):
+    try:
+        id = int(request.query_params['id'])
+        friends_qs =  User.objects.get(id=id).profile.friends.values('username')
+        req_qs = User.objects.all().exclude(Q(username__in=friends_qs) |Q(id=id))
+        serialized = UserCustomSerializer(req_qs,many=True)
+        return Response(status=200, data=serialized.data)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+@api_view(['GET'])
+def delete_post(request):
+    try:
+        id = int(request.query_params['id'])
+        post = Post.objects.get(id=id)
+        post.delete()
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def dob_upload(request):
+    try:
+        id = int(request.data['id'])
+        file = request.data['file']
+        date_time_str = request.data['date']
+        f_name = request.data['f_name']
+        l_name = request.data['l_name']
+        dob = datetime.strptime(date_time_str , '%d/%m/%Y %H:%M:%S').date()
+        cur_user = User.objects.get(id=id)
+        cur_user.f_name = f_name
+        cur_user.l_name = l_name
+        cur_user.dob = dob
+        cur_user.profile_pic = file
+        cur_user.save()
+        return Response(status=200)
+
+    except:
+        return Response(status=400)
+
 

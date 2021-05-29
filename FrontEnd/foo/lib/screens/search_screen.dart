@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flappy_search_bar/flappy_search_bar.dart';
@@ -7,20 +8,81 @@ import 'package:foo/profile/profile_test.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchScreen extends StatelessWidget {
+  Future<List> getUserList() async {
+    var prefs = await SharedPreferences.getInstance();
+    try {
+      var resp = await http.get(Uri.http(localhost, 'api/people_you_may_know',
+          {"id": prefs.getInt('id').toString()}));
+
+      if (resp.statusCode == 200) {
+        var respJson = jsonDecode(resp.body);
+        List<UserTest> returList = [];
+        respJson.forEach((e) {
+          print(e);
+          returList.add(UserTest(
+              name: e["username"],
+              id: e['id'],
+              fname: e['f name'],
+              lname: e['l_name']));
+        });
+        print(returList);
+        return returList;
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  peopleYouMayKnow() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: EdgeInsets.only(left: 20, top: 8, bottom: 8),
+            child: Text("People you may know",
+                style: GoogleFonts.lato(fontWeight: FontWeight.w600)),
+          ),
+          Expanded(
+            child: FutureBuilder(
+                future: getUserList(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    var userList = snapshot.data;
+                    return ListView.builder(
+                        itemCount: userList.length,
+                        itemBuilder: (context, index) {
+                          return SearchTile(
+                            user: userList[index],
+                          );
+                        });
+                  }
+                  return Center(
+                      child: CircularProgressIndicator(
+                    strokeWidth: 1,
+                  ));
+                }),
+          ),
+        ],
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 5),
           child: SearchBar<UserTest>(
             loader: const Center(
                 child: CircularProgressIndicator(
               strokeWidth: 1,
               backgroundColor: Colors.purple,
             )),
+            searchBarPadding: EdgeInsets.symmetric(horizontal: 15),
+            placeHolder: peopleYouMayKnow(),
             minimumChars: 1,
             onSearch: search,
             searchBarStyle: SearchBarStyle(),
@@ -130,11 +192,11 @@ class SearchTile extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(this.user.name,
+                    Text(this.user.name ?? "",
                         style: GoogleFonts.raleway(
                             fontWeight: FontWeight.w600, fontSize: 17)),
                     SizedBox(height: 6),
-                    Text(this.user.fname, style: TextStyle(fontSize: 13)),
+                    Text(this.user.fname ?? "", style: TextStyle(fontSize: 13)),
                   ],
                 ),
               ],

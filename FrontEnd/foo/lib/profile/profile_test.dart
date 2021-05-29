@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:foo/chat/chatscreen.dart';
+import 'package:foo/screens/comment_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
@@ -12,9 +13,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../models.dart';
 import '../test_cred.dart';
+import 'dart:math' as math;
 
 class Profile extends StatelessWidget {
   final int userId;
+  final bool myProfile;
   List<Post> posts = [];
   String profUserName;
   String curUser;
@@ -22,19 +25,30 @@ class Profile extends StatelessWidget {
   bool isMe;
   String userDpUrl;
   String fullName;
+  int friendsCount;
+  int postsCount;
 
-  Profile({this.userId});
+  Profile({this.userId, this.myProfile = false});
 
   //Gets the data corresponding to the profile
   Future<List> getData() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
     curUser = _prefs.getString("username");
-    var response = await http.get(
-        Uri.http(localhost, '/api/$userId/profile', {'username': curUser}));
+    var response;
+    if (myProfile) {
+      int myId = _prefs.getInt('id');
+      response = await http.get(
+          Uri.http(localhost, '/api/$myId/profile', {'username': curUser}));
+    } else {
+      response = await http.get(
+          Uri.http(localhost, '/api/$userId/profile', {'username': curUser}));
+    }
     var respJson = jsonDecode(response.body);
     requestStatus = respJson['requestStatus'];
     profUserName = respJson['username'];
     isMe = respJson['isMe'];
+    friendsCount = respJson['friends_count'];
+    postsCount = respJson['post_count'];
     // userDpUrl = respJson['dp']
     print(userId);
     print(respJson);
@@ -49,7 +63,8 @@ class Profile extends StatelessWidget {
           0,
           Post(
               username: respJson['username'],
-              postUrl: e['url'],
+              postUrl: 'http://' + localhost + e['url'],
+              commentCount: e['comments'],
               likeCount: e['likes'],
               postId: e['id']));
     });
@@ -75,6 +90,8 @@ class Profile extends StatelessWidget {
                     userDpUrl: "assets/images/user4.png",
                     requestStatus: this.requestStatus,
                     curUser: this.curUser,
+                    friendsCount: this.friendsCount,
+                    postsCount: this.postsCount,
                     isMe: this.isMe);
               }
               return Center(
@@ -98,6 +115,8 @@ class ProfileTest extends StatefulWidget {
   String curUser;
   String fullName;
   bool isMe;
+  int friendsCount;
+  int postsCount;
 
   ProfileTest(
       {Key key,
@@ -105,6 +124,8 @@ class ProfileTest extends StatefulWidget {
       this.userName,
       this.userId,
       this.userDpUrl,
+      this.friendsCount,
+      this.postsCount,
       this.requestStatus,
       this.fullName,
       this.curUser,
@@ -284,6 +305,8 @@ class _ProfileTestState extends State<ProfileTest>
   ];
 
   SizedBox tripleTier() {
+    var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
+
     return SizedBox(
       height: 200,
       child: Row(
@@ -292,13 +315,33 @@ class _ProfileTestState extends State<ProfileTest>
             flex: 2,
             child: GestureDetector(
               onLongPressStart: (press) {
-                return showOverlay(
-                    context, "http://" + localhost + widget.posts[0].postUrl);
+                return showOverlay(context, widget.posts[0].postUrl);
               },
               onLongPressEnd: (details) {
                 animationController
                     .reverse()
                     .whenComplete(() => overlayEntry.remove());
+              },
+              onTap: () async {
+                var hasDelete = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => CommentScreen(
+                              isMe: widget.isMe,
+
+                              postUrl: widget.posts[0].postUrl,
+                              heroIndex: 0,
+                              postId: widget.posts[0].postId,
+                              height: height,
+                              likeCount: widget.posts[0].likeCount,
+                              commentCount: widget.posts[0].commentCount,
+                              // ViewPostScreen(post: widget.post, index: widget.index),
+                            )));
+                if (hasDelete.runtimeType == bool) {
+                  if (hasDelete) {
+                    widget.posts.removeAt(0);
+                  }
+                }
               },
               child: Container(
                 margin: EdgeInsets.fromLTRB(8, 0, 5, 0),
@@ -306,8 +349,7 @@ class _ProfileTestState extends State<ProfileTest>
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(15),
                   image: DecorationImage(
-                    image: CachedNetworkImageProvider(
-                        getUrl(widget.posts[0].postUrl)),
+                    image: CachedNetworkImageProvider(widget.posts[0].postUrl),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -318,9 +360,29 @@ class _ProfileTestState extends State<ProfileTest>
             child: Column(
               children: [
                 GestureDetector(
+                  onTap: () async {
+                    var hasDelete = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => CommentScreen(
+                                  isMe: widget.isMe,
+                                  postUrl: widget.posts[1].postUrl,
+                                  heroIndex: 1,
+                                  postId: widget.posts[1].postId,
+                                  height: height,
+                                  likeCount: widget.posts[1].likeCount,
+                                  commentCount: widget.posts[1].commentCount,
+                                  // ViewPostScreen(post: widget.post, index: widget.index),
+                                )));
+
+                    if (hasDelete.runtimeType == bool) {
+                      if (hasDelete) {
+                        widget.posts.removeAt(1);
+                      }
+                    }
+                  },
                   onLongPressStart: (press) {
-                    return showOverlay(context,
-                        "http://" + localhost + widget.posts[1].postUrl);
+                    return showOverlay(context, widget.posts[1].postUrl);
                   },
                   onLongPressEnd: (details) {
                     animationController
@@ -333,8 +395,8 @@ class _ProfileTestState extends State<ProfileTest>
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(15),
                       image: DecorationImage(
-                        image: CachedNetworkImageProvider(
-                            getUrl(widget.posts[1].postUrl)),
+                        image:
+                            CachedNetworkImageProvider(widget.posts[1].postUrl),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -342,9 +404,28 @@ class _ProfileTestState extends State<ProfileTest>
                   ),
                 ),
                 GestureDetector(
+                  onTap: () async {
+                    var hasDelete = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => CommentScreen(
+                                  isMe: widget.isMe,
+                                  postUrl: widget.posts[2].postUrl,
+                                  heroIndex: 2,
+                                  postId: widget.posts[2].postId,
+                                  height: height,
+                                  likeCount: widget.posts[2].likeCount,
+                                  commentCount: widget.posts[2].commentCount,
+                                  // ViewPostScreen(post: widget.post, index: widget.index),
+                                )));
+                    if (hasDelete.runtimeType == bool) {
+                      if (hasDelete) {
+                        widget.posts.removeAt(2);
+                      }
+                    }
+                  },
                   onLongPressStart: (press) {
-                    return showOverlay(context,
-                        "http://" + localhost + widget.posts[2].postUrl);
+                    return showOverlay(context, widget.posts[2].postUrl);
                   },
                   onLongPressEnd: (details) {
                     animationController
@@ -357,8 +438,8 @@ class _ProfileTestState extends State<ProfileTest>
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(15),
                       image: DecorationImage(
-                        image: CachedNetworkImageProvider(
-                            getUrl(widget.posts[2].postUrl)),
+                        image:
+                            CachedNetworkImageProvider(widget.posts[2].postUrl),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -380,7 +461,9 @@ class _ProfileTestState extends State<ProfileTest>
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.black, size: 20),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pop(context);
+            },
           ),
           Text(
             "Profile",
@@ -399,7 +482,7 @@ class _ProfileTestState extends State<ProfileTest>
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text("142",
+              Text(widget.friendsCount.toString(),
                   style: GoogleFonts.lato(
                       fontSize: 16, fontWeight: FontWeight.w500)),
               Text("Friends",
@@ -444,7 +527,7 @@ class _ProfileTestState extends State<ProfileTest>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("8",
+              Text(widget.postsCount.toString(),
                   style: GoogleFonts.lato(
                       fontSize: 16, fontWeight: FontWeight.w500)),
               Text("Posts",
@@ -482,14 +565,6 @@ class _ProfileTestState extends State<ProfileTest>
             ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
             : [grid(false)]),
       ],
-      // headerSliverBuilder: (context, val) {
-      //   return [
-      //     SliverToBoxAdapter(
-      //       child: topPortion(),
-      //     )
-      //   ];
-      // },
-      // body: widget.posts.length >= 3 ? threeOrMore() : grid(false),
     );
   }
 
@@ -502,6 +577,8 @@ class _ProfileTestState extends State<ProfileTest>
         ],
       );
   SliverPadding grid(bool needExtention) {
+    var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
+
     int postCount;
     if (needExtention) {
       postCount = widget.posts.length - 3;
@@ -523,20 +600,33 @@ class _ProfileTestState extends State<ProfileTest>
                 margin: EdgeInsets.symmetric(horizontal: 3, vertical: 5),
                 height: 200,
                 decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withOpacity(.4),
-                      offset: Offset(1, 3),
-                      blurRadius: 3,
-                    )
-                  ],
                   borderRadius: BorderRadius.circular(15),
                   color: Colors.white,
                 ),
                 child: GestureDetector(
+                  onTap: () async {
+                    var hasDelete = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => CommentScreen(
+                                  isMe: widget.isMe,
+                                  postUrl: widget.posts[curIndex].postUrl,
+                                  heroIndex: curIndex,
+                                  postId: widget.posts[curIndex].postId,
+                                  height: height,
+                                  likeCount: widget.posts[curIndex].likeCount,
+                                  commentCount:
+                                      widget.posts[curIndex].commentCount,
+                                  // ViewPostScreen(post: widget.post, index: widget.index),
+                                )));
+                    if (hasDelete.runtimeType == bool) {
+                      if (hasDelete) {
+                        widget.posts.removeAt(1);
+                      }
+                    }
+                  },
                   onLongPressStart: (press) {
-                    return showOverlay(context,
-                        "http://" + localhost + widget.posts[curIndex].postUrl);
+                    return showOverlay(context, widget.posts[curIndex].postUrl);
                   },
                   onLongPressEnd: (details) {
                     animationController
@@ -550,9 +640,7 @@ class _ProfileTestState extends State<ProfileTest>
                         borderRadius: BorderRadius.circular(15),
                         image: DecorationImage(
                             image: CachedNetworkImageProvider(
-                              "http://" +
-                                  localhost +
-                                  widget.posts[curIndex].postUrl,
+                              widget.posts[curIndex].postUrl,
                             ),
                             fit: BoxFit.cover),
                       ),
@@ -564,62 +652,7 @@ class _ProfileTestState extends State<ProfileTest>
             childCount: postCount,
           ),
           gridDelegate:
-              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3)
-          // padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
-          // shrinkWrap: true,
-          // physics: BouncingScrollPhysics(),
-          // itemCount: postCount,
-          // gridDelegate:
-          //     SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
-          // itemBuilder: (context, index) {
-          //   int curIndex;
-          //   if (needExtention) {
-          //     curIndex = index + 3;
-          //   } else {
-          //     curIndex = index;
-          //   }
-          //   return Container(
-          //     margin: EdgeInsets.all(5),
-          //     height: 200,
-          //     decoration: BoxDecoration(
-          //       boxShadow: [
-          //         BoxShadow(
-          //           color: Colors.white.withOpacity(.4),
-          //           offset: Offset(1, 3),
-          //           blurRadius: 3,
-          //         )
-          //       ],
-          //       borderRadius: BorderRadius.circular(15),
-          //       color: Colors.white,
-          //     ),
-          //     child: GestureDetector(
-          //       onLongPressStart: (press) {
-          //         return showOverlay(context,
-          //             "http://" + localhost + widget.posts[curIndex].postUrl);
-          //       },
-          //       onLongPressEnd: (details) {
-          //         animationController
-          //             .reverse()
-          //             .whenComplete(() => overlayEntry.remove());
-          //       },
-          //       child: AspectRatio(
-          //           aspectRatio: 4 / 5,
-          //           child: Container(
-          //             decoration: BoxDecoration(
-          //               borderRadius: BorderRadius.circular(15),
-          //               image: DecorationImage(
-          //                   image: CachedNetworkImageProvider(
-          //                     "http://" +
-          //                         localhost +
-          //                         widget.posts[curIndex].postUrl,
-          //                   ),
-          //                   fit: BoxFit.cover),
-          //             ),
-          //           )),
-          //     ),
-          //   );
-          // },
-          ),
+              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3)),
     );
   }
 }

@@ -36,6 +36,7 @@ Future<void> main() async {
   await Hive.openBox('Feed');
   await Hive.openBox('Notifications');
   await Hive.openBox('MyStories');
+
   SharedPreferences prefs = await SharedPreferences.getInstance();
   prefs.setString("curUser", "");
   SocketChannel socket;
@@ -43,6 +44,7 @@ Future<void> main() async {
     print("in main");
     socket = SocketChannel();
   }
+
   await Firebase.initializeApp();
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     print(message.data);
@@ -62,6 +64,7 @@ class MyApp extends StatelessWidget {
   SharedPreferences prefs;
 
   MyApp({this.prefs});
+
   static final GlobalKey<NavigatorState> _key = GlobalKey();
   @override
   Widget build(BuildContext context) {

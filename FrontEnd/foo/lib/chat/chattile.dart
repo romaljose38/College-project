@@ -101,11 +101,21 @@ class ChatTile extends StatelessWidget {
             var prefs = await getPrefs();
             Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                        prefs: prefs,
-                        // controller:this.controller,
-                        thread: this.thread)));
+                PageRouteBuilder(
+                    pageBuilder: (context, animation, secAnimation) =>
+                        ChatScreen(
+                            prefs: prefs,
+                            // controller:this.controller,
+                            thread: this.thread),
+                    transitionsBuilder:
+                        (context, animation, secAnimation, child) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                                begin: Offset(1, 0), end: Offset(0, 0))
+                            .animate(animation),
+                        child: child,
+                      );
+                    }));
           },
           leading: CircleAvatar(
             radius: 35,

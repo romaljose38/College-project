@@ -59,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       data.forEach((key, value) {
         if ((key == "uprn") | (key == "id")) {
           prefs.setInt(key, value);
+        } else if (key == "dobVerified") {
         } else {
           prefs.setString(key, value);
         }

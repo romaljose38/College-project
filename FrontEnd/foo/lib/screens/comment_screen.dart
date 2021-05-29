@@ -11,6 +11,7 @@ import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,12 +32,14 @@ class CommentScreen extends StatefulWidget {
   final double height;
   final int likeCount;
   final int commentCount;
+  final bool isMe;
 
   CommentScreen(
       {this.postUrl,
       this.postId,
       this.heroIndex,
       this.height,
+      this.isMe = false,
       this.likeCount,
       this.commentCount});
 
@@ -242,6 +245,23 @@ class _CommentScreenState extends State<CommentScreen>
     overlayState.insert(overlayEntry);
   }
 
+  Future<void> deletePost() async {
+    try {
+      print("trying");
+      var resp = await http.get(Uri.http(
+          localhost, "/api/delete_post", {"id": widget.postId.toString()}));
+      if (resp.statusCode == 200) {
+        var feedBox = Hive.box("Feed");
+        var feed = feedBox.get("feed");
+        feed.deletePost(widget.postId);
+        feed.save();
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
   String insertAtChangedPoint(String word, int start, int end) {
     String text = _commentController.text;
     String newText = text.replaceRange(start, end, word);
@@ -346,10 +366,41 @@ class _CommentScreenState extends State<CommentScreen>
                         Navigator.pop(context, 4);
                       },
                     ),
-                    IconButton(
-                      icon: Icon(icons.Feed.colon, size: 20),
-                      onPressed: () {},
-                    ),
+                    widget.isMe
+                        ? IconButton(
+                            icon: Icon(icons.Feed.colon, size: 20),
+                            onPressed: () async {
+                              var shouldDelete = false;
+                              await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text(
+                                          "Are you sure you want to delete this post?"),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Yes"),
+                                          onPressed: () {
+                                            shouldDelete = true;
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("No"),
+                                          onPressed: () {
+                                            shouldDelete = false;
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  });
+                              if (shouldDelete) {
+                                await deletePost();
+                              }
+                            },
+                          )
+                        : Container(),
                   ],
                 ))),
         backgroundColor: Colors.white,

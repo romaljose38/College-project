@@ -138,6 +138,7 @@ class _ChatCloudListState extends State<ChatCloudList>
               hasSelectedSomething: hasSelectedSomething,
               outerSetState: outersetState,
               forwardMap: widget.msgMap,
+              swipingHandler: widget.swipingHandler,
               scroller: scroller,
               forwardRemover: removeForward,
             );

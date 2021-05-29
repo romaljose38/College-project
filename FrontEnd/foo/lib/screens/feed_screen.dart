@@ -41,6 +41,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   AnimationController _tileAnimationController;
   //
 
+  bool isStacked = false;
+  //
   @override
   initState() {
     _animationController =
@@ -483,10 +485,18 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
-    var heightFactor = (height - 48) / height;
+    var heightFactor = (height - 58) / height;
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(double.infinity, 60),
+          child: Container(
+            width: double.infinity,
+            height: 60,
+            color: Colors.white,
+          ),
+        ),
         // extendBodyBehindAppBar: true,
         // extendBody: true,
         // backgroundColor: Color.fromRGBO(24, 4, 29, 1),
@@ -509,9 +519,19 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               ),
               GestureDetector(
                 onTap: () {
-                  _tileAnimationController
-                      .forward()
-                      .whenComplete(() => _tileAnimationController.reverse());
+                  if (isStacked) {
+                    _tileAnimationController
+                        .reverse()
+                        .whenComplete(() => setState(() {
+                              isStacked = false;
+                            }));
+                  } else {
+                    _tileAnimationController
+                        .forward()
+                        .whenComplete(() => setState(() {
+                              isStacked = true;
+                            }));
+                  }
                 },
                 child: Text(
                   "anm",
