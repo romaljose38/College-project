@@ -72,8 +72,8 @@ class MyApp extends StatelessWidget {
       title: 'Foo Register',
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
-      home: Renderer(prefs: prefs),
-      // home: CalendarBackground(),
+      // home: Renderer(prefs: prefs),
+      home: CalendarBackground(),
     );
   }
 }

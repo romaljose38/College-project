@@ -338,7 +338,9 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
   FixedExtentScrollController _dateController;
   FixedExtentScrollController _monthController;
   FixedExtentScrollController _yearController;
-  int date = 1, month = 1, year = 2000;
+  int date = 1, month = 1, year = 1980;
+  String dateString = '01', monthString = '01', yearString = '1980';
+  String finalDateString;
 
   Map months = {
     1: 'Jan',
@@ -372,6 +374,7 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
   }
 
   void _submitHandler() {
+    finalDateString = '$dateString/$monthString/$yearString 00:00:00';
     _prefs.setBool('loggedIn', true);
     Navigator.pushNamed(context, '/landingPage');
   }
@@ -570,7 +573,8 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                           physics: BouncingScrollPhysics(),
                           onSelectedItemChanged: (data) {
                             date = data + 1;
-                            print('$date/$month/$year');
+                            dateString = date < 10 ? '0$date' : '$date';
+                            print('$dateString/$monthString/$yearString');
                           })),
                   Container(
                       height: 80,
@@ -595,7 +599,8 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                           physics: BouncingScrollPhysics(),
                           onSelectedItemChanged: (data) {
                             month = data + 1;
-                            print('$date/$month/$year');
+                            monthString = month < 10 ? '0$month' : '$month';
+                            print('$dateString/$monthString/$yearString');
                           })),
                   Container(
                       height: 80,
@@ -618,7 +623,8 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                           physics: BouncingScrollPhysics(),
                           onSelectedItemChanged: (data) {
                             year = data + 1980; //to increment the index by 1980
-                            print('$date/$month/$year');
+                            yearString = '$year';
+                            print('$dateString/$monthString/$yearString');
                           }))
                 ],
               ),
