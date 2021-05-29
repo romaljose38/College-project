@@ -79,6 +79,9 @@ class _ChatScreenState extends State<ChatScreen>
   bool isForwarding = false;
   Map<int, ChatMessage> forwardedMsgs = <int, ChatMessage>{};
 
+  //
+  int refreshId = 0;
+
   @override
   void initState() {
     super.initState();
@@ -356,6 +359,7 @@ class _ChatScreenState extends State<ChatScreen>
     setState(() {
       replyingMsg = null;
       replyingMsgObj = null;
+      refreshId += 1;
     });
     _chatController.text = "";
   }
@@ -951,6 +955,7 @@ class _ChatScreenState extends State<ChatScreen>
                 ),
               )),
           RecordApp(
+            refreshId: refreshId,
             sendMessage: _sendMessage,
             sendImage: _sendImage,
             sendAudio: _sendAudio,
@@ -967,8 +972,14 @@ class RecordApp extends StatefulWidget {
   final Function sendImage;
   final Function sendAudio;
   final FocusNode focusNode;
+  final int refreshId;
 
-  RecordApp({this.sendMessage, this.sendImage, this.sendAudio, this.focusNode});
+  RecordApp(
+      {this.sendMessage,
+      this.sendImage,
+      this.sendAudio,
+      this.focusNode,
+      this.refreshId});
 
   @override
   _RecordAppState createState() => _RecordAppState();
@@ -995,6 +1006,7 @@ class _RecordAppState extends State<RecordApp>
   @override
   void initState() {
     super.initState();
+    print(widget.refreshId);
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
@@ -1094,10 +1106,9 @@ class _RecordAppState extends State<RecordApp>
 
   Future<void> _stopRecording() async {
     await Record.stop();
-
-    if (hasSent != true) {
+    // String _path = await recorder.stopRecorder();
+    if (hasSent == false) {
       widget.sendAudio(path);
-      hasSent = true;
     }
   }
 

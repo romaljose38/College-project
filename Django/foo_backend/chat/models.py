@@ -112,6 +112,7 @@ class Profile(models.Model):
     people_i_should_inform = models.ManyToManyField(User, related_name="cctvs", blank=True)
     people_i_peek = models.ManyToManyField(User, related_name="watching", blank=True)
     friends = models.ManyToManyField(User, related_name="friends", blank=True)
+    yall_cant_see_me = models.ManyToManyField(User, related_name="hidden_last_seen", blank=True)
 
     def __str__(self):
         return f'{self.user.email}'

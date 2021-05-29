@@ -273,6 +273,8 @@ def get_status(request):
         cur_id = request.query_params['id']
         cur_user = User.objects.get(id=int(cur_id))
         user = User.objects.get(username=username)
+        if cur_user in user.profile.yall_cant_see_me.all():
+            return Response(status=200, data={"status":"nope"})
         user.profile.people_i_should_inform.add(cur_user)
         user.save()
         cur_user.profile.people_i_peek.add(user)
@@ -597,3 +599,18 @@ def dob_upload(request):
         return Response(status=400)
 
 
+@api_view(['GET'])
+def add_to_last_seen(request):
+    try:
+        action = request.query_params['action']
+        id = int(request.query_params['id'])
+        username = request.query_params['username']
+        user = User.objects.get(id=id)
+        other_user = User.objects.get(username=username)
+        user.profile.yall_cant_see_me.add(other_user)
+
+        user.save()
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
