@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/test_cred.dart';
@@ -497,6 +498,7 @@ class _PlayerState extends State<Player> {
   void initState() {
     super.initState();
     player = AudioPlayer();
+
     addListeners();
   }
 
@@ -538,11 +540,7 @@ class _PlayerState extends State<Player> {
 
   //activates the player and responsible for changing the pause/play icon
   Future<void> playerStateChange() async {
-    print("button click");
-    print(totalDuration);
     if ((widget.file != null) & (!hasInitialized)) {
-      print("initializing");
-      print(widget.file.path);
       await player.play(widget.file.path,
           isLocal: true, volume: .8, stayAwake: true);
       setState(() {

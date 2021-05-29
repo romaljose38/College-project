@@ -514,27 +514,48 @@ class _ImageReplyCloudState extends State<ImageReplyCloud> {
                   child: Container(
                     width: 70,
                     decoration: BoxDecoration(
-                      color: Colors.black45,
+                      color: widget.msgObj.isMe
+                          ? Colors.white
+                          : Color.fromRGBO(255, 143, 187, 1),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(.05),
+                            blurRadius: 10,
+                            spreadRadius: .5,
+                            offset: Offset(-2, -3))
+                      ],
                       borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(20),
                           topRight: Radius.circular(20)),
                     ),
                     padding: EdgeInsets.all(10),
-                    child: (widget.msgObj.replyMsgTxt == imageUTF)
+                    child: (this.widget.msgObj.replyMsgTxt == imageUTF)
                         ? Row(children: [
                             Icon(Icons.image, size: 15),
-                            Text("Image", style: TextStyle(fontSize: 11))
+                            Text("Image",
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: widget.msgObj.isMe
+                                        ? Colors.black
+                                        : Colors.white))
                           ])
-                        : (widget.msgObj.replyMsgTxt == audioUTF)
+                        : (this.widget.msgObj.replyMsgTxt == audioUTF)
                             ? Row(children: [
                                 Icon(Icons.headset_rounded, size: 15),
-                                Text("Audio", style: TextStyle(fontSize: 11))
+                                Text("Audio",
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: widget.msgObj.isMe
+                                            ? Colors.black
+                                            : Colors.white))
                               ])
                             : Text(
-                                widget.msgObj.replyMsgTxt,
+                                this.widget.msgObj.replyMsgTxt,
                                 style: TextStyle(
-                                  fontSize: 12,
-                                ),
+                                    fontSize: 12,
+                                    color: widget.msgObj.isMe
+                                        ? Colors.black
+                                        : Colors.white),
                                 overflow: TextOverflow.ellipsis,
                               ),
                   ),
