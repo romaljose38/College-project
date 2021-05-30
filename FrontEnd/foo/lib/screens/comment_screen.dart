@@ -64,6 +64,13 @@ class _CommentScreenState extends State<CommentScreen>
   AnimationController animationController;
   int start = 0, end = 0;
 
+  //
+  String caption;
+  int commentCount;
+  int likeCount;
+  bool hasLiked;
+  String postUrl;
+
   @override
   void initState() {
     super.initState();
@@ -76,12 +83,21 @@ class _CommentScreenState extends State<CommentScreen>
   }
 
   Future<void> _getComments() async {
-    var response = await http
-        .get(Uri.http(localhost, '/api/${widget.postId}/post_detail'));
+    var prefs = await SharedPreferences.getInstance();
+    var curId = prefs.getInt('id');
+
+    var response = await http.get(Uri.http(localhost,
+        '/api/${widget.postId}/post_detail', {'id': curId.toString()}));
     if (response.statusCode == 200) {
       var respJson = jsonDecode(utf8.decode(response.bodyBytes));
       print(respJson);
-
+      setState(() {
+        commentCount = respJson['comment_set'].length;
+        likeCount = respJson['likeCount'];
+        caption = respJson['caption'];
+        hasLiked = respJson['hasLiked'];
+        postUrl = 'http://' + localhost + respJson['file'];
+      });
       respJson['comment_set'].forEach((e) {
         var comment = jsonDecode(e['comment']);
 
@@ -343,8 +359,7 @@ class _CommentScreenState extends State<CommentScreen>
 
   Future<bool> _onWillPop() async {
     print("nope you r not goin");
-    Navigator.pop(
-        context, {"likes": widget.likeCount, "comments": widget.commentCount});
+    Navigator.pop(context, {"likes": likeCount, "comments": commentCount});
     return Future.value(false);
   }
 
@@ -419,7 +434,7 @@ class _CommentScreenState extends State<CommentScreen>
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30.0),
                     image: DecorationImage(
-                      image: CachedNetworkImageProvider(widget.postUrl),
+                      image: CachedNetworkImageProvider(postUrl),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -510,7 +525,7 @@ class _CommentScreenState extends State<CommentScreen>
                                   SizedBox(width: 5),
                                   // SizedBox(width: 25),
                                   Text(
-                                    widget.likeCount.toString(),
+                                    likeCount.toString(),
                                     style: TextStyle(
                                       fontSize: 11.0,
                                       color: Colors.white,
@@ -540,7 +555,7 @@ class _CommentScreenState extends State<CommentScreen>
                                 onPressed: () {},
                               ),
                               Text(
-                                widget.commentCount.toString(),
+                                commentCount.toString(),
                                 style: TextStyle(
                                   fontSize: 12.0,
                                   color: Colors.white,

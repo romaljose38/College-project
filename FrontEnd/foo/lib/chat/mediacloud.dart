@@ -526,7 +526,9 @@ class _MediaCloudState extends State<MediaCloud> {
           : null,
       child: Container(
         child: widget.disableSwipe ? cloudContent() : swipeAble(),
-        color: (widget.hasSelectedSomething && hasSelected)
+        color: (widget.hasSelectedSomething &&
+                widget.forwardMap.containsKey(widget.msgObj.id) &&
+                hasSelected)
             ? Colors.blue.withOpacity(.3)
             : Colors.transparent,
       ),

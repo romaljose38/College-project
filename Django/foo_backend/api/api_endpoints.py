@@ -30,7 +30,8 @@ urlpatterns = [
     path('upload_chat_image_reply',api_views.upload_chat_image_reply, name="chat_image_reply_upload"),
     path('people_you_may_know', api_views.people_you_may_know, name="suggestions"),
     path('delete_post', api_views.delete_post, name="delete_post"),
-    path('dob_upload', api_views.dob_upload,  name="dob_upload")    
+    path('dob_upload', api_views.dob_upload,  name="dob_upload"),
+    path('user_details', api_views.get_user_details, name="get_user_details"),
 
 
 ]

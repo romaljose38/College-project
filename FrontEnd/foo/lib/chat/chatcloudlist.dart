@@ -67,12 +67,11 @@ class _ChatCloudListState extends State<ChatCloudList>
 
   removeForward() {
     widget.forwardMsgHandler();
-    print("function works");
   }
 
   scroller(id) async {
     print(checkingList);
-    print("scroll to index");
+
     if (checkingList.containsKey(id)) {
       await widget.scrollController.scrollTo(
           index: checkingList[id],
@@ -113,7 +112,7 @@ class _ChatCloudListState extends State<ChatCloudList>
             final reversedIndex = widget.chatList.length - 1 - index;
             var curId = widget.chatList[reversedIndex].id;
             checkingList[curId] = index;
-
+            print(widget.chatList[reversedIndex].msgType);
             var chat = ChatCloud(
               key: ValueKey(curId),
               msgObj: widget.chatList[reversedIndex],
@@ -213,6 +212,7 @@ class _ChatCloudListState extends State<ChatCloudList>
       setState(() {
         hasSelectedSomething = false;
       });
+      widget.msgMap = {};
     } else {
       widget.forwardMsgHandler();
       setState(() {

@@ -38,7 +38,6 @@ class SocketChannel {
 
   ///Timer to run the local checkup
   localCheck() {
-    print("local check");
     if (!isConnected && !(_timer?.isActive ?? false)) {
       print("sanm poi");
       _timer = Timer.periodic(Duration(seconds: 5), (timer) => handleSocket());
@@ -52,7 +51,6 @@ class SocketChannel {
 
   Future<void> handleSocket() async {
     try {
-      print("pingingggg");
       var resp = await http.get(Uri.http(localhost, '/api/ping'));
       if (resp.statusCode == 200) {
         if (!isConnected) {
@@ -422,6 +420,18 @@ class SocketChannel {
     sendToChannel(jsonEncode({'n_r': data['notif_id']}));
   }
 
+  getAndSetDetails(thread) async {
+    var username = thread.second.name;
+    var response = await http
+        .get(Uri.http(localhost, '/api/user_details', {'username': username}));
+
+    var decodedResp = jsonDecode(response.body);
+    thread.second.f_name = decodedResp['f_name'];
+    thread.second.l_name = decodedResp['l_name'];
+    thread.second.dpUrl = decodedResp['dp'];
+    thread.save();
+  }
+
   _chicanery(threadName, thread, data) async {
     // showNotification(data['message']['message'], data['message']['from']);
     _handler.chatNotif(data['message']['from'], data['message']['message']);
@@ -456,6 +466,7 @@ class SocketChannel {
         id: data['message']['id'],
       ));
     }
+    getAndSetDetails(thread);
     if (thread.hasUnseen != null) {
       thread.hasUnseen += 1;
     } else {

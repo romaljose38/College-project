@@ -132,7 +132,8 @@ def get_profile_and_posts(request, id):
 def get_comments(request, id):
     try:
         post = Post.objects.get(id=id)
-        serialized = PostDetailSerializer(post)
+        user_id = int(request.query_params['id'])
+        serialized = PostDetailSerializer(post,context={'user':User.objects.get(id=user_id)})
         return Response(status=200, data=serialized.data)
     except Exception as e:
         print(e)
@@ -142,10 +143,7 @@ def get_comments(request, id):
 @api_view(['POST'])
 def add_comment(request, username):
     try:
-        print(request.data['comment'])
-        print(json.dumps(request.data['comment']).__class__)
-        print(request.data['mentions'])
-        print(request.data['mentions'].__class__)
+        print(request.data)
         user = User.objects.get(username=username)
         post = Post.objects.get(id=request.data['post'])
         comment = Comment.objects.create(
@@ -613,4 +611,19 @@ def add_to_last_seen(request):
         return Response(status=200)
     except Exception as e:
         print(e)
+        return Response(status=400)
+
+
+@api_view(['GET'])
+def get_user_details(request):
+    try:
+        username = request.query_params['username']
+        user = User.objects.get(username=username)
+        data = {
+            f_name:user.f_name,
+            l_name:user.l_name,
+            dp:user.profile.profile_pic.url
+        }
+        return Response(status=200, data=data)
+    except:
         return Response(status=400)
