@@ -121,6 +121,7 @@ class _ChatCloudListState extends State<ChatCloudList>
               forwardRemover: removeForward,
             );
             var audio = AudioCloud(
+              key: UniqueKey(),
               msgObj: widget.chatList[reversedIndex],
               controller: _controller,
               swipingHandler: widget.swipingHandler,
@@ -165,6 +166,7 @@ class _ChatCloudListState extends State<ChatCloudList>
               forwardRemover: removeForward,
             );
             var image = MediaCloud(
+              key: UniqueKey(),
               msgObj: widget.chatList[reversedIndex],
               otherUser: widget.otherUser,
               swipingHandler: widget.swipingHandler,

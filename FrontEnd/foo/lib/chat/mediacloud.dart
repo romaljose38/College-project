@@ -25,14 +25,16 @@ class MediaCloud extends StatefulWidget {
   Function forwardRemover;
 
   MediaCloud(
-      {this.msgObj,
+      {Key key,
+      this.msgObj,
       this.otherUser,
       this.hasSelectedSomething,
       this.outerSetState,
       this.forwardRemover,
       this.forwardMap,
       this.disableSwipe = false,
-      this.swipingHandler});
+      this.swipingHandler})
+      : super(key: key);
 
   @override
   _MediaCloudState createState() => _MediaCloudState();

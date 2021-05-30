@@ -28,7 +28,8 @@ class AudioCloud extends StatefulWidget {
   Function forwardRemover;
 
   AudioCloud(
-      {this.msgObj,
+      {Key key,
+      this.msgObj,
       this.controller,
       this.forwardRemover,
       this.otherUser,
@@ -36,7 +37,8 @@ class AudioCloud extends StatefulWidget {
       this.outerSetState,
       this.hasSelectedSomething,
       this.forwardMap,
-      this.disableSwipe = false});
+      this.disableSwipe = false})
+      : super(key: key);
 
   @override
   _AudioCloudState createState() => _AudioCloudState();
