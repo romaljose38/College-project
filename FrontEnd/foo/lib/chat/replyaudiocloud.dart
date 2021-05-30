@@ -520,7 +520,9 @@ class _AudioReplyCloudState extends State<AudioReplyCloud> {
                 : null
             : null,
         child: Container(
-            color: (widget.hasSelectedSomething && hasSelected)
+            color: (widget.hasSelectedSomething &&
+                    widget.forwardMap.containsKey(widget.msgObj.id) &&
+                    hasSelected)
                 ? Colors.blue.withOpacity(.3)
                 : Colors.transparent,
             child: widget.disableSwipe ? cloudContent() : swipeAble()));

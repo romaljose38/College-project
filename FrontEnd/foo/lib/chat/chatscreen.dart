@@ -29,6 +29,7 @@ import 'package:http/http.dart' as http;
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
+import 'package:cached_network_image/cached_network_image.dart';
 
 String imageUTF = "\x69\x6d\x61\x67\x65";
 String audioUTF = "\x61\x75\x64\x69\x6f";
@@ -496,7 +497,6 @@ class _ChatScreenState extends State<ChatScreen>
   void setPreferences() {
     String key = "am_i_hiding_last_seen_from_$otherUser";
     if (_prefs.containsKey(key)) {
-      print("test");
       setState(() {
         hidingLastSeen = _prefs.getBool(key);
       });
@@ -565,106 +565,127 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   showDeletionSheet() {
+    bool _deleteForEveryone = false;
     showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
+            content: CheckboxListTile(
+              value: false,
+              onChanged: (val) {},
+              title: Text("Delete for everyone"),
+            ),
             title: Text((forwardedMsgs.length > 1)
                 ? "Do you want to delete these messages?"
                 : "Do you want to delete this message?"),
             actions: [
               TextButton(
                   onPressed: () {
-                    print("Yes");
+                    if (_deleteForEveryone) {
+                      if (SocketChannel.isConnected) {
+                        deleteForEveryone();
+                        deleteforMe();
+                        Navigator.pop(context);
+                      } else {
+                        CustomOverlay overlay = CustomOverlay(
+                            context: context,
+                            animationController: _animationController);
+                        overlay.show(
+                            "Something went wrong.\n Please check your network connection and try again later");
+                      }
+                    } else {
+                      deleteforMe();
+                    }
+                    Navigator.pop(context);
                   },
                   child: Text("Yes")),
               TextButton(
                   onPressed: () {
-                    print("No");
+                    Navigator.pop(context);
                   },
                   child: Text("No")),
             ],
           );
         });
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          height: 300,
-          child: Column(
-            children: [
-              Container(
-                child: Text(
-                  "Settings",
-                  style: GoogleFonts.lato(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                alignment: Alignment.centerLeft,
-                margin: EdgeInsets.fromLTRB(20, 20, 0, 8),
-              ),
-              Divider(),
-              Container(
-                // height: 70,
-                width: double.infinity,
-                child: Row(
-                  children: [
-                    Spacer(),
-                    TextButton(
-                      child: Text(
-                        "Delete for me",
-                        style: GoogleFonts.openSans(
-                          fontSize: 16,
-                        ),
-                      ),
-                      onPressed: () {
-                        deleteforMe();
-                        Navigator.pop(context);
-                      },
-                    ),
-                    Spacer(flex: 4),
-                  ],
-                ),
-              ),
-              Divider(),
-              Container(
-                // height: 70,
-                width: double.infinity,
-                child: Row(
-                  children: [
-                    Spacer(),
-                    TextButton(
-                      child: Text(
-                        "Delete for everyone",
-                        style: GoogleFonts.openSans(
-                          fontSize: 16,
-                        ),
-                      ),
-                      onPressed: () {
-                        if (SocketChannel.isConnected) {
-                          deleteForEveryone();
-                          deleteforMe();
-                          Navigator.pop(context);
-                        } else {
-                          CustomOverlay overlay = CustomOverlay(
-                              context: context,
-                              animationController: _animationController);
-                          overlay.show(
-                              "Something went wrong.\n Please check your network connection and try again later");
-                        }
-                      },
-                    ),
-                    Spacer(flex: 4),
-                  ],
-                ),
-              ),
-              Divider(),
-            ],
-          ),
-        );
-      },
-    );
+    // showModalBottomSheet(
+    //   context: context,
+    //   builder: (context) {
+    //     return Container(
+    //       height: 300,
+    //       child: Column(
+    //         children: [
+    //           Container(
+    //             child: Text(
+    //               "Settings",
+    //               style: GoogleFonts.lato(
+    //                 fontSize: 23,
+    //                 fontWeight: FontWeight.w600,
+    //               ),
+    //             ),
+    //             alignment: Alignment.centerLeft,
+    //             margin: EdgeInsets.fromLTRB(20, 20, 0, 8),
+    //           ),
+    //           Divider(),
+    //           Container(
+    //             // height: 70,
+    //             width: double.infinity,
+    //             child: Row(
+    //               children: [
+    //                 Spacer(),
+    //                 TextButton(
+    //                   child: Text(
+    //                     "Delete for me",
+    //                     style: GoogleFonts.openSans(
+    //                       fontSize: 16,
+    //                     ),
+    //                   ),
+    //                   onPressed: () {
+    //                     deleteforMe();
+    //                     Navigator.pop(context);
+    //                   },
+    //                 ),
+    //                 Spacer(flex: 4),
+    //               ],
+    //             ),
+    //           ),
+    //           Divider(),
+    //           Container(
+    //             // height: 70,
+    //             width: double.infinity,
+    //             child: Row(
+    //               children: [
+    //                 Spacer(),
+    //                 TextButton(
+    //                   child: Text(
+    //                     "Delete for everyone",
+    //                     style: GoogleFonts.openSans(
+    //                       fontSize: 16,
+    //                     ),
+    //                   ),
+    //                   onPressed: () {
+    //                     if (SocketChannel.isConnected) {
+    //                       deleteForEveryone();
+    //                       deleteforMe();
+    //                       Navigator.pop(context);
+    //                     } else {
+    //                       CustomOverlay overlay = CustomOverlay(
+    //                           context: context,
+    //                           animationController: _animationController);
+    //                       overlay.show(
+    //                           "Something went wrong.\n Please check your network connection and try again later");
+    //                     }
+    //                   },
+    //                 ),
+    //                 Spacer(flex: 4),
+    //               ],
+    //             ),
+    //           ),
+    //           Divider(),
+    //         ],
+    //       ),
+    //     );
+    //   },
+    // );
   }
 
   //
@@ -770,6 +791,7 @@ class _ChatScreenState extends State<ChatScreen>
       if (isForwarding) {
         setState(() {
           isForwarding = false;
+          forwardedMsgs = {};
         });
       }
     } else {
@@ -784,7 +806,6 @@ class _ChatScreenState extends State<ChatScreen>
     checkAndSendKeyboardStatus();
     return WillPopScope(
       onWillPop: () async {
-        print("outer");
         _prefs.setString("curUser", "");
         // Navigator.pushNamedAndRemoveUntil(
         // context, '/chatlist', (Route route) => route is ChatListScreen);
@@ -840,10 +861,30 @@ class _ChatScreenState extends State<ChatScreen>
                                 color: Colors.black, size: 23),
                           ),
                           Spacer(),
-                          CircleAvatar(
-                            child: Text(otherUser[0].toUpperCase()),
-                            radius: 20,
-                          ),
+                          // CircleAvatar(
+                          //   //child: Text(otherUser[0].toUpperCase()),
+                          //   child: CachedNetworkImage(
+                          //       errorWidget: (a, b, c) {
+                          //         return Text(otherUser[0].toUpperCase());
+                          //       },
+                          //       imageUrl: widget.thread.second?.dpUrl),
+                          //   radius: 20,
+                          // ),
+                          Container(
+                              height: 56,
+                              width: 56,
+                              //child: Text(this.thread.second.name[0].toUpperCase()),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                image: DecorationImage(
+                                    fit: BoxFit.cover,
+                                    image: CachedNetworkImageProvider(
+                                      thread.second.dpUrl == null
+                                          ? ''
+                                          : 'http://$localhost' +
+                                              thread.second?.dpUrl,
+                                    )),
+                              )),
                           Spacer(),
                           Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -945,7 +986,7 @@ class _ChatScreenState extends State<ChatScreen>
                   //   }
                   // }
                 }
-                print("rerender");
+
                 return ChatCloudList(
                     chatList: __chatList,
                     curUser: curUser,
@@ -1042,7 +1083,7 @@ class _RecordAppState extends State<RecordApp>
   @override
   void initState() {
     super.initState();
-    print(widget.refreshId);
+
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),

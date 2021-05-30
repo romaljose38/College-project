@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foo/models.dart';
 import 'package:foo/notifications/friend_request_tile.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -100,9 +101,13 @@ class NotificationScreen extends StatelessWidget {
                           return ListView.builder(
                             itemCount: notifications.length ?? 0,
                             itemBuilder: (context, index) {
-                              return Tile(
-                                notification: notifications[index],
-                              );
+                              if (notifications[index].type ==
+                                  NotificationType.friendRequest) {
+                                return Tile(
+                                  notification: notifications[index],
+                                );
+                              }
+                              return Container();
                             },
                           );
                         },

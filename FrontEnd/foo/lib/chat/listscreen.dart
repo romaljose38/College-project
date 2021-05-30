@@ -37,8 +37,6 @@ class _ChatListScreenState extends State<ChatListScreen>
   tiles() => ValueListenableBuilder(
       valueListenable: Hive.box("Threads").listenable(),
       builder: (context, box, widget) {
-        print(box.values.toList());
-
         List threads = box.values.toList() ?? [];
 
         if (threads.length >= 1) {
@@ -46,12 +44,10 @@ class _ChatListScreenState extends State<ChatListScreen>
             return b.lastAccessed.compareTo(a.lastAccessed);
           });
         }
-        print(threads);
+
         return ListView.builder(
             itemCount: threads.length,
             itemBuilder: (context, index) {
-              print(index);
-              print(threads[index]);
               return ChatTile(thread: threads[index]);
             });
       });

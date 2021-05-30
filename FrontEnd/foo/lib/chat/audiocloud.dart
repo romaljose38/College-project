@@ -59,7 +59,7 @@ class _AudioCloudState extends State<AudioCloud> {
 
     if (widget.msgObj.isMe == true) {
       setFile();
-      print(widget.msgObj.haveReachedServer);
+
       if (widget.msgObj.haveReachedServer == true) {
         setState(() {
           reachedServer = true;
@@ -91,7 +91,6 @@ class _AudioCloudState extends State<AudioCloud> {
     if (await Permission.storage.request().isGranted) {
       if (widget.msgObj.hasSeen != true) {
         var url = 'http://$localhost${widget.msgObj.filePath}';
-        print(url);
         try {
           var response = await http.get(Uri.parse(url));
 
@@ -161,7 +160,6 @@ class _AudioCloudState extends State<AudioCloud> {
   }
 
   void trySendingToServer() async {
-    print("uploading...");
     if (hasSetPrefs != true) {
       await setPrefs();
     }
@@ -197,53 +195,6 @@ class _AudioCloudState extends State<AudioCloud> {
       }
     }
   }
-
-  // FutureOr convertEncodedString() async {
-  //   if ((this.widget.msgObj.isMe == true) &
-  //       (this.widget.msgObj.filePath != null)) {
-  //     bool exists = await File(this.widget.msgObj.filePath).exists();
-  //     if (exists) {
-  //       File file = File(this.widget.msgObj.filePath);
-  //       if (file != null) {
-  //         return file;
-  //       }
-  //     }
-  //     return "does not exist";
-  //   } else {
-  //     var ext = this.widget.msgObj.ext;
-  //     var aud64 = this.widget.msgObj.base64string;
-  //     Directory appDir = await getApplicationDocumentsDirectory();
-  //     String path =
-  //         appDir.path + '/Audio/' + this.widget.msgObj.id.toString() + '.$ext';
-  //     bool isPresent = await File(path).exists();
-  //     if (!isPresent) {
-  //       if (ext == null) {
-  //         return;
-  //       }
-
-  //       print(ext);
-  //       var bytes = base64Decode(aud64);
-  //       print(bytes);
-
-  //       File(appDir.path +
-  //               '/Audio/' +
-  //               this.widget.msgObj.id.toString() +
-  //               '.$ext')
-  //           .createSync(recursive: true);
-  //       print(appDir.path +
-  //           '/Audio/' +
-  //           this.widget.msgObj.id.toString() +
-  //           '.$ext');
-
-  //       File fle = File(path);
-  //       await fle.writeAsBytes(bytes);
-  //       print("writing done successfully to " + fle.path);
-  //       return fle;
-  //     }
-  //     print("already exists");
-  //     return File(path);
-  //   }
-  // }
 
   String getTime() => intl.DateFormat('hh:mm').format(this.widget.msgObj.time);
 
@@ -433,7 +384,6 @@ class _AudioCloudState extends State<AudioCloud> {
 
   @override
   Widget build(BuildContext context) {
-    print(widget.msgObj.filePath);
     return GestureDetector(
         onLongPress: (widget.msgObj.haveReachedServer ?? false)
             ? () {
@@ -474,7 +424,9 @@ class _AudioCloudState extends State<AudioCloud> {
                 : null
             : null,
         child: Container(
-            color: ((widget.hasSelectedSomething ?? false) && hasSelected)
+            color: (widget.hasSelectedSomething &&
+                    widget.forwardMap.containsKey(widget.msgObj.id) &&
+                    hasSelected)
                 ? Colors.blue.withOpacity(.3)
                 : Colors.transparent,
             child: widget.disableSwipe ? cloudContent() : swipeAble()));
@@ -633,7 +585,6 @@ class _PlayerState extends State<Player> {
                 : ValueListenableBuilder(
                     valueListenable: widget.notifier,
                     builder: (context, snapshot, _widget) {
-                      print("hello");
                       Widget child;
                       if (widget.notifier.value == true) {
                         child = SizedBox(

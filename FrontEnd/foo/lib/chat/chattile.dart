@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'chatscreen.dart';
 import 'package:foo/models.dart';
 import 'package:intl/intl.dart';
+import 'package:foo/test_cred.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ChatTile extends StatelessWidget {
@@ -35,8 +37,11 @@ class ChatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     print("has Unseen");
     print(thread.hasUnseen);
+    print(thread.second?.f_name);
+    print(thread.second?.l_name);
+    print(thread.second?.dpUrl);
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 5),
+      //margin: EdgeInsets.symmetric(horizontal: 0, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white,
         // borderRadius: BorderRadius.circular(15),
@@ -50,8 +55,9 @@ class ChatTile extends StatelessWidget {
         //   )
         // ],
       ),
-      padding: EdgeInsets.symmetric(vertical: 13),
+      padding: EdgeInsets.symmetric(vertical: 18),
       width: MediaQuery.of(context).size.width,
+      //height: 80,
       child: ListTile(
           trailing: Container(
             width: 50,
@@ -117,10 +123,20 @@ class ChatTile extends StatelessWidget {
                       );
                     }));
           },
-          leading: CircleAvatar(
-            radius: 35,
-            child: Text(this.thread.second.name[0].toUpperCase()),
-          ),
+          leading: Container(
+              height: 56,
+              width: 56,
+              //child: Text(this.thread.second.name[0].toUpperCase()),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                image: DecorationImage(
+                    fit: BoxFit.cover,
+                    image: CachedNetworkImageProvider(
+                      thread.second.dpUrl == null
+                          ? ''
+                          : 'http://$localhost' + thread.second?.dpUrl,
+                    )),
+              )),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
