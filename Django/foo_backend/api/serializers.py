@@ -38,6 +38,8 @@ class UserSerializer(serializers.ModelSerializer):
         representation['id'] = instance.id
         if(instance.dob is None):
             representation['dobVerified'] = False
+        else:
+            representation['dobVerified'] = True
         return representation
 
 

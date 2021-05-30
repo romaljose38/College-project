@@ -812,7 +812,7 @@ class _ChatScreenState extends State<ChatScreen>
                           ),
                           Spacer(),
                           CircleAvatar(
-                            child: Text(curUser[0]),
+                            child: Text(otherUser[0].toUpperCase()),
                             radius: 20,
                           ),
                           Spacer(),

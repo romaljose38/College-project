@@ -118,6 +118,10 @@ class _RegisterFormState extends State<RegisterForm> {
       body: userJson,
     );
 
+    setState(() {
+      _isUploading = false;
+    });
+
     if (response.statusCode == 400) {
       var jsonResponse = convert.jsonDecode(response.body);
       print(jsonResponse);
@@ -144,6 +148,9 @@ class _RegisterFormState extends State<RegisterForm> {
   //OnSubmit
   void _submitHandle() {
     if (_formKey.currentState.validate()) {
+      setState(() {
+        _isUploading = true;
+      });
       _formKey.currentState.save();
       //To encode the Map object to JSON file
       userJson = convert.jsonEncode(registerData);
@@ -264,15 +271,10 @@ class _RegisterFormState extends State<RegisterForm> {
                     ),
                     SizedBox(height: 60),
                     _isUploading
-                        ? CircularProgressIndicator()
+                        ? Center(child: CircularProgressIndicator())
                         : ElevatedGradientButton(
                             text: "Submit",
-                            onPressed: () {
-                              setState(() {
-                                _isUploading = true;
-                              });
-                              _submitHandle();
-                            },
+                            onPressed: _submitHandle,
                             focusNode: focusSubmit,
                           ),
                   ])),
@@ -358,7 +360,8 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
   }
 
   Future<File> testCompressAndGetFile(File file) async {
-    String targetPath = '/storage/emulated/0/foo/profile_pic/dp.jpg';
+    String targetPath = (await getApplicationDocumentsDirectory()).path +
+        '/images/dp/dp.jpg'; //'/storage/emulated/0/foo/profile_pic/dp.jpg';
     await Permission.storage.request();
     try {
       File(targetPath).createSync(recursive: true);
@@ -377,12 +380,13 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
   }
 
   Future<File> getImageFileFromAssets() async {
-    String path = 'images/user0.png';
+    String path = 'images/dp/dp.jpg';
     final byteData = await rootBundle.load('assets/$path');
 
-    File('${(await getTemporaryDirectory()).path}/$path')
+    File('${(await getApplicationDocumentsDirectory()).path}/$path')
         .createSync(recursive: true);
-    final file = File('${(await getTemporaryDirectory()).path}/$path');
+    final file =
+        File('${(await getApplicationDocumentsDirectory()).path}/$path');
     await file.writeAsBytes(byteData.buffer
         .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
 
@@ -618,7 +622,7 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                                     color: Colors.grey.shade400, width: 1),
                                 image: DecorationImage(
                                   fit: BoxFit.cover,
-                                  image: AssetImage('assets/images/user0.png'),
+                                  image: AssetImage('assets/images/dp/dp.jpg'),
                                 ),
 
                                 // color: Colors.grey.shade100,

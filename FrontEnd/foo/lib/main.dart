@@ -80,7 +80,32 @@ class MyApp extends StatelessWidget {
       // home: TestRecord(),
       home: Renderer(prefs: prefs),
       // home: CalendarBackground(),
-      // home: StoryPage(),
+      // home: CheckFilePath(),
+    );
+  }
+}
+
+class CheckFilePath extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("TEST"),
+      ),
+      // body: Center(
+      //   child: ElevatedButton(
+      //     child: Text("Get File Path"),
+      //     onPressed: () async {
+      //       print((await pathProvider.getApplicationDocumentsDirectory()).path);
+      //     },
+      //   ),
+      // ),
+      body: Center(
+        child: Image(
+          image: AssetImage('assets/images/dp/dp.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
     );
   }
 }

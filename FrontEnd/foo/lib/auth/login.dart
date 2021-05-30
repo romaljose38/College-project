@@ -6,6 +6,7 @@ import '../test_cred.dart';
 import 'elevatedgradientbutton.dart';
 import 'logintextfield.dart';
 import 'package:http/http.dart' as http;
+import 'package:foo/auth/register.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -20,6 +21,8 @@ class _LoginScreenState extends State<LoginScreen> {
   FocusNode focusMail;
   FocusNode focusPassword;
   FocusNode focusSubmit;
+
+  bool _buttonPressed = false;
 
   @override
   void initState() {
@@ -38,6 +41,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _authenticate() async {
+    setState(() {
+      _buttonPressed = true;
+    });
+
     final email = _emailController.text;
     final password = _passwordController.text;
     print(email + password);
@@ -52,20 +59,32 @@ class _LoginScreenState extends State<LoginScreen> {
         'password': password,
       }),
     );
+
+    setState(() {
+      _buttonPressed = false;
+    });
+
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
+      bool dobVerified;
       print(data);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       data.forEach((key, value) {
         if ((key == "uprn") | (key == "id")) {
           prefs.setInt(key, value);
         } else if (key == "dobVerified") {
+          dobVerified = data[key];
         } else {
           prefs.setString(key, value);
         }
       });
-      prefs.setBool('loggedIn', true);
-      Navigator.pushNamed(context, '/landingPage');
+      if (dobVerified == true) {
+        prefs.setBool('loggedIn', true);
+        Navigator.pushNamed(context, '/landingPage');
+      } else {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => CalendarBackground()));
+      }
     }
   }
 
@@ -148,10 +167,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 SizedBox(
                                   height: 40,
                                 ),
-                                ElevatedGradientButton(
-                                  text: "Login",
-                                  onPressed: _authenticate,
-                                ),
+                                _buttonPressed == false
+                                    ? ElevatedGradientButton(
+                                        text: "Login",
+                                        onPressed: _authenticate,
+                                      )
+                                    : Center(
+                                        child: CircularProgressIndicator()),
                               ])),
                           Align(
                             child: GestureDetector(

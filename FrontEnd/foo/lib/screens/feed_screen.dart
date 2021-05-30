@@ -8,6 +8,7 @@ import 'package:foo/screens/post_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../test_cred.dart';
 import 'dart:math' as math;
@@ -39,6 +40,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   var myStoryList = [];
   AnimationController _animationController;
   AnimationController _tileAnimationController;
+
+  String myProfPic;
   //
 
   bool isStacked = false;
@@ -54,6 +57,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     //_fetchStory();
     super.initState();
     // _getNewPosts();
+    _getMyProfPic();
 
     _scrollController
       ..addListener(() {
@@ -195,6 +199,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   //The widget to display the stories which fetches data using the websocket
 
+  Future<void> _getMyProfPic() async {
+    myProfPic =
+        (await getApplicationDocumentsDirectory()).path + '/images/dp/dp.jpg';
+  }
+
   Widget _newHoriz() {
     return ValueListenableBuilder(
         valueListenable: Hive.box('MyStories').listenable(),
@@ -239,7 +248,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 if (index == 0) {
                   return Column(
                     children: [
-                      StoryUploadPick(myStory: myStory),
+                      StoryUploadPick(myStory: myStory, myProfPic: myProfPic),
                       Text(
                         "Momentos",
                         overflow: TextOverflow.ellipsis,

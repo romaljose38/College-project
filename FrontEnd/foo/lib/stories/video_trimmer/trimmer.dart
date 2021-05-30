@@ -18,9 +18,10 @@ import 'package:foo/stories/story_new.dart';
 
 class StoryUploadPick extends StatelessWidget {
   final Trimmer _trimmer = Trimmer();
+  final String myProfPic;
   final myStory;
 
-  StoryUploadPick({this.myStory});
+  StoryUploadPick({this.myStory, this.myProfPic});
 
   Future<void> _uploadStory(BuildContext context, File mediaFile) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -50,9 +51,10 @@ class StoryUploadPick extends StatelessWidget {
         if (myStory == null) {
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Long press to add a new moment")));
+        } else {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => MyStoryScreen(storyObject: myStory)));
         }
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => MyStoryScreen(storyObject: myStory)));
       },
       onLongPress: () async {
         FilePickerResult result = await FilePicker.platform.pickFiles(
@@ -103,13 +105,25 @@ class StoryUploadPick extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.all(2),
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(23),
-                ),
+                decoration: myProfPic != null
+                    ? BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(23),
+                        image: DecorationImage(
+                          image: FileImage(File(myProfPic)),
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(23),
+                      ),
                 child: Center(
-                  child: plusButton(),
-                ),
+                    child: myProfPic == null
+                        ? CircularProgressIndicator()
+                        : Container()
+                    // child: plusButton(),
+                    ),
               ),
             ),
           ),
@@ -306,6 +320,7 @@ class _CropMyImageState extends State<CropMyImage> {
   String filePath;
 
   bool _isCropping = false;
+  bool _isUploading = false;
 
   Future<void> _openImage() async {
     final File file = File(widget.file.path);
@@ -402,60 +417,73 @@ class _CropMyImageState extends State<CropMyImage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size(double.infinity, 100),
-        child: Container(
-          padding: EdgeInsets.only(top: 35),
-          color: Colors.black,
-          child: Row(
-            children: <Widget>[
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    _isCropping = false;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              Spacer(),
-              _isCropping
-                  ? Container()
-                  : IconButton(
-                      icon: Icon(Icons.crop, color: Colors.white),
-                      onPressed: () {
-                        setState(() {
-                          _isCropping = true;
-                        });
-                        _openImage();
-                      },
-                    ),
-              _isCropping
-                  ? Container()
-                  : IconButton(
-                      icon: Icon(Icons.upload_file, color: Colors.white),
-                      onPressed: () {
-                        String fileFormat = widget.file.path.split('.').last;
-                        Directory(dirPath).createSync(recursive: true);
-                        filePath = dirPath +
-                            '/${DateTime.now().millisecondsSinceEpoch}.' +
-                            fileFormat;
-                        widget.file.copySync(filePath);
-                        File uploadFile = File(filePath);
-                        widget.file.delete();
-                        print(uploadFile);
-                        widget.uploadFunc(context, uploadFile);
-                      },
-                    )
-            ],
+    return AbsorbPointer(
+      absorbing: _isUploading,
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(double.infinity, 100),
+          child: Container(
+            padding: EdgeInsets.only(top: 35),
+            color: Colors.black,
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      _isCropping = false;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                Spacer(),
+                _isCropping
+                    ? Container()
+                    : IconButton(
+                        icon: Icon(Icons.crop, color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            _isCropping = true;
+                          });
+                          _openImage();
+                        },
+                      ),
+                _isCropping
+                    ? Container()
+                    : _isUploading
+                        ? Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: CircularProgressIndicator(),
+                          )
+                        : IconButton(
+                            icon: Icon(Icons.upload_file, color: Colors.white),
+                            onPressed: () {
+                              String fileFormat =
+                                  widget.file.path.split('.').last;
+                              Directory(dirPath).createSync(recursive: true);
+                              filePath = dirPath +
+                                  '/${DateTime.now().millisecondsSinceEpoch}.' +
+                                  fileFormat;
+                              widget.file.copySync(filePath);
+                              File uploadFile = File(filePath);
+                              widget.file.delete();
+                              print(uploadFile);
+                              setState(() {
+                                _isUploading = true;
+                              });
+                              widget.uploadFunc(context, uploadFile);
+                            },
+                          ),
+              ],
+            ),
           ),
         ),
-      ),
-      body: Container(
-        color: Colors.black,
-        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
-        child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
+        body: Container(
+          color: Colors.black,
+          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+          child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
+        ),
       ),
     );
   }
