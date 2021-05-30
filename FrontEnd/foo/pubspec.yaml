@@ -61,6 +61,8 @@ dependencies:
   swipe_to: ^0.0.1+8
   scrollable_positioned_list: ^0.1.10
   better_player: ^0.0.68
+  image_cropper: ^1.4.0
+  flutter_image_compress: ^1.0.0
   flutter_sound_lite: ^8.1.4
   
 

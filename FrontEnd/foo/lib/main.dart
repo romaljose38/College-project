@@ -15,6 +15,7 @@ import 'package:hive/hive.dart';
 import 'package:foo/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:foo/auth/register.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +79,7 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: generateRoute,
       // home: TestRecord(),
       home: Renderer(prefs: prefs),
+      // home: CalendarBackground(),
       // home: StoryPage(),
     );
   }

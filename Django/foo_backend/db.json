@@ -1,0 +1,55 @@
+[
+{
+  "model": "chat.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$260000$VWgPJtuPHzl1Sd9UQ4VeHN$7/7z+QOUUnrkHg5dWdET5vUl1/IOvz1giISN8r4f2kM=",
+    "last_login": "2021-05-28T08:37:52.777Z",
+    "email": "pranavsdreams@gmail.com",
+    "f_name": "",
+    "l_name": "",
+    "username": "pranav",
+    "uprn": 191106137,
+    "token": "erfef",
+    "dob": null,
+    "is_active": true,
+    "staff": true,
+    "admin": true
+  }
+},
+{
+  "model": "chat.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$260000$NXK13bI8wdQ7SShj75h98K$BvHxAZcSGTJgL8ynxK7jyKdYWfTseXe4dq9ZHjVAgKQ=",
+    "last_login": "2021-05-26T13:20:33.321Z",
+    "email": "snehanair@gmail.com",
+    "f_name": "Sneha",
+    "l_name": "Nair",
+    "username": "sneha",
+    "uprn": 191106133,
+    "token": "kkbbeeff",
+    "dob": null,
+    "is_active": true,
+    "staff": false,
+    "admin": false
+  }
+},
+{
+  "model": "chat.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$260000$H6XfurqcArtqbv0VKY1Y0k$edrHBpt8kzSv4eR3F6QTz/TeSnGfRXU6GZ+fgKr7YN4=",
+    "last_login": "2021-05-28T08:37:36.870Z",
+    "email": "febimariathomas@gmail.com",
+    "f_name": "",
+    "l_name": "",
+    "username": "",
+    "uprn": null,
+    "token": null,
+    "dob": null,
+    "is_active": true,
+    "staff": false,
+    "admin": false
+  }
+}
