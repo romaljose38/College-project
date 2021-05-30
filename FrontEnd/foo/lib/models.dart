@@ -9,7 +9,16 @@ class User extends HiveObject {
   @HiveField(0)
   String name;
 
-  User({this.name});
+  @HiveField(1)
+  String dpUrl;
+
+  @HiveField(2)
+  String f_name;
+
+  @HiveField(3)
+  String l_name;
+
+  User({this.name, this.dpUrl, this.f_name, this.l_name});
 }
 
 @HiveType(typeId: 1)
