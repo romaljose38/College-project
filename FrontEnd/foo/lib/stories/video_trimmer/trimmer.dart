@@ -86,48 +86,75 @@ class StoryUploadPick extends StatelessWidget {
           }
         }
       },
-      child: Container(
-        //margin: EdgeInsets.only(left: 20, top: 10, bottom: 10, right: 5),
-        margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-        height: 80, //50,
-        width: 80,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Color.fromRGBO(203, 212, 217, 1),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(3),
-          child: Container(
+      child: Stack(
+        children: [
+          Container(
+            //margin: EdgeInsets.only(left: 20, top: 10, bottom: 10, right: 5),
+            margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+            height: 80, //50,
+            width: 80,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(26),
+              borderRadius: BorderRadius.circular(30),
+              color: Color.fromRGBO(203, 212, 217, 1),
             ),
             child: Padding(
-              padding: EdgeInsets.all(2),
+              padding: EdgeInsets.all(3),
               child: Container(
-                decoration: myProfPic != null
-                    ? BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(23),
-                        image: DecorationImage(
-                          image: FileImage(File(myProfPic)),
-                          fit: BoxFit.cover,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(2),
+                  child: Container(
+                    decoration: myProfPic != null
+                        ? BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(23),
+                            image: DecorationImage(
+                              image: FileImage(File(myProfPic)),
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(23),
+                          ),
+                    child: Center(
+                        child: myProfPic == null
+                            ? CircularProgressIndicator()
+                            : Container()
+                        // child: plusButton(),
                         ),
-                      )
-                    : BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(23),
-                      ),
-                child: Center(
-                    child: myProfPic == null
-                        ? CircularProgressIndicator()
-                        : Container()
-                    // child: plusButton(),
-                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: EdgeInsets.all(2.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Container(
+                    height: 24,
+                    width: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    // )
+                    child: Center(
+                        child: Icon(Icons.add, color: Colors.white, size: 18))),
+              ),
+            ),
+          )
+        ],
       ),
     );
   }
@@ -321,6 +348,16 @@ class _CropMyImageState extends State<CropMyImage> {
 
   bool _isCropping = false;
   bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    requestPermission();
+  }
+
+  Future<void> requestPermission() async {
+    await ImageCrop.requestPermissions();
+  }
 
   Future<void> _openImage() async {
     final File file = File(widget.file.path);

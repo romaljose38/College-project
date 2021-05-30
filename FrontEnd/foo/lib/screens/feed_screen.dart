@@ -10,8 +10,10 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../test_cred.dart';
 import 'dart:math' as math;
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'models/post_model.dart' as pst;
@@ -200,8 +202,24 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   //The widget to display the stories which fetches data using the websocket
 
   Future<void> _getMyProfPic() async {
-    myProfPic =
+    prefs = await SharedPreferences.getInstance();
+    var pic =
         (await getApplicationDocumentsDirectory()).path + '/images/dp/dp.jpg';
+    if (!File(pic).existsSync()) {
+      String url = 'http://$localhost' + prefs.getString('dp');
+      var response = await http.get(Uri.parse(url));
+
+      try {
+        File file = File(pic);
+        await file.create(recursive: true);
+        await file.writeAsBytes(response.bodyBytes);
+      } catch (e) {
+        print(e);
+      }
+    }
+    setState(() {
+      myProfPic = pic;
+    });
   }
 
   Widget _newHoriz() {
