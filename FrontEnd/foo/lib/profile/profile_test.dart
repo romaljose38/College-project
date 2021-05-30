@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/screens/comment_screen.dart';
+import 'package:foo/settings/settings_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
@@ -137,8 +138,9 @@ class ProfileTest extends StatefulWidget {
 }
 
 class _ProfileTestState extends State<ProfileTest>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   AnimationController animationController;
+  AnimationController _profileAnimationController;
   Animation animation;
   OverlayEntry overlayEntry;
   bool hasSentRequest = false;
@@ -149,6 +151,8 @@ class _ProfileTestState extends State<ProfileTest>
     super.initState();
     // getData();
     requestStatus = widget.requestStatus;
+    _profileAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     animation = Tween<double>(begin: 0, end: 1).animate(animationController);
@@ -472,7 +476,22 @@ class _ProfileTestState extends State<ProfileTest>
           ),
           IconButton(
             icon: Icon(Icons.settings, color: Colors.black, size: 20),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                    pageBuilder: (contxt, animation, secAnimation) {
+                  return Settings();
+                }, transitionsBuilder: (ctx, animation, secAnimation, child) {
+                  return SlideTransition(
+                    position:
+                        Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
+                            .animate(animation),
+                    child: child,
+                  );
+                }),
+              );
+            },
           ),
         ],
       ),
@@ -554,18 +573,76 @@ class _ProfileTestState extends State<ProfileTest>
     ]);
   }
 
+  settingsWidget() =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            IconButton(
+              icon: Icon(Icons.exit_to_app_rounded,
+                  color: Colors.black, size: 20),
+              onPressed: () {
+                _profileAnimationController.reverse();
+              },
+            ),
+          ],
+        ),
+        SizedBox(height: 40),
+        TextButton(child: Text("Settings"), onPressed: () {})
+      ]);
+
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: topPortion(),
-        ),
-        ...(widget.posts.length >= 3
-            ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
-            : [grid(false)]),
-      ],
-    );
+    final size = MediaQuery.of(context).size;
+    return AnimatedBuilder(
+        animation: _profileAnimationController,
+        builder: (context, child) {
+          print(_profileAnimationController.value);
+          var curVal = _profileAnimationController.value;
+          var val;
+          if (curVal > .3) {
+            val = .7;
+          } else {
+            val = 1 - curVal;
+          }
+          var x = (size.width * .25) * curVal;
+          return Stack(children: [
+            Container(
+              height: size.height,
+              width: size.width,
+              color: Colors.white,
+              child: settingsWidget(),
+            ),
+            Transform(
+              alignment: Alignment.centerRight,
+              transform: Matrix4.identity()
+                ..scale(val)
+                ..translate(x),
+              child: Container(
+                height: size.height,
+                width: size.width,
+                decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(.2),
+                    spreadRadius: .5,
+                    blurRadius: 20,
+                    offset: Offset(-3, 0),
+                  )
+                ]),
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: topPortion(),
+                    ),
+                    ...(widget.posts.length >= 3
+                        ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
+                        : [grid(false)]),
+                  ],
+                ),
+              ),
+            ),
+          ]);
+        });
   }
 
   Column threeOrMore() => Column(

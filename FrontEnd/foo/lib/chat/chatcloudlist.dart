@@ -21,7 +21,7 @@ class ChatCloudList extends StatefulWidget {
   final Function swipingHandler;
   final ItemPositionsListener positionsListener;
   final Function forwardMsgHandler;
-  final Map msgMap;
+  Map msgMap;
 
   ChatCloudList({
     Key key,
@@ -45,7 +45,7 @@ class _ChatCloudListState extends State<ChatCloudList>
   int day;
   AnimationController _controller;
   bool hasSelectedSomething = false;
-  Map<int, ChatMessage> forwardedMsgs = <int, ChatMessage>{};
+  // Map<int, ChatMessage> forwardedMsgs = <int, ChatMessage>{};
   Map<int, int> checkingList = <int, int>{};
   ValueNotifier notifer;
   @override
@@ -97,12 +97,13 @@ class _ChatCloudListState extends State<ChatCloudList>
           setState(() {
             hasSelectedSomething = false;
           });
-          widget.forwardMsgHandler();
+          widget.forwardMsgHandler(false);
           return Future.value(false);
         }
         return Future.value(true);
       },
       child: ScrollablePositionedList.builder(
+          key: ValueKey(3),
           itemPositionsListener: widget.positionsListener,
           reverse: true,
           itemCount: widget.chatList.length ?? 0,
@@ -110,9 +111,11 @@ class _ChatCloudListState extends State<ChatCloudList>
           itemScrollController: widget.scrollController,
           itemBuilder: (context, index) {
             final reversedIndex = widget.chatList.length - 1 - index;
-            checkingList[widget.chatList[reversedIndex].id] = index;
+            var curId = widget.chatList[reversedIndex].id;
+            checkingList[curId] = index;
 
             var chat = ChatCloud(
+              key: ValueKey(curId),
               msgObj: widget.chatList[reversedIndex],
               swipingHandler: widget.swipingHandler,
               outerSetState: outersetState,
@@ -121,7 +124,9 @@ class _ChatCloudListState extends State<ChatCloudList>
               forwardRemover: removeForward,
             );
             var audio = AudioCloud(
-              key: UniqueKey(),
+              // key: UniqueKey(),
+              key: ValueKey(curId),
+
               msgObj: widget.chatList[reversedIndex],
               controller: _controller,
               swipingHandler: widget.swipingHandler,
@@ -135,6 +140,7 @@ class _ChatCloudListState extends State<ChatCloudList>
               msgObj: widget.chatList[reversedIndex],
             );
             var txtReply = ReplyCloud(
+              key: ValueKey(curId),
               msgObj: widget.chatList[reversedIndex],
               hasSelectedSomething: hasSelectedSomething,
               outerSetState: outersetState,
@@ -166,7 +172,8 @@ class _ChatCloudListState extends State<ChatCloudList>
               forwardRemover: removeForward,
             );
             var image = MediaCloud(
-              key: UniqueKey(),
+              // key: UniqueKey(),
+              key: ValueKey(curId),
               msgObj: widget.chatList[reversedIndex],
               otherUser: widget.otherUser,
               swipingHandler: widget.swipingHandler,
@@ -201,11 +208,17 @@ class _ChatCloudListState extends State<ChatCloudList>
     );
   }
 
-  outersetState() {
-    widget.forwardMsgHandler();
-    setState(() {
-      hasSelectedSomething = true;
-    });
+  outersetState([bool val = true]) {
+    if (val == false) {
+      setState(() {
+        hasSelectedSomething = false;
+      });
+    } else {
+      widget.forwardMsgHandler();
+      setState(() {
+        hasSelectedSomething = !hasSelectedSomething;
+      });
+    }
   }
 
   @override

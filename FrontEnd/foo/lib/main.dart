@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound_lite/flutter_sound.dart';
 import 'package:foo/notification_handler.dart';
 import 'package:foo/socket.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'initialscreen.dart';
@@ -77,52 +78,8 @@ class MyApp extends StatelessWidget {
       title: 'Foo Register',
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
-      // home: TestRecord(),
+
       home: Renderer(prefs: prefs),
-      // home: CalendarBackground(),
-      // home: StoryPage(),
-    );
-  }
-}
-
-class TestRecord extends StatefulWidget {
-  @override
-  _TestRecordState createState() => _TestRecordState();
-}
-
-class _TestRecordState extends State<TestRecord> {
-  FlutterSoundPlayer player;
-  FlutterSoundRecorder recorder;
-  @override
-  void initState() {
-    super.initState();
-    init();
-  }
-
-  init() async {
-    player = await FlutterSoundPlayer().openAudioSession();
-    recorder = await FlutterSoundRecorder().openAudioSession();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: TextButton(
-          child: Text("hello"),
-          onPressed: () async {
-            if (await Permission.storage.isGranted &&
-                await Permission.microphone.isGranted) {
-              await recorder.startRecorder(
-                  toFile:
-                      "/storage/emulated/0/foo/audio/${DateTime.now().millisecondsSinceEpoch.toString()}.aac");
-            }
-            Timer(Duration(seconds: 10), () async {
-              await recorder.stopRecorder();
-            });
-            await player.startPlayer(
-                fromURI:
-                    "/storage/emulated/0/foo/audio/${DateTime.now().millisecondsSinceEpoch.toString()}.aac");
-          }),
     );
   }
 }

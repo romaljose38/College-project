@@ -501,12 +501,15 @@ class _MediaCloudState extends State<MediaCloud> {
             }
           : null,
       onTap: (widget.msgObj.haveReachedServer ?? false)
-          ? (widget.hasSelectedSomething
+          ? (widget.hasSelectedSomething ?? false)
               ? () {
                   if (hasSelected == true) {
-                    widget.forwardMap.remove(widget.msgObj.id);
-                    if (widget.forwardMap.length == 0) {
+                    if (widget.forwardMap.length == 1) {
                       widget.forwardRemover();
+                      widget.outerSetState(false);
+                      widget.forwardMap.remove(widget.msgObj.id);
+                    } else {
+                      widget.forwardMap.remove(widget.msgObj.id);
                     }
                     setState(() {
                       hasSelected = false;
@@ -519,7 +522,7 @@ class _MediaCloudState extends State<MediaCloud> {
                   }
                   print(widget.forwardMap);
                 }
-              : null)
+              : null
           : null,
       child: Container(
         child: widget.disableSwipe ? cloudContent() : swipeAble(),

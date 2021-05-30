@@ -50,9 +50,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     _tileAnimationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     listKey = GlobalKey<SliverAnimatedListState>();
-    setInitialData();
+
     //_fetchStory();
     super.initState();
+    setInitialData();
     // _getNewPosts();
 
     _scrollController
@@ -104,6 +105,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   void dispose() {
     super.dispose();
     _scrollController.dispose();
+    _animationController.dispose();
+    _tileAnimationController.dispose();
     // _nestedScrollController.dispose();
   }
 
@@ -126,7 +129,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   }
 
   Future<void> setInitialData() async {
-    await _checkConnectionStatus();
     prefs = await SharedPreferences.getInstance();
     curUser = prefs.getString("username");
     var feedBox = Hive.box("Feed");
@@ -136,7 +138,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
       for (int i = feed.posts.length - 1; i >= 0; i--) {
         listKey.currentState
-            .insertItem(0, duration: Duration(milliseconds: 200));
+            .insertItem(0, duration: Duration(milliseconds: 100));
         postsList.insert(0, feed.posts[i]);
       }
       setState(() {
@@ -147,7 +149,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
       await feedBox.put('feed', feed);
     }
-
+    await _checkConnectionStatus();
     if (isConnected) {
       var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
       var respJson = jsonDecode(utf8.decode(response.bodyBytes));

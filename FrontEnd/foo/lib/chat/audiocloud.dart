@@ -143,11 +143,13 @@ class _AudioCloudState extends State<AudioCloud> {
         File _file = File(widget.msgObj.filePath);
         if (_file != null) {
           // return file;
-          setState(() {
-            file = _file;
-            fileExists = true;
-            tryingNotifier = ValueNotifier(isUploading);
-          });
+          if (mounted) {
+            setState(() {
+              file = _file;
+              fileExists = true;
+              tryingNotifier = ValueNotifier(isUploading);
+            });
+          }
         }
       }
     }
@@ -336,8 +338,15 @@ class _AudioCloudState extends State<AudioCloud> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            IconButton(icon: Icon(Icons.play_arrow_rounded), onPressed: () {}),
-            Slider(value: 0, onChanged: showError),
+            GestureDetector(
+                child: Icon(Ionicons.play_circle), onTap: () => showError(0)),
+            SliderTheme(
+              data: SliderThemeData(
+                  trackHeight: 1.4,
+                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 7)),
+              child: Slider(
+                  value: 0, onChanged: showError, activeColor: Colors.white),
+            ),
           ],
         ));
   }
@@ -441,12 +450,15 @@ class _AudioCloudState extends State<AudioCloud> {
               }
             : null,
         onTap: (widget.msgObj.haveReachedServer ?? false)
-            ? (widget.hasSelectedSomething
+            ? (widget.hasSelectedSomething ?? false)
                 ? () {
                     if (hasSelected == true) {
-                      widget.forwardMap.remove(widget.msgObj.id);
-                      if (widget.forwardMap.length == 0) {
+                      if (widget.forwardMap.length == 1) {
                         widget.forwardRemover();
+                        widget.outerSetState(false);
+                        widget.forwardMap.remove(widget.msgObj.id);
+                      } else {
+                        widget.forwardMap.remove(widget.msgObj.id);
                       }
                       setState(() {
                         hasSelected = false;
@@ -459,7 +471,7 @@ class _AudioCloudState extends State<AudioCloud> {
                     }
                     print(widget.forwardMap);
                   }
-                : null)
+                : null
             : null,
         child: Container(
             color: ((widget.hasSelectedSomething ?? false) && hasSelected)
@@ -502,6 +514,12 @@ class _PlayerState extends State<Player> {
     player = AudioPlayer();
 
     addListeners();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    player?.dispose();
   }
 
   //adds listeners to the player to update the slider and all..
