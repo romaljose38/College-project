@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:hive/hive.dart';
 
 part 'models.g.dart';
@@ -138,7 +140,7 @@ class Thread extends HiveObject {
     return false;
   }
 
-  void deleteChat(id) {
+  void deleteChat(id) async {
     for (int i = 0; i < chatList.length; i++) {
       var index = chatList.length - 1 - i;
       if (chatList[index].msgType == "date") {
@@ -148,6 +150,12 @@ class Thread extends HiveObject {
         if (chatList[index + 1].msgType == "date" &&
             chatList[index - 1].msgType == "date") {
           chatList.removeAt(index - 1);
+        }
+        if (chatList[index].msgType == "aud" ||
+            chatList[index].msgType == "img") {
+          if (File(chatList[index].filePath).existsSync()) {
+            File(chatList[index].filePath).deleteSync(recursive: true);
+          }
         }
         chatList.removeAt(index);
       }

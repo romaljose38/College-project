@@ -13,13 +13,15 @@ class ChatCloud extends StatefulWidget {
   Function forwardRemover;
 
   ChatCloud(
-      {this.msgObj,
+      {Key key,
+      this.msgObj,
       this.swipingHandler,
       this.forwardRemover,
       this.disableSwipe = false,
       this.outerSetState,
       this.forwardMap,
-      this.hasSelectedSomething});
+      this.hasSelectedSomething})
+      : super(key: key);
 
   @override
   _ChatCloudState createState() => _ChatCloudState();
@@ -161,12 +163,15 @@ class _ChatCloudState extends State<ChatCloud> {
               }
             : null,
         onTap: (widget.msgObj.haveReachedServer ?? false)
-            ? (widget.hasSelectedSomething ?? false
+            ? (widget.hasSelectedSomething ?? false)
                 ? () {
                     if (hasSelected == true) {
-                      widget.forwardMap.remove(widget.msgObj.id);
-                      if (widget.forwardMap.length == 0) {
+                      if (widget.forwardMap.length == 1) {
                         widget.forwardRemover();
+                        widget.outerSetState(false);
+                        widget.forwardMap.remove(widget.msgObj.id);
+                      } else {
+                        widget.forwardMap.remove(widget.msgObj.id);
                       }
                       setState(() {
                         hasSelected = false;
@@ -179,10 +184,10 @@ class _ChatCloudState extends State<ChatCloud> {
                     }
                     print(widget.forwardMap);
                   }
-                : null)
+                : null
             : null,
         child: Container(
-            color: ((widget.hasSelectedSomething ?? false) && hasSelected)
+            color: (widget.forwardMap.containsKey(widget.msgObj.id))
                 ? Colors.blue.withOpacity(.3)
                 : Colors.transparent,
             child: this.widget.disableSwipe

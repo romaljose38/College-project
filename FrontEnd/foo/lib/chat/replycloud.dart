@@ -15,14 +15,16 @@ class ReplyCloud extends StatefulWidget {
   Function swipingHandler;
 
   ReplyCloud(
-      {this.msgObj,
+      {Key key,
+      this.msgObj,
       this.scroller,
       this.forwardRemover,
       this.disableSwipe = false,
       this.swipingHandler,
       this.hasSelectedSomething,
       this.outerSetState,
-      this.forwardMap});
+      this.forwardMap})
+      : super(key: key);
 
   @override
   _ReplyCloudState createState() => _ReplyCloudState();
@@ -240,12 +242,15 @@ class _ReplyCloudState extends State<ReplyCloud> {
             }
           : null,
       onTap: (widget.msgObj.haveReachedServer ?? false)
-          ? (widget.hasSelectedSomething
+          ? (widget.hasSelectedSomething ?? false)
               ? () {
                   if (hasSelected == true) {
-                    widget.forwardMap.remove(widget.msgObj.id);
-                    if (widget.forwardMap.length == 0) {
+                    if (widget.forwardMap.length == 1) {
                       widget.forwardRemover();
+                      widget.outerSetState(false);
+                      widget.forwardMap.remove(widget.msgObj.id);
+                    } else {
+                      widget.forwardMap.remove(widget.msgObj.id);
                     }
                     setState(() {
                       hasSelected = false;
@@ -258,7 +263,7 @@ class _ReplyCloudState extends State<ReplyCloud> {
                   }
                   print(widget.forwardMap);
                 }
-              : null)
+              : null
           : null,
       child: Container(
           color: (widget.hasSelectedSomething && hasSelected)

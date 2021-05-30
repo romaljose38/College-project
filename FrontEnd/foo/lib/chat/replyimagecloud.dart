@@ -588,12 +588,15 @@ class _ImageReplyCloudState extends State<ImageReplyCloud> {
               }
             : null,
         onTap: (widget.msgObj.haveReachedServer ?? false)
-            ? (widget.hasSelectedSomething
+            ? (widget.hasSelectedSomething ?? false)
                 ? () {
                     if (hasSelected == true) {
-                      widget.forwardMap.remove(widget.msgObj.id);
-                      if (widget.forwardMap.length == 0) {
+                      if (widget.forwardMap.length == 1) {
                         widget.forwardRemover();
+                        widget.outerSetState(false);
+                        widget.forwardMap.remove(widget.msgObj.id);
+                      } else {
+                        widget.forwardMap.remove(widget.msgObj.id);
                       }
                       setState(() {
                         hasSelected = false;
@@ -606,7 +609,7 @@ class _ImageReplyCloudState extends State<ImageReplyCloud> {
                     }
                     print(widget.forwardMap);
                   }
-                : null)
+                : null
             : null,
         child: Container(
             color: (widget.hasSelectedSomething && hasSelected)

@@ -565,6 +565,27 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   showDeletionSheet() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text((forwardedMsgs.length > 1)
+                ? "Do you want to delete these messages?"
+                : "Do you want to delete this message?"),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    print("Yes");
+                  },
+                  child: Text("Yes")),
+              TextButton(
+                  onPressed: () {
+                    print("No");
+                  },
+                  child: Text("No")),
+            ],
+          );
+        });
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -744,10 +765,18 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
-  forwardMessage() {
-    setState(() {
-      isForwarding = !isForwarding;
-    });
+  forwardMessage([bool val = true]) {
+    if (val == false) {
+      if (isForwarding) {
+        setState(() {
+          isForwarding = false;
+        });
+      }
+    } else {
+      setState(() {
+        isForwarding = !isForwarding;
+      });
+    }
   }
 
   @override
@@ -884,6 +913,7 @@ class _ChatScreenState extends State<ChatScreen>
         body: Column(children: <Widget>[
           Expanded(
             child: ValueListenableBuilder(
+              key: ValueKey(0),
               valueListenable:
                   Hive.box("Threads").listenable(keys: [threadName]),
               // child: ChatCloudList(
