@@ -94,4 +94,14 @@ class LocalNotificationHandler {
         payload: 'item x');
     this._incrementIndex(index);
   }
+
+  Future<void> mentionNotif(String user) async {
+    int index = this._getIndex();
+    NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(index,
+        '$user mentioned you in a comment.', "", platformChannelSpecifics,
+        payload: 'item x');
+    this._incrementIndex(index);
+  }
 }

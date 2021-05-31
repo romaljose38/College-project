@@ -333,12 +333,9 @@ class _ProfileTestState extends State<ProfileTest>
                         builder: (_) => CommentScreen(
                               isMe: widget.isMe,
 
-                              postUrl: widget.posts[0].postUrl,
                               heroIndex: 0,
                               postId: widget.posts[0].postId,
-                              height: height,
-                              likeCount: widget.posts[0].likeCount,
-                              commentCount: widget.posts[0].commentCount,
+
                               // ViewPostScreen(post: widget.post, index: widget.index),
                             )));
                 if (hasDelete.runtimeType == bool) {
@@ -370,12 +367,10 @@ class _ProfileTestState extends State<ProfileTest>
                         MaterialPageRoute(
                             builder: (_) => CommentScreen(
                                   isMe: widget.isMe,
-                                  postUrl: widget.posts[1].postUrl,
+
                                   heroIndex: 1,
                                   postId: widget.posts[1].postId,
-                                  height: height,
-                                  likeCount: widget.posts[1].likeCount,
-                                  commentCount: widget.posts[1].commentCount,
+
                                   // ViewPostScreen(post: widget.post, index: widget.index),
                                 )));
 
@@ -414,12 +409,10 @@ class _ProfileTestState extends State<ProfileTest>
                         MaterialPageRoute(
                             builder: (_) => CommentScreen(
                                   isMe: widget.isMe,
-                                  postUrl: widget.posts[2].postUrl,
+
                                   heroIndex: 2,
                                   postId: widget.posts[2].postId,
-                                  height: height,
-                                  likeCount: widget.posts[2].likeCount,
-                                  commentCount: widget.posts[2].commentCount,
+
                                   // ViewPostScreen(post: widget.post, index: widget.index),
                                 )));
                     if (hasDelete.runtimeType == bool) {
@@ -687,13 +680,9 @@ class _ProfileTestState extends State<ProfileTest>
                         MaterialPageRoute(
                             builder: (_) => CommentScreen(
                                   isMe: widget.isMe,
-                                  postUrl: widget.posts[curIndex].postUrl,
                                   heroIndex: curIndex,
                                   postId: widget.posts[curIndex].postId,
-                                  height: height,
-                                  likeCount: widget.posts[curIndex].likeCount,
-                                  commentCount:
-                                      widget.posts[curIndex].commentCount,
+
                                   // ViewPostScreen(post: widget.post, index: widget.index),
                                 )));
                     if (hasDelete.runtimeType == bool) {

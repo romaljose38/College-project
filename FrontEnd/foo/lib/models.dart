@@ -9,7 +9,16 @@ class User extends HiveObject {
   @HiveField(0)
   String name;
 
-  User({this.name});
+  @HiveField(1)
+  String dpUrl;
+
+  @HiveField(2)
+  String f_name;
+
+  @HiveField(3)
+  String l_name;
+
+  User({this.name, this.dpUrl, this.f_name, this.l_name});
 }
 
 @HiveType(typeId: 1)
@@ -372,8 +381,20 @@ class Notifications extends HiveObject {
   @HiveField(5)
   int notifId;
 
+  @HiveField(6)
+  int postId;
+
+  @HiveField(7)
+  String userDpUrl;
+
   Notifications(
-      {this.type, this.userName, this.userId, this.timeCreated, this.notifId});
+      {this.type,
+      this.userName,
+      this.userId,
+      this.timeCreated,
+      this.notifId,
+      this.userDpUrl,
+      this.postId});
 }
 
 // Story models ahead

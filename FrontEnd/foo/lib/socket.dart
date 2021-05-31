@@ -175,6 +175,27 @@ class SocketChannel {
       deleteOldStory(data);
     } else if (data['type'] == 'chat_delete') {
       deleteChat(data);
+    } else if (data['type'] == 'mention_notif') {
+      addMentionNotification(data);
+    }
+  }
+
+  Future<void> addMentionNotification(data) async {
+    if ((_prefs.containsKey('lastNotifId') &&
+            (_prefs.getInt('lastNotifId') != data['n_id'])) ||
+        !_prefs.containsKey('lastNotifId')) {
+      _prefs.setInt("lastNotifId", data['n_id']);
+      DateTime time = DateTime.parse(data['time']);
+      _handler.mentionNotif(data['username']);
+      var notif = Notifications(
+          type: NotificationType.mention,
+          userName: data['u'],
+          timeCreated: time,
+          userDpUrl: data['dp'],
+          postId: data['id']);
+      sendToChannel(jsonEncode({'m_r': data['n_id']}));
+      var notifBox = await Hive.openBox('Notifications');
+      await notifBox.put(time.toString(), notif);
     }
   }
 
@@ -379,15 +400,16 @@ class SocketChannel {
             (_prefs.getInt('lastNotifId') != data['id'])) ||
         !_prefs.containsKey('lastNotifId')) {
       _prefs.setInt("lastNotifId", data['id']);
-      DateTime curTime = DateTime.now();
+      DateTime curTime = DateTime.parse(data['time']);
       _handler.friendRequestNotif(data['username']);
       var notif = Notifications(
           type: NotificationType.friendRequest,
           userName: data['username'],
           timeCreated: curTime,
           userId: data['user_id'],
+          userDpUrl: data['dp'],
           notifId: data['id']);
-
+      sendToChannel(jsonEncode({'f_r': data['id']}));
       var notifBox = await Hive.openBox('Notifications');
       await notifBox.put(curTime.toString(), notif);
     }
