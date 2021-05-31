@@ -607,7 +607,24 @@ def add_to_last_seen(request):
         username = request.query_params['username']
         user = User.objects.get(id=id)
         other_user = User.objects.get(username=username)
-        user.profile.yall_cant_see_me.add(other_user)
+        if action == "add":
+            user.profile.yall_cant_see_me.add(other_user)
+        else:
+            user.profile.yall_cant_see_me.remove(other_user)
+
+        user.save()
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+@api_view(['GET'])
+def switch_off_last_seen(request):
+    try:
+        action = request.query_params['action']
+        id = int(request.query_params['id'])
+        user = User.objects.get(id=id)
+        user.profile.general_last_seen_off = True if action == "add" else False
 
         user.save()
         return Response(status=200)

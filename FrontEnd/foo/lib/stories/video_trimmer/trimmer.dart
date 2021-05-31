@@ -48,12 +48,12 @@ class StoryUploadPick extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (myStory == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Long press to add a new moment")));
-        } else {
+        if (myStory != null && !myStory.isEmpty()) {
           Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => MyStoryScreen(storyObject: myStory)));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Long press to add a new moment")));
         }
       },
       onLongPress: () async {
@@ -95,7 +95,36 @@ class StoryUploadPick extends StatelessWidget {
             width: 80,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              color: Color.fromRGBO(203, 212, 217, 1),
+              //color: Color.fromRGBO(203, 212, 217, 1),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                // colors: [
+                //   if (myStory != null)
+                //     if (!myStory.isEmpty()) ...[
+                //       Color.fromRGBO(250, 87, 142, 1),
+                //       Color.fromRGBO(202, 136, 18, 1),
+                //       Color.fromRGBO(253, 167, 142, 1),
+                //     ] else ...[
+                //       Color.fromRGBO(255, 255, 255, 1),
+                //       Color.fromRGBO(190, 190, 190, 1),
+                //     ]
+                //   else ...[
+                //     Color.fromRGBO(255, 255, 255, 1),
+                //     Color.fromRGBO(190, 190, 190, 1),
+                //   ],
+                // ],
+                colors: (myStory != null && !myStory.isEmpty())
+                    ? [
+                        Color.fromRGBO(250, 87, 142, 1),
+                        Color.fromRGBO(202, 136, 18, 1),
+                        Color.fromRGBO(253, 167, 142, 1),
+                      ]
+                    : [
+                        Color.fromRGBO(255, 255, 255, 1),
+                        Color.fromRGBO(190, 190, 190, 1),
+                      ],
+              ),
             ),
             child: Padding(
               padding: EdgeInsets.all(3),

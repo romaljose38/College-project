@@ -114,6 +114,7 @@ class Profile(models.Model):
     people_i_peek = models.ManyToManyField(User, related_name="watching", blank=True)
     friends = models.ManyToManyField(User, related_name="friends", blank=True)
     yall_cant_see_me = models.ManyToManyField(User, related_name="hidden_last_seen", blank=True)
+    general_last_seen_off = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.user.email}'

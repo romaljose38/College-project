@@ -488,6 +488,8 @@ class VideoPlayerProvider extends StatefulWidget {
 class _VideoPlayerProviderState extends State<VideoPlayerProvider> {
   @override
   Widget build(BuildContext context) {
+    VideoPlayerController _videoPlayerController =
+        VideoPlayerController.file(widget.videoFile);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -500,11 +502,15 @@ class _VideoPlayerProviderState extends State<VideoPlayerProvider> {
         child: BetterPlayer.file(
           widget.videoFile.path,
           betterPlayerConfiguration: BetterPlayerConfiguration(
-            aspectRatio: 5 / 4,
+            aspectRatio: _videoPlayerController.value.aspectRatio,
+            autoDetectFullscreenDeviceOrientation: true,
             allowedScreenSleep: false,
             autoDispose: true,
             autoPlay: true,
             fit: BoxFit.contain,
+            controlsConfiguration: BetterPlayerControlsConfiguration(
+              enableSkips: false,
+            ),
           ),
         ),
       ),

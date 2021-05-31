@@ -36,6 +36,8 @@ urlpatterns = [
     path('check_password', api_views.password_check, name="check_password"),
     path('change_password', api_views.password_change, name="change_password"),
     path('delete_account', api_views.delete_account, name="account_delete"),
+    path('last_seen', api_views.add_to_last_seen, name='add_last_seen_personal'),
+    path('last_seen_general', api_views.switch_off_last_seen, name='switch_off_last_seen_all'),
 
 
 ]
