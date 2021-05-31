@@ -16,6 +16,7 @@ import 'package:ionicons/ionicons.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../colour_palette.dart';
+import 'dart:math' as math;
 
 class UserTest {
   final String name;
@@ -26,22 +27,15 @@ class UserTest {
 }
 
 class CommentScreen extends StatefulWidget {
-  final String postUrl;
   final int postId;
   final int heroIndex;
-  final double height;
-  final int likeCount;
-  final int commentCount;
   final bool isMe;
 
-  CommentScreen(
-      {this.postUrl,
-      this.postId,
-      this.heroIndex,
-      this.height,
-      this.isMe = false,
-      this.likeCount,
-      this.commentCount});
+  CommentScreen({
+    this.postId,
+    this.heroIndex,
+    this.isMe = false,
+  });
 
   @override
   _CommentScreenState createState() => _CommentScreenState();
@@ -138,7 +132,6 @@ class _CommentScreenState extends State<CommentScreen>
           String stringToCheck = element.substring(1, element.length);
           mapToSend[element] = true;
           if (mentionList.contains(stringToCheck)) {
-            print("yep avdond");
             finalMentionList.add(stringToCheck);
           }
         } else {
@@ -365,6 +358,7 @@ class _CommentScreenState extends State<CommentScreen>
 
   @override
   Widget build(BuildContext context) {
+    var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -428,7 +422,7 @@ class _CommentScreenState extends State<CommentScreen>
               Hero(
                 tag: "profile_${widget.heroIndex}",
                 child: Container(
-                  height: widget.height,
+                  height: height,
                   width: double.infinity,
                   // margin: EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
@@ -490,7 +484,7 @@ class _CommentScreenState extends State<CommentScreen>
               AnimatedPositioned(
                 duration: Duration(milliseconds: 100),
                 height: 200,
-                top: widget.height - (hasTextExpanded ? 120 : 90),
+                top: height - (hasTextExpanded ? 120 : 90),
                 left: 0,
                 child: Container(
                   width: MediaQuery.of(context).size.width - 10,
@@ -525,7 +519,9 @@ class _CommentScreenState extends State<CommentScreen>
                                   SizedBox(width: 5),
                                   // SizedBox(width: 25),
                                   Text(
-                                    likeCount.toString(),
+                                    (likeCount != null)
+                                        ? likeCount.toString()
+                                        : "",
                                     style: TextStyle(
                                       fontSize: 11.0,
                                       color: Colors.white,
@@ -555,7 +551,9 @@ class _CommentScreenState extends State<CommentScreen>
                                 onPressed: () {},
                               ),
                               Text(
-                                commentCount.toString(),
+                                (commentCount != null)
+                                    ? commentCount.toString()
+                                    : "",
                                 style: TextStyle(
                                   fontSize: 12.0,
                                   color: Colors.white,
@@ -651,7 +649,7 @@ class _CommentScreenState extends State<CommentScreen>
 
               AnimatedPositioned(
                 duration: Duration(milliseconds: 200),
-                top: hasCommentExpanded ? 34 : widget.height,
+                top: hasCommentExpanded ? 34 : height,
                 child: AnimatedContainer(
                   duration: Duration(milliseconds: 200),
                   height: MediaQuery.of(context).size.height * .9,

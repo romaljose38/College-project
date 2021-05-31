@@ -381,8 +381,20 @@ class Notifications extends HiveObject {
   @HiveField(5)
   int notifId;
 
+  @HiveField(6)
+  int postId;
+
+  @HiveField(7)
+  String userDpUrl;
+
   Notifications(
-      {this.type, this.userName, this.userId, this.timeCreated, this.notifId});
+      {this.type,
+      this.userName,
+      this.userId,
+      this.timeCreated,
+      this.notifId,
+      this.userDpUrl,
+      this.postId});
 }
 
 // Story models ahead

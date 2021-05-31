@@ -322,13 +322,15 @@ class NotificationsAdapter extends TypeAdapter<Notifications> {
       userId: fields[2] as int,
       timeCreated: fields[3] as DateTime,
       notifId: fields[5] as int,
+      userDpUrl: fields[7] as String,
+      postId: fields[6] as int,
     )..hasAccepted = fields[4] as bool;
   }
 
   @override
   void write(BinaryWriter writer, Notifications obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.type)
       ..writeByte(1)
@@ -340,7 +342,11 @@ class NotificationsAdapter extends TypeAdapter<Notifications> {
       ..writeByte(4)
       ..write(obj.hasAccepted)
       ..writeByte(5)
-      ..write(obj.notifId);
+      ..write(obj.notifId)
+      ..writeByte(6)
+      ..write(obj.postId)
+      ..writeByte(7)
+      ..write(obj.userDpUrl);
   }
 
   @override

@@ -5,7 +5,9 @@ from .models import (
     FriendRequest, 
     Story,
     StoryNotification,
-    StoryComment
+    StoryComment,
+    Comment,
+    MentionNotification
     )
 from django.conf import settings
 from django.dispatch import receiver
@@ -40,7 +42,9 @@ def send_request(sender, instance, created, **kwargs):
                     "type": "notification", 
                     "username": instance.from_user.username, 
                     'user_id': instance.from_user.id, 
-                    'id': instance.id
+                    'dp':instances.from_user.profile.profile_pic.url,
+                    'id': instance.id,
+                    'time':instance.time_created,
                     })
 
 
@@ -71,13 +75,6 @@ def story_created_notif(sender, instance, created, **kwargs):
 
 
     
-# @database_sync_to_async
-# def get_user_status(user):
-#     return user.profile.online
-
-# @database_sync_to_async
-# def get_user_from_id(id):
-#     return
 
 
 async def send_notif(from_username):
@@ -95,15 +92,7 @@ async def send_notif(from_username):
     print("in here")
 
 
-# def inform_user(sender, instance, pk_set, **kwargs):
-#     print(instance.user, pk_set)
-#     id=list(pk_set)[0]
-#     user = User.objects.get(id=id)
-#     if user!=instance.user:
-#         async_to_sync(send_notif)(instance.user,id,user.username)
 
-
-# m2m_changed.connect(inform_user,sender=ChatMessage.recipients.through)
 
 @receiver(m2m_changed,sender=Story.views.through)
 def story_viewed(sender, instance, **kwargs):
@@ -164,3 +153,29 @@ def story_deleted_notif(sender, instance, **kwargs):
             test.append(_dict)
             async_to_sync(channel_layer.group_send)(user.username,_dict)
     print(test)
+
+
+
+
+@receiver(m2m_changed,sender=Comment.mentions.through)
+def comment_mention(sender, instance, **kwargs):
+    if(kwargs['action']=='post_add'):
+        print('post add')
+        channel_layer = get_channel_layer()
+
+        user_id = kwargs['pk_set'].pop()
+        user = User.objects.get(id=user_id)
+        time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        notif = MentionNotification(from_user=instance.user, to_user= user, time_created=time, post_id=instance.post.id)
+        notif.save()
+        
+        if user.profile.online:
+            _dict = {
+                'type':'mention_notif',
+                'u':instance.user.username,
+                'id':instance.post.id,
+                'n_id':notif.id,
+                'time':time,
+                'dp':instance.user.profile.profile_pic.url
+            }
+            async_to_sync(channel_layer.group_send)(user.username,_dict)

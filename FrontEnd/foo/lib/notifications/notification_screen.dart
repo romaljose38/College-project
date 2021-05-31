@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
 import 'package:foo/notifications/friend_request_tile.dart';
+import 'package:foo/notifications/mention_tile.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -88,7 +89,7 @@ class NotificationScreen extends StatelessWidget {
                       topLeft: Radius.circular(50),
                     ),
                     child: Container(
-                      padding: EdgeInsets.only(left: 40, top: 40),
+                      padding: EdgeInsets.only(left: 40, top: 30),
 
                       child: ValueListenableBuilder(
                         valueListenable: Hive.box("Notifications").listenable(),
@@ -104,6 +105,11 @@ class NotificationScreen extends StatelessWidget {
                               if (notifications[index].type ==
                                   NotificationType.friendRequest) {
                                 return Tile(
+                                  notification: notifications[index],
+                                );
+                              } else if (notifications[index].type ==
+                                  NotificationType.mention) {
+                                return MentionTile(
                                   notification: notifications[index],
                                 );
                               }

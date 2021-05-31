@@ -232,6 +232,7 @@ class FriendRequest(models.Model):
     to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="to_user")
     status = models.CharField(max_length=10, choices=STATES)
     has_received = models.BooleanField(default=False)
+    time_created = models.CharField(max_length=70, blank=True, null=True)
 
 
 
@@ -263,3 +264,10 @@ class StoryNotification(models.Model):
     notif_type = models.CharField(max_length=15,choices=STORY_NOTIF_TYPES)
     time_created = models.CharField(max_length=20)
     from_user = models.ForeignKey(User, on_delete=models.CASCADE,related_name="story_viewed_user", blank=True, null=True)
+
+class MentionNotification(models.Model):
+
+    post_id = models.IntegerField(blank = True, null=True)
+    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="mention_to_user")
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="mention_from_user")  
+    time_created = models.CharField(max_length=70, null=True, blank=True)

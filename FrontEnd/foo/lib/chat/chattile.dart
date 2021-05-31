@@ -37,6 +37,39 @@ class ChatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     print("has Unseen");
     print(thread.hasUnseen);
+<<<<<<< HEAD
+    return ListTile(
+        trailing: Container(
+          width: 50,
+          child: Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: Column(
+              children: [
+                Text(getDate(thread.lastAccessed),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500)),
+                SizedBox(
+                  height: 6,
+                ),
+                SizedBox(
+                  height: 20,
+                  child: ((thread.hasUnseen ?? -1) > 0)
+                      ? Container(
+                          width: 20,
+                          height: 20,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.green.withOpacity(.6),
+                                Colors.green.withOpacity(.2),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+=======
     print(thread.second?.f_name);
     print(thread.second?.l_name);
     print(thread.second?.dpUrl);
@@ -91,18 +124,75 @@ class ChatTile extends StatelessWidget {
                                 end: Alignment.bottomRight,
                               ),
                               shape: BoxShape.circle,
+>>>>>>> 59623ce844e9312f71418541edcccb1e8b3ae68a
                             ),
-                            child: Text(thread.hasUnseen.toString(),
-                                style: TextStyle(
-                                    fontSize: 8, color: Colors.white)),
-                          )
-                        : Container(),
-                  ),
-                ],
-                mainAxisAlignment: MainAxisAlignment.start,
-              ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(thread.hasUnseen.toString(),
+                              style:
+                                  TextStyle(fontSize: 8, color: Colors.white)),
+                        )
+                      : Container(),
+                ),
+              ],
+              mainAxisAlignment: MainAxisAlignment.start,
             ),
           ),
+<<<<<<< HEAD
+        ),
+        onTap: () async {
+          var prefs = await getPrefs();
+          Navigator.push(
+              context,
+              PageRouteBuilder(
+                  pageBuilder: (context, animation, secAnimation) => ChatScreen(
+                      prefs: prefs,
+                      // controller:this.controller,
+                      thread: this.thread),
+                  transitionsBuilder:
+                      (context, animation, secAnimation, child) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
+                              .animate(animation),
+                      child: child,
+                    );
+                  }));
+        },
+        leading: Container(
+          width: 70,
+          height: 90,
+          color: Colors.black,
+        ),
+        // leading: CircleAvatar(
+        //   radius: 35,
+        //   child: Text(this.thread.second.name[0].toUpperCase()),
+        // ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              this.thread.second.name,
+              style: TextStyle(
+                  color: Color.fromRGBO(60, 82, 111, 1),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18),
+            ),
+            SizedBox(
+              height: 8,
+            ),
+            Text(
+              (thread.chatList.length != 0)
+                  ? ((thread.chatList.last.msgType == "txt")
+                      ? (thread.chatList.last.message ?? "") //"text"
+                      : "media")
+                  : "",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Color.fromRGBO(100, 115, 142, 1),
+                fontWeight: FontWeight.w200,
+                fontSize: 15,
+=======
           onTap: () async {
             var prefs = await getPrefs();
             Navigator.push(
@@ -162,9 +252,10 @@ class ChatTile extends StatelessWidget {
                   fontWeight: FontWeight.w200,
                   fontSize: 15,
                 ),
+>>>>>>> 59623ce844e9312f71418541edcccb1e8b3ae68a
               ),
-            ],
-          )),
-    );
+            ),
+          ],
+        ));
   }
 }

@@ -197,10 +197,12 @@ def send_friend_request(request):
         from_user = User.objects.get(username=username)
         print(request.query_params['id'])
         to_user = User.objects.get(id=request.query_params['id'])
+        time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
         friend_request = FriendRequest.objects.create(
             from_user=from_user,
             to_user=to_user, 
             status="pending",
+            time_created=time,
             )
         friend_request.save()
         return Response(status=200)
