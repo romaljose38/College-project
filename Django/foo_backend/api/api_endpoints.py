@@ -32,6 +32,10 @@ urlpatterns = [
     path('delete_post', api_views.delete_post, name="delete_post"),
     path('dob_upload', api_views.dob_upload,  name="dob_upload"),
     path('user_details', api_views.get_user_details, name="get_user_details"),
+    path('update_details', api_views.update_user_details, name="update_user_details"),
+    path('check_password', api_views.password_check, name="check_password"),
+    path('change_password', api_views.password_change, name="change_password"),
+    path('delete_account', api_views.delete_account, name="account_delete"),
 
 
 ]

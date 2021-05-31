@@ -42,7 +42,7 @@ def send_request(sender, instance, created, **kwargs):
                     "type": "notification", 
                     "username": instance.from_user.username, 
                     'user_id': instance.from_user.id, 
-                    'dp':instances.from_user.profile.profile_pic.url,
+                    'dp':instance.from_user.profile.profile_pic.url,
                     'id': instance.id,
                     'time':instance.time_created,
                     })

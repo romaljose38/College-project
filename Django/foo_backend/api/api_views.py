@@ -630,3 +630,68 @@ def get_user_details(request):
     except Exception as e:
         print(e)
         return Response(status=400)
+
+
+@api_view(['POST'])
+def update_user_details(request):
+    try:
+        username = request.data['username']
+        about = request.data['about']
+        user_id = int(request.data['id'])
+        file = request.data['file']
+        cur_user = User.objects.get(id=user_id)
+        cur_user.profile.profile_pic = file
+        cur_user.about=about
+        cur_user.username_alias = username
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+@api_view(['POST'])
+def password_check(request):
+    try:
+        id = int(request.data['id'])
+        user = User.objects.get(id=id)
+        password_to_check = request.data['password']
+        _pass = user.check_password(password_to_check)
+        if(_pass):
+            return Response(status=200)
+        else:
+            return Response(status=417)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+@api_view(['POST'])
+def password_change(request):
+    try:
+        id = int(request.data['id'])
+        user = User.objects.get(id=id)
+        password_to_check = request.data['password']
+        user.set_password(password_to_check)
+        user.save()
+        return Response(status=200)
+
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+@api_view(['POST'])
+def delete_account(request):
+    try:
+        id = int(request.data['id'])
+        user = User.objects.get(id=id)
+        password_to_check = request.data['password']
+        _pass = user.check_password(password_to_check)
+        if(_pass):
+            user.delete()
+            return Response(status=200)
+        else:
+            return Response(status=417)
+
+    except Exception as e:
+        print(e)
+        return Response(status=400)
