@@ -13,6 +13,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'chattile.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:foo/screens/feed_icons.dart' as doubleMoreVert;
+import 'package:foo/custom_overlay.dart';
 
 class ChatListScreen extends StatefulWidget {
   @override
@@ -24,9 +26,11 @@ class _ChatListScreenState extends State<ChatListScreen>
   bool isSearching = false;
   AnimationController _animationController;
   Animation _animation;
+  SharedPreferences _prefs;
 
   @override
   void initState() {
+    setPreferences();
     _animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     _animation =
@@ -77,6 +81,111 @@ class _ChatListScreenState extends State<ChatListScreen>
             )),
       );
 
+  bool hidingLastSeen;
+
+  // showErrMessage() {
+  //   CustomOverlay overlay = CustomOverlay(
+  //       context: context, animationController: _animationController);
+  //   overlay.show("Sorry. Something went wrong.\n Please try again later.");
+  // }
+
+  void setPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    String key = "general_hide_last_seen";
+    if (_prefs.containsKey(key)) {
+      setState(() {
+        hidingLastSeen = _prefs.getBool(key);
+      });
+    } else {
+      _prefs.setBool(key, false);
+      setState(() {
+        hidingLastSeen = false;
+      });
+    }
+  }
+
+  //Changes the preferences;
+  Future<void> changePreferences(bool val, Function innerSetState) async {
+    //String key = "am_i_hiding_last_seen_from_$otherUser";
+    String key = 'general_hide_last_seen';
+
+    String action = "";
+    if (val) {
+      action = "add";
+    } else {
+      action = "remove";
+    }
+    var id = _prefs.getInt('id');
+    try {
+      var response = await http.get(Uri.http(localhost,
+          '/api/last_seen_general', {'id': id.toString(), 'action': action}));
+
+      if (response.statusCode == 200) {
+        _prefs.setBool(key, val);
+        innerSetState(() {
+          hidingLastSeen = val;
+        });
+      } else {
+        CustomOverlay overlay = CustomOverlay(
+            context: context, animationController: _animationController);
+        overlay.show("Sorry. Something went wrong.\n Please try again later.");
+      }
+    } catch (e) {
+      CustomOverlay overlay = CustomOverlay(
+          context: context, animationController: _animationController);
+      overlay.show("Sorry. Something went wrong.\n Please try again later.");
+    }
+  }
+
+  showSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, tester) {
+          return Container(
+            height: 300,
+            child: Column(
+              children: [
+                Container(
+                  child: Text(
+                    "Settings",
+                    style: GoogleFonts.lato(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  alignment: Alignment.centerLeft,
+                  margin: EdgeInsets.fromLTRB(20, 20, 0, 8),
+                ),
+                Divider(),
+                Container(
+                  // height: 70,
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Spacer(),
+                      Text("Hide last seen for everyone",
+                          style: GoogleFonts.openSans(
+                            fontSize: 16,
+                          )),
+                      Spacer(flex: 4),
+                      Switch(
+                        value: hidingLastSeen,
+                        onChanged: (val) => changePreferences(val, tester),
+                      ),
+                      Spacer(),
+                    ],
+                  ),
+                ),
+                Divider(),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -123,6 +232,14 @@ class _ChatListScreenState extends State<ChatListScreen>
                                     }));
                           }
                         }),
+                    isSearching
+                        ? Container()
+                        : RotatedBox(
+                            quarterTurns: 3,
+                            child: IconButton(
+                                icon: Icon(doubleMoreVert.Feed.colon),
+                                onPressed: () => showSettings(context)),
+                          ),
                   ],
                 ),
               ),

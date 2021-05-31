@@ -32,6 +32,8 @@ urlpatterns = [
     path('delete_post', api_views.delete_post, name="delete_post"),
     path('dob_upload', api_views.dob_upload,  name="dob_upload"),
     path('user_details', api_views.get_user_details, name="get_user_details"),
+    path('last_seen', api_views.add_to_last_seen, name='add_last_seen_personal'),
+    path('last_seen_general', api_views.switch_off_last_seen, name='switch_off_last_seen_all'),
 
 
 ]
