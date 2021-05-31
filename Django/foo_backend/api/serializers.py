@@ -38,6 +38,9 @@ class UserSerializer(serializers.ModelSerializer):
         representation['id'] = instance.id
         if(instance.dob is None):
             representation['dobVerified'] = False
+        else:
+            representation['dobVerified'] = True
+            representation['dp'] = instance.user.profile.profile_pic.url
         return representation
 
 

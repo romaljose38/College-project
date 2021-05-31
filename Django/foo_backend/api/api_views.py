@@ -627,5 +627,6 @@ def get_user_details(request):
             'dp':user.profile.profile_pic.url
         }
         return Response(status=200, data=data)
-    except:
+    except Exception as e:
+        print(e)
         return Response(status=400)

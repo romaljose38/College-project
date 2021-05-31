@@ -65,6 +65,8 @@ class _VideoEditorState extends State<VideoEditor> {
   final double height = 60;
 
   bool _exported = false;
+  bool _isAbsorbing = false;
+  bool _isUploading = false;
   String _exportText = "";
   VideoEditorController _controller;
 
@@ -125,6 +127,9 @@ class _VideoEditorState extends State<VideoEditor> {
       _exportText = "Video success export!";
       print(
           "File Path = ${file.path}"); //This is the path that has to posted via http post
+      setState(() {
+        _isUploading = true;
+      });
       widget.uploadFunc(context, File(file.path));
     } else
       _exportText = "Error on export video :(";
@@ -138,66 +143,69 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: _controller.initialized
-          ? Stack(children: [
-              Column(children: [
-                _topNavBar(),
-                Expanded(
-                  child: CropGridViewer(
-                    controller: _controller,
-                    showGrid: false,
-                  ),
-                ),
-                ..._trimSlider(),
-              ]),
-              Center(
-                child: AnimatedBuilder(
-                  animation: _controller.video,
-                  builder: (_, __) => OpacityTransition(
-                    visible: !_controller.isPlaying,
-                    child: GestureDetector(
-                      onTap: _controller.video.play,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.play_arrow),
-                      ),
+    return AbsorbPointer(
+      absorbing: _isAbsorbing,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: _controller.initialized
+            ? Stack(children: [
+                Column(children: [
+                  _topNavBar(),
+                  Expanded(
+                    child: CropGridViewer(
+                      controller: _controller,
+                      showGrid: false,
                     ),
                   ),
-                ),
-              ),
-              _customSnackBar(),
-              ValueListenableBuilder(
-                valueListenable: _isExporting,
-                builder: (_, bool export, __) => OpacityTransition(
-                  visible: export,
-                  child: AlertDialog(
-                    title: ValueListenableBuilder(
-                      valueListenable: _exportingProgress,
-                      // builder: (_, double value, __) => TextDesigned(
-                      //   "Exporting video ${(value * 100).ceil()}%",
-                      // color: Colors.black,
-                      //   bold: true,
-                      builder: (_, double value, __) => UnconstrainedBox(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1,
-                          backgroundColor: Colors.purple,
-                          value: value,
-                          //),
+                  ..._trimSlider(),
+                ]),
+                Center(
+                  child: AnimatedBuilder(
+                    animation: _controller.video,
+                    builder: (_, __) => OpacityTransition(
+                      visible: !_controller.isPlaying,
+                      child: GestureDetector(
+                        onTap: _controller.video.play,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.play_arrow),
                         ),
                       ),
                     ),
                   ),
                 ),
-              )
-            ])
-          : Center(child: CircularProgressIndicator()),
+                _customSnackBar(),
+                ValueListenableBuilder(
+                  valueListenable: _isExporting,
+                  builder: (_, bool export, __) => OpacityTransition(
+                    visible: export,
+                    child: AlertDialog(
+                      title: ValueListenableBuilder(
+                        valueListenable: _exportingProgress,
+                        // builder: (_, double value, __) => TextDesigned(
+                        //   "Exporting video ${(value * 100).ceil()}%",
+                        // color: Colors.black,
+                        //   bold: true,
+                        builder: (_, double value, __) => UnconstrainedBox(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1,
+                            backgroundColor: Colors.purple,
+                            value: value,
+                            //),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ])
+            : Center(child: CircularProgressIndicator()),
+      ),
     );
   }
 
@@ -228,10 +236,21 @@ class _VideoEditorState extends State<VideoEditor> {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  //_controller.video.pause();
+                  _controller.video.pause();
+                  setState(() {
+                    _isAbsorbing = true;
+                  });
                   _exportVideo();
                 },
-                child: Icon(Icons.save, color: Colors.white),
+                child: _isUploading
+                    ? UnconstrainedBox(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: UnconstrainedBox(
+                              child: CircularProgressIndicator()),
+                        ),
+                      )
+                    : Icon(Icons.save, color: Colors.white),
               ),
             ),
           ],

@@ -18,9 +18,10 @@ import 'package:foo/stories/story_new.dart';
 
 class StoryUploadPick extends StatelessWidget {
   final Trimmer _trimmer = Trimmer();
+  final String myProfPic;
   final myStory;
 
-  StoryUploadPick({this.myStory});
+  StoryUploadPick({this.myStory, this.myProfPic});
 
   Future<void> _uploadStory(BuildContext context, File mediaFile) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -50,9 +51,10 @@ class StoryUploadPick extends StatelessWidget {
         if (myStory == null) {
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Long press to add a new moment")));
+        } else {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => MyStoryScreen(storyObject: myStory)));
         }
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => MyStoryScreen(storyObject: myStory)));
       },
       onLongPress: () async {
         FilePickerResult result = await FilePicker.platform.pickFiles(
@@ -84,36 +86,75 @@ class StoryUploadPick extends StatelessWidget {
           }
         }
       },
-      child: Container(
-        //margin: EdgeInsets.only(left: 20, top: 10, bottom: 10, right: 5),
-        margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-        height: 80, //50,
-        width: 80,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Color.fromRGBO(203, 212, 217, 1),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(3),
-          child: Container(
+      child: Stack(
+        children: [
+          Container(
+            //margin: EdgeInsets.only(left: 20, top: 10, bottom: 10, right: 5),
+            margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+            height: 80, //50,
+            width: 80,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(26),
+              borderRadius: BorderRadius.circular(30),
+              color: Color.fromRGBO(203, 212, 217, 1),
             ),
             child: Padding(
-              padding: EdgeInsets.all(2),
+              padding: EdgeInsets.all(3),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(23),
+                  borderRadius: BorderRadius.circular(26),
                 ),
-                child: Center(
-                  child: plusButton(),
+                child: Padding(
+                  padding: EdgeInsets.all(2),
+                  child: Container(
+                    decoration: myProfPic != null
+                        ? BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(23),
+                            image: DecorationImage(
+                              image: FileImage(File(myProfPic)),
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(23),
+                          ),
+                    child: Center(
+                        child: myProfPic == null
+                            ? CircularProgressIndicator()
+                            : Container()
+                        // child: plusButton(),
+                        ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: EdgeInsets.all(2.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Container(
+                    height: 24,
+                    width: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    // )
+                    child: Center(
+                        child: Icon(Icons.add, color: Colors.white, size: 18))),
+              ),
+            ),
+          )
+        ],
       ),
     );
   }
@@ -306,6 +347,17 @@ class _CropMyImageState extends State<CropMyImage> {
   String filePath;
 
   bool _isCropping = false;
+  bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    requestPermission();
+  }
+
+  Future<void> requestPermission() async {
+    await ImageCrop.requestPermissions();
+  }
 
   Future<void> _openImage() async {
     final File file = File(widget.file.path);
@@ -402,60 +454,73 @@ class _CropMyImageState extends State<CropMyImage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size(double.infinity, 100),
-        child: Container(
-          padding: EdgeInsets.only(top: 35),
-          color: Colors.black,
-          child: Row(
-            children: <Widget>[
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    _isCropping = false;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              Spacer(),
-              _isCropping
-                  ? Container()
-                  : IconButton(
-                      icon: Icon(Icons.crop, color: Colors.white),
-                      onPressed: () {
-                        setState(() {
-                          _isCropping = true;
-                        });
-                        _openImage();
-                      },
-                    ),
-              _isCropping
-                  ? Container()
-                  : IconButton(
-                      icon: Icon(Icons.upload_file, color: Colors.white),
-                      onPressed: () {
-                        String fileFormat = widget.file.path.split('.').last;
-                        Directory(dirPath).createSync(recursive: true);
-                        filePath = dirPath +
-                            '/${DateTime.now().millisecondsSinceEpoch}.' +
-                            fileFormat;
-                        widget.file.copySync(filePath);
-                        File uploadFile = File(filePath);
-                        widget.file.delete();
-                        print(uploadFile);
-                        widget.uploadFunc(context, uploadFile);
-                      },
-                    )
-            ],
+    return AbsorbPointer(
+      absorbing: _isUploading,
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(double.infinity, 100),
+          child: Container(
+            padding: EdgeInsets.only(top: 35),
+            color: Colors.black,
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      _isCropping = false;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                Spacer(),
+                _isCropping
+                    ? Container()
+                    : IconButton(
+                        icon: Icon(Icons.crop, color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            _isCropping = true;
+                          });
+                          _openImage();
+                        },
+                      ),
+                _isCropping
+                    ? Container()
+                    : _isUploading
+                        ? Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: CircularProgressIndicator(),
+                          )
+                        : IconButton(
+                            icon: Icon(Icons.upload_file, color: Colors.white),
+                            onPressed: () {
+                              String fileFormat =
+                                  widget.file.path.split('.').last;
+                              Directory(dirPath).createSync(recursive: true);
+                              filePath = dirPath +
+                                  '/${DateTime.now().millisecondsSinceEpoch}.' +
+                                  fileFormat;
+                              widget.file.copySync(filePath);
+                              File uploadFile = File(filePath);
+                              widget.file.delete();
+                              print(uploadFile);
+                              setState(() {
+                                _isUploading = true;
+                              });
+                              widget.uploadFunc(context, uploadFile);
+                            },
+                          ),
+              ],
+            ),
           ),
         ),
-      ),
-      body: Container(
-        color: Colors.black,
-        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
-        child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
+        body: Container(
+          color: Colors.black,
+          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+          child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
+        ),
       ),
     );
   }

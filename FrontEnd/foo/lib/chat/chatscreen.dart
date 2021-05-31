@@ -29,6 +29,7 @@ import 'package:http/http.dart' as http;
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
+import 'package:cached_network_image/cached_network_image.dart';
 
 String imageUTF = "\x69\x6d\x61\x67\x65";
 String audioUTF = "\x61\x75\x64\x69\x6f";
@@ -860,10 +861,30 @@ class _ChatScreenState extends State<ChatScreen>
                                 color: Colors.black, size: 23),
                           ),
                           Spacer(),
-                          CircleAvatar(
-                            child: Text(curUser[0]),
-                            radius: 20,
-                          ),
+                          // CircleAvatar(
+                          //   //child: Text(otherUser[0].toUpperCase()),
+                          //   child: CachedNetworkImage(
+                          //       errorWidget: (a, b, c) {
+                          //         return Text(otherUser[0].toUpperCase());
+                          //       },
+                          //       imageUrl: widget.thread.second?.dpUrl),
+                          //   radius: 20,
+                          // ),
+                          Container(
+                              height: 56,
+                              width: 56,
+                              //child: Text(this.thread.second.name[0].toUpperCase()),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                image: DecorationImage(
+                                    fit: BoxFit.cover,
+                                    image: CachedNetworkImageProvider(
+                                      thread.second.dpUrl == null
+                                          ? ''
+                                          : 'http://$localhost' +
+                                              thread.second?.dpUrl,
+                                    )),
+                              )),
                           Spacer(),
                           Column(
                               mainAxisAlignment: MainAxisAlignment.center,
