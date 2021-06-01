@@ -7,6 +7,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:foo/landing_page.dart';
+import 'package:foo/test_cred.dart';
+import 'package:http/http.dart' as http;
+import 'package:foo/custom_overlay.dart';
 
 class AudioUploadScreen extends StatefulWidget {
   File audio;
@@ -17,10 +22,67 @@ class AudioUploadScreen extends StatefulWidget {
   _AudioUploadScreenState createState() => _AudioUploadScreenState();
 }
 
-class _AudioUploadScreenState extends State<AudioUploadScreen> {
+class _AudioUploadScreenState extends State<AudioUploadScreen>
+    with SingleTickerProviderStateMixin {
+  TextEditingController captionController;
+  AnimationController _animationController;
+  Animation _animation;
   bool hasImage = false;
   bool _isBlurred = false;
   File imageFile;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _animation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    captionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    captionController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _upload(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt('id');
+    var uri = Uri.http(
+        localhost, '/api/post_upload'); //This web address has to be changed
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['user_id'] = userId.toString()
+      ..fields['type'] = _isBlurred ? 'aud_blurred' : 'aud'
+      ..fields['caption'] = captionController.text
+      ..fields['hasThumbnail'] = (imageFile == null) ? '0' : '1'
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        widget.audio.path,
+      ));
+
+    if (imageFile != null) {
+      request.files
+          .add(await http.MultipartFile.fromPath('thumbnail', imageFile.path));
+    }
+
+    try {
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        print('Uploaded');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => LandingPage()));
+      }
+    } catch (e) {
+      print(e);
+      CustomOverlay overlay = CustomOverlay(
+          context: context, animationController: _animationController);
+      overlay.show("Sorry. Upload Failed.\n Please try again later.");
+    }
+  }
 
   GestureDetector bottomSheetTile(
           String type, Color color, IconData icon, Function onTap) =>
@@ -228,15 +290,23 @@ class _AudioUploadScreenState extends State<AudioUploadScreen> {
                               child: Container(
                                   height: size.height * 0.7,
                                   width: size.height * 0.7,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      image: DecorationImage(
-                                        image: imageFile == null
-                                            ? AssetImage(
-                                                "assets/images/user3.png")
-                                            : FileImage(imageFile),
-                                        fit: BoxFit.cover,
-                                      )),
+                                  decoration: imageFile != null
+                                      ? BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          image: DecorationImage(
+                                            image: FileImage(imageFile),
+                                            // image: imageFile == null
+                                            //     ? AssetImage(
+                                            //         "assets/images/user3.png")
+                                            //     : FileImage(imageFile),
+                                            fit: BoxFit.cover,
+                                          ))
+                                      : BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          color: Colors.black,
+                                        ),
                                   // decoration: hasImage
                                   //     ? backgroundImage()
                                   //     : backgroundColor(),
@@ -323,6 +393,7 @@ class _AudioUploadScreenState extends State<AudioUploadScreen> {
                         ),
                       ),
                       child: TextField(
+                        controller: captionController,
                         decoration: InputDecoration(
                           hintText: "Add a caption",
                           hintStyle: GoogleFonts.lato(
@@ -350,7 +421,7 @@ class _AudioUploadScreenState extends State<AudioUploadScreen> {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton(
-              onPressed: () {},
+              onPressed: () => _upload(context),
               child: Text(
                 "Next",
                 style:
@@ -457,8 +528,8 @@ class _PlayerState extends State<Player> {
 
   @override
   void dispose() {
-    super.dispose();
     player.dispose();
+    super.dispose();
   }
 
   //adds listeners to the player to update the slider and all..

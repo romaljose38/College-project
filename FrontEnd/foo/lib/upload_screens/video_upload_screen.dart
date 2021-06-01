@@ -17,6 +17,8 @@ import 'package:better_player/better_player.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:foo/landing_page.dart';
+import 'package:foo/custom_overlay.dart';
 import '../test_cred.dart';
 
 class VideoUploadScreen extends StatefulWidget {
@@ -28,10 +30,14 @@ class VideoUploadScreen extends StatefulWidget {
   _VideoUploadScreenState createState() => _VideoUploadScreenState();
 }
 
-class _VideoUploadScreenState extends State<VideoUploadScreen> {
+class _VideoUploadScreenState extends State<VideoUploadScreen>
+    with SingleTickerProviderStateMixin {
   bool hasImage = false;
   File imageFile;
   File _generatedThumbnail;
+  TextEditingController captionController;
+  AnimationController _animationController;
+  Animation _animation;
   // VideoPlayerController _controller;
 
   GestureDetector bottomSheetTile(
@@ -168,7 +174,51 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   @override
   void initState() {
     super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _animation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    captionController = TextEditingController();
     _generateThumbnail();
+  }
+
+  @override
+  void dispose() {
+    captionController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _upload(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt('id');
+    var uri = Uri.http(
+        localhost, '/api/post_upload'); //This web address has to be changed
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['user_id'] = userId.toString()
+      ..fields['type'] = 'vid'
+      ..fields['caption'] = captionController.text
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        widget.mediaInserted.path,
+      ))
+      ..files.add(await http.MultipartFile.fromPath('thumbnail',
+          (imageFile == null) ? _generatedThumbnail.path : imageFile.path));
+
+    try {
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        print('Uploaded');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => LandingPage()));
+      }
+    } catch (e) {
+      print(e);
+      CustomOverlay overlay = CustomOverlay(
+          context: context, animationController: _animationController);
+      overlay.show("Sorry. Upload Failed.\n Please try again later.");
+    }
   }
 
   @override

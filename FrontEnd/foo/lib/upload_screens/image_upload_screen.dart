@@ -6,6 +6,7 @@ import 'package:foo/screens/feed_icons.dart';
 import 'package:foo/screens/models/post_model.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import '../test_cred.dart';
@@ -18,9 +19,29 @@ class ImageUploadScreen extends StatefulWidget {
   _ImageUploadScreenState createState() => _ImageUploadScreenState();
 }
 
-class _ImageUploadScreenState extends State<ImageUploadScreen> {
-  final TextEditingController captionController = TextEditingController();
+class _ImageUploadScreenState extends State<ImageUploadScreen>
+    with SingleTickerProviderStateMixin {
+  AnimationController _animationController;
+  Animation _animation;
+  TextEditingController captionController;
   bool uploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _animation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    captionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    captionController.dispose();
+    super.dispose();
+  }
 
   Future<void> _upload(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -35,11 +56,19 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         'file',
         widget.mediaInserted.path,
       ));
-    var response = await request.send();
+    try {
+      var response = await request.send();
 
-    if (response.statusCode == 200) {
-      print('Uploaded');
-      Navigator.push(context, MaterialPageRoute(builder: (_) => LandingPage()));
+      if (response.statusCode == 200) {
+        print('Uploaded');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => LandingPage()));
+      }
+    } catch (e) {
+      print(e);
+      CustomOverlay overlay = CustomOverlay(
+          context: context, animationController: _animationController);
+      overlay.show("Sorry. Upload Failed.\n Please try again later.");
     }
   }
 
@@ -226,6 +255,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                         ),
                       ),
                       child: TextField(
+                        controller: captionController,
                         decoration: InputDecoration(
                           hintText: "Add a caption",
                           hintStyle: GoogleFonts.lato(
