@@ -28,6 +28,7 @@ from .serializers import (
     PostDetailSerializer,
     UserStorySerializer,
 )
+from chat.signals import tell_them_i_have_changed_my_dp
 import json
 
 User = get_user_model()
@@ -78,6 +79,25 @@ def get_user_list(request):
         param = request.query_params['name']
         print(param)
         qs = User.objects.filter(Q(username__icontains=param)
+                                 | Q(f_name__icontains=param))
+        # .filter(l_name__icontains=param)
+        serialized = UserCustomSerializer(qs,many=True)
+        print(request.query_params)
+        # print(data)
+        return Response(status=200, data=serialized.data)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+@api_view(['GET'])
+def get_friends_list(request):
+    try:
+        param = request.query_params['name']
+        print(param)
+        id = request.query_params['id']
+        friends = User.objects.get(id=id).profile.friends
+        qs = friends.filter(Q(username_alias__icontains=param)
                                  | Q(f_name__icontains=param))
         # .filter(l_name__icontains=param)
         serialized = UserCustomSerializer(qs,many=True)
@@ -661,14 +681,18 @@ def get_user_details(request):
 @api_view(['POST'])
 def update_user_details(request):
     try:
+        print(request.data)
         username = request.data['username']
         about = request.data['about']
         user_id = int(request.data['id'])
         file = request.data['file']
         cur_user = User.objects.get(id=user_id)
         cur_user.profile.profile_pic = file
+        cur_user.profile.save()
         cur_user.about=about
         cur_user.username_alias = username
+        cur_user.save()
+        tell_them_i_have_changed_my_dp.delay(cur_user.id)
         return Response(status=200)
     except Exception as e:
         print(e)

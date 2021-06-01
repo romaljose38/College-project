@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:foo/media_players.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/comment_screen.dart';
 import 'package:foo/screens/view_post_screen.dart';
@@ -713,125 +714,5 @@ class _ExpandableTextState extends State<ExpandableText>
                 )),
           )),
     ]);
-  }
-}
-
-class Player extends StatefulWidget {
-  final String url;
-
-  Player({Key key, this.url}) : super(key: key);
-
-  @override
-  _PlayerState createState() => _PlayerState();
-}
-
-class _PlayerState extends State<Player> {
-  AudioPlayer player;
-  bool isPlaying = false;
-  int totalDuration;
-  double valState = 0;
-  bool hasInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    player = AudioPlayer();
-    addListeners();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    player.dispose();
-  }
-
-  //adds listeners to the player to update the slider and all..
-  void addListeners() {
-    player.onDurationChanged.listen((Duration d) {
-      setState(() {
-        totalDuration = d.inMicroseconds;
-      });
-    });
-
-    player.onAudioPositionChanged.listen((e) {
-      if (e.inMicroseconds == totalDuration) {
-        setState(() {
-          isPlaying = false;
-        });
-      }
-      var percent = e.inMicroseconds / totalDuration;
-
-      setState(() {
-        valState = percent;
-      });
-    });
-
-    player.onPlayerCompletion.listen((event) {
-      setState(() {
-        isPlaying = false;
-        valState = 1;
-      });
-    });
-  }
-
-  //activates the player and responsible for changing the pause/play icon
-  Future<void> playerStateChange() async {
-    if (!hasInitialized) {
-      await player.play(widget.url, volume: 0.8);
-      setState(() {
-        valState = null;
-        hasInitialized = true;
-      });
-    }
-    // if ((widget.file != null) & (!hasInitialized)) {
-    //   print("initializing");
-    //
-    // }
-    if (isPlaying) {
-      await player.pause();
-      setState(() {
-        isPlaying = false;
-      });
-    } else {
-      await player.resume();
-      setState(() {
-        isPlaying = true;
-      });
-    }
-  }
-
-  //manages slider seeking
-  Future<void> seekAudio(double val) async {
-    print(val);
-
-    Duration position = Duration(milliseconds: (val * totalDuration).toInt());
-    await player.seek(position);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          width: 100,
-          height: 100,
-          child: CircularProgressIndicator(
-            value: valState,
-            strokeWidth: 1,
-            backgroundColor: Colors.white,
-          ),
-        ),
-        Positioned(
-            top: 22,
-            left: 20,
-            child: IconButton(
-              icon: Icon(
-                  this.isPlaying ? Ionicons.pause_circle : Ionicons.play_circle,
-                  size: 45,
-                  color: Colors.white),
-              onPressed: playerStateChange,
-            )),
-      ],
-    );
   }
 }

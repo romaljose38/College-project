@@ -76,7 +76,7 @@ class PostRelatedField(serializers.RelatedField):
 
     def to_representation(self,instance):
       
-        return {'id':instance.id,'url':instance.file.url,'likes':instance.likes.count(),'comments':instance.comment_set.all().count()}
+        return {'id':instance.id,'url':instance.file.url,'likes':instance.likes.count(),'type':instance.post_type,'comments':instance.comment_set.all().count(),'thumbnail':instance.thumbnail.url if instance.thumbnail else ""}
 
     def get_queryset(self):
         return Post.objects.all()
@@ -89,7 +89,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["f_name","l_name","username","id","email","posts"]
+        fields = ["f_name","l_name","username","id","email","posts","about"]
         # depth = 1
 
 
@@ -97,6 +97,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         request = self.context['request']
         cur_user = self.context['cur_user']
+        if(instance.profile.profile_pic):
+            representation['dp']=instance.profile.profile_pic.url
+        
+        else:
+            representation['dp']=''
         if instance==cur_user:
             representation['isMe'] = True
         else:
