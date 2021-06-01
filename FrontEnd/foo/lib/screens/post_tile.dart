@@ -748,42 +748,36 @@ class _PlayerState extends State<Player> {
   //adds listeners to the player to update the slider and all..
   void addListeners() {
     player.onDurationChanged.listen((Duration d) {
-      print('Max duration: $d');
+      setState(() {
+        totalDuration = d.inMicroseconds;
+      });
     });
 
     player.onAudioPositionChanged.listen((e) {
-      if (e.inMilliseconds == totalDuration) {
+      if (e.inMicroseconds == totalDuration) {
         setState(() {
           isPlaying = false;
         });
       }
-      var percent = e.inMilliseconds / totalDuration;
-      print(percent);
+      var percent = e.inMicroseconds / totalDuration;
+
       setState(() {
-        valState = percent * 100;
+        valState = percent;
       });
-      print(e.inMilliseconds);
     });
 
     player.onPlayerCompletion.listen((event) {
       setState(() {
         isPlaying = false;
+        valState = 1;
       });
     });
   }
 
   //activates the player and responsible for changing the pause/play icon
   Future<void> playerStateChange() async {
-    print("button click");
     if (!hasInitialized) {
       await player.play(widget.url, volume: 0.8);
-      var duration = await player.getDuration();
-      print(duration);
-      print("this is the duration");
-      setState(() {
-        totalDuration = duration;
-      });
-      await player.resume();
       setState(() {
         valState = null;
         hasInitialized = true;
