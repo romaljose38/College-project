@@ -262,6 +262,9 @@ class Post {
   @HiveField(9)
   String caption;
 
+  @HiveField(10)
+  String thumbNailPath;
+
   Post(
       {this.username,
       this.userDpUrl,
@@ -272,6 +275,7 @@ class Post {
       this.haveLiked,
       this.userId,
       this.type,
+      this.thumbNailPath,
       this.caption});
 }
 

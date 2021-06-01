@@ -57,7 +57,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ["file","user",'id',"post_type",'caption']
+        fields = ["file","user",'id',"post_type",'caption','thumbnail']
 
 
     def to_representation(self, instance):

@@ -193,34 +193,52 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
       );
 
   Container postAudio(height) => Container(
-        height: height,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          // boxShadow: [BoxShadow()],
-          // borderRadius: BorderRadius.circular(25),
-          image: DecorationImage(
-            image: CachedNetworkImageProvider(widget.post.postUrl),
-            // image: CachedNetworkImageProvider(widget.post.postUrl),
-            fit: BoxFit.cover,
-          ),
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        // boxShadow: [BoxShadow()],
+        // borderRadius: BorderRadius.circular(25),
+        image: DecorationImage(
+          image: CachedNetworkImageProvider(widget.post.thumbNailPath),
+          // image: CachedNetworkImageProvider(widget.post.postUrl),
+          fit: BoxFit.cover,
         ),
-        child: Center(child: Player()),
-      );
+      ),
+      child: Center(
+        child: Player(url: widget.post.postUrl),
+      ));
+
+  Container postAudioBlurred(height) => Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: CachedNetworkImageProvider(widget.post.thumbNailPath),
+          // image: CachedNetworkImageProvider(widget.post.postUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Center(
+          child: BackdropFilter(
+        child: Player(url: widget.post.postUrl),
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      )));
 
   Container postVideo() => Container(
-        height: 540,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          // boxShadow: [BoxShadow()],
-          // borderRadius: BorderRadius.circular(25),
-          image: DecorationImage(
-            image: CachedNetworkImageProvider(widget.post.postUrl),
-            // image: CachedNetworkImageProvider(widget.post.postUrl),
-            fit: BoxFit.cover,
-          ),
+      height: 540,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        // boxShadow: [BoxShadow()],
+        // borderRadius: BorderRadius.circular(25),
+        image: DecorationImage(
+          image: CachedNetworkImageProvider(widget.post.thumbNailPath),
+          // image: CachedNetworkImageProvider(widget.post.postUrl),
+          fit: BoxFit.cover,
         ),
-        child: Center(child: Player()),
-      );
+      ),
+      child: Center(
+        child: Icon(Icons.play_arrow),
+      ));
 
   BoxDecoration cardDecorationWithShadow() {
     return BoxDecoration(
@@ -288,7 +306,11 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(20),
                 child: widget.post.type == "img"
                     ? postImage(height)
-                    : postAudio(height),
+                    : (widget.post.type == "aud")
+                        ? postAudio(height)
+                        : (widget.post.type == "vid")
+                            ? postVideo()
+                            : postAudioBlurred(height),
               ),
             ),
             Positioned(
@@ -695,9 +717,9 @@ class _ExpandableTextState extends State<ExpandableText>
 }
 
 class Player extends StatefulWidget {
-  final File file;
+  final String url;
 
-  Player({Key key, this.file}) : super(key: key);
+  Player({Key key, this.url}) : super(key: key);
 
   @override
   _PlayerState createState() => _PlayerState();
@@ -754,8 +776,7 @@ class _PlayerState extends State<Player> {
   Future<void> playerStateChange() async {
     print("button click");
     if (!hasInitialized) {
-      await player.setUrl(
-          "https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav");
+      await player.play(widget.url, volume: 0.8);
       var duration = await player.getDuration();
       print(duration);
       print("this is the duration");

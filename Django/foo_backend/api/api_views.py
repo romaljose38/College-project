@@ -49,18 +49,23 @@ def login(request):
 
 
 @csrf_exempt
-@api_view(['POST', 'PUT'])
+@api_view(['POST'])
 @parser_classes([MultiPartParser])
-def video_upload_handler(request):
+def post_upload_handler(request):
     try:
         file_type = request.data['type']
         caption = request.data['caption']
         file = request.data['file']
-        username = request.data['username']
+        id = request.data['user_id']
         print(request.data)
-        user = User.objects.get(username=username)
+        user = User.objects.get(id=id)
         post = Post.objects.create(
             post_type=file_type, caption=caption, file=file, user=user)
+        if((file_type == "aud") or (file_type=="aud_blurred")):
+            if(int(request.data['hasThumbnail'])==1):
+                post.thumbnail = request.data['thumbnail']
+        elif(file_type=="vid"):
+            post.thumbnail = request.data['thumbnail']
         post.save()
         return Response(status=200, data={"status": "success"})
     except:
