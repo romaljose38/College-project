@@ -6,7 +6,7 @@ from . import api_views
 urlpatterns = [
     path('register', views.register , name="register"),
     path('login', api_views.login, name="login_api"),
-    path('upload', api_views.video_upload_handler, name="video_upload"),
+    path('post_upload', api_views.post_upload_handler, name="post_upload"),
     path('users',api_views.get_user_list, name="user list"),
     path('<str:username>/posts',api_views.get_posts, name="post list"),
     path('<int:id>/profile',api_views.get_profile_and_posts, name="profile details"),
@@ -32,6 +32,10 @@ urlpatterns = [
     path('delete_post', api_views.delete_post, name="delete_post"),
     path('dob_upload', api_views.dob_upload,  name="dob_upload"),
     path('user_details', api_views.get_user_details, name="get_user_details"),
+    path('update_details', api_views.update_user_details, name="update_user_details"),
+    path('check_password', api_views.password_check, name="check_password"),
+    path('change_password', api_views.password_change, name="change_password"),
+    path('delete_account', api_views.delete_account, name="account_delete"),
     path('last_seen', api_views.add_to_last_seen, name='add_last_seen_personal'),
     path('last_seen_general', api_views.switch_off_last_seen, name='switch_off_last_seen_all'),
 

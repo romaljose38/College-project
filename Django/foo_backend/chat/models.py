@@ -66,8 +66,9 @@ class User(AbstractBaseUser):
     dob = models.DateField(null=True,blank=True)
     is_active = models.BooleanField(default=True)
     staff = models.BooleanField(default=False) # a admin user; non super-user
-    admin = models.BooleanField(default=False) # a superuser
-
+    admin = models.BooleanField(default=False)
+    username_alias = models.CharField(max_length=100, unique=True, null=True, blank=True) # a superuser
+    about =models.TextField(blank=True,null=True)
     # notice the absence of a "Password field", that is built in.
 
     USERNAME_FIELD = 'email'
@@ -193,7 +194,11 @@ class Notification(models.Model):
 def user_directory_path(instance, filename):
     extension = filename.split(".")[-1]
     return 'user_{0}/{1}'.format(instance.user.id, filename[:4]+'.'+extension)
-  
+
+def post_thumbnail_path(instance, filename):
+    extension = filename.split(".")[-1]
+    return 'user_{0}/thumbnails/{1}'.format(instance.user.id, filename[:4]+'.'+extension)
+
 
 class Post(models.Model):
     
@@ -202,6 +207,7 @@ class Post(models.Model):
     post_type = models.CharField(max_length=5)
     time_created = models.DateTimeField(auto_now_add=True)
     caption = models.CharField(max_length=100)
+    thumbnail = models.FileField(upload_to = post_thumbnail_path)
 
     likes = models.ManyToManyField(User,related_name="likes", blank=True)
 

@@ -110,7 +110,8 @@ class _ChatCloudState extends State<ChatCloud> {
                           SizedBox(width: 3.0),
                           (this.widget.msgObj.isMe == true)
                               ? (Icon(
-                                  this.widget.msgObj.haveReachedServer
+                                  (this.widget.msgObj.haveReachedServer ??
+                                          false)
                                       ? (this.widget.msgObj.haveReceived
                                           ? (this.widget.msgObj.hasSeen == true)
                                               ? Icons.done_outline_sharp

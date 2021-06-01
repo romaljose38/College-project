@@ -96,6 +96,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           caption: e['caption'],
           likeCount: e['likeCount'],
           haveLiked: e['hasLiked'],
+          thumbNailPath: (e['post_type'] == "aud" ||
+                  e['post_type'] == "aud_blurred" ||
+                  e['post_type'] == "vid")
+              ? e['thumbnail']
+              : "",
           type: e['post_type']);
       int index = postsList.length - 1;
       listKey.currentState.insertItem(index);
@@ -172,6 +177,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               userId: e['user']['id'],
               likeCount: e['likeCount'],
               haveLiked: e['hasLiked'],
+              thumbNailPath: (e['post_type'] == "aud" ||
+                      e['post_type'] == "aud_blurred" ||
+                      e['post_type'] == "vid")
+                  ? e['thumbnail']
+                  : "",
               type: e['post_type']);
           feed.addPost(post);
           feed.save();
@@ -496,7 +506,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           caption: e['caption'],
           likeCount: e['likeCount'],
           haveLiked: e['hasLiked'],
+          thumbNailPath: (e['post_type'] == "aud" ||
+                  e['post_type'] == "aud_blurred" ||
+                  e['post_type'] == "vid")
+              ? e['thumbnail']
+              : "",
           type: e['post_type']);
+
       feed.addPost(post);
       feed.save();
       if (feed.isNew(e['id'])) {

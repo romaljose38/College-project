@@ -35,6 +35,7 @@ class CustomOverlay {
                     borderRadius: BorderRadius.circular(20)),
                 child: Text(
                   text,
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.lato(
                     color: Colors.white,
                   ),

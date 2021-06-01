@@ -29,6 +29,7 @@ class UserSerializer(serializers.ModelSerializer):
                                         )
         user.uprn = validated_data['uprn']
         user.username = validated_data['username']
+        user.username_alias = validated_data['username']
         user.token = validated_data['token']
         user.save()
         return user
@@ -56,7 +57,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ["file","user",'id',"post_type",'caption']
+        fields = ["file","user",'id',"post_type",'caption','thumbnail']
 
 
     def to_representation(self, instance):

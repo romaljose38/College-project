@@ -49,18 +49,23 @@ def login(request):
 
 
 @csrf_exempt
-@api_view(['POST', 'PUT'])
+@api_view(['POST'])
 @parser_classes([MultiPartParser])
-def video_upload_handler(request):
+def post_upload_handler(request):
     try:
         file_type = request.data['type']
         caption = request.data['caption']
         file = request.data['file']
-        username = request.data['username']
+        id = request.data['user_id']
         print(request.data)
-        user = User.objects.get(username=username)
+        user = User.objects.get(id=id)
         post = Post.objects.create(
             post_type=file_type, caption=caption, file=file, user=user)
+        if((file_type == "aud") or (file_type=="aud_blurred")):
+            if(int(request.data['hasThumbnail'])==1):
+                post.thumbnail = request.data['thumbnail']
+        elif(file_type=="vid"):
+            post.thumbnail = request.data['thumbnail']
         post.save()
         return Response(status=200, data={"status": "success"})
     except:
@@ -644,6 +649,71 @@ def get_user_details(request):
             'dp':user.profile.profile_pic.url
         }
         return Response(status=200, data=data)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+@api_view(['POST'])
+def update_user_details(request):
+    try:
+        username = request.data['username']
+        about = request.data['about']
+        user_id = int(request.data['id'])
+        file = request.data['file']
+        cur_user = User.objects.get(id=user_id)
+        cur_user.profile.profile_pic = file
+        cur_user.about=about
+        cur_user.username_alias = username
+        return Response(status=200)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+@api_view(['POST'])
+def password_check(request):
+    try:
+        id = int(request.data['id'])
+        user = User.objects.get(id=id)
+        password_to_check = request.data['password']
+        _pass = user.check_password(password_to_check)
+        if(_pass):
+            return Response(status=200)
+        else:
+            return Response(status=417)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+@api_view(['POST'])
+def password_change(request):
+    try:
+        id = int(request.data['id'])
+        user = User.objects.get(id=id)
+        password_to_check = request.data['password']
+        user.set_password(password_to_check)
+        user.save()
+        return Response(status=200)
+
+    except Exception as e:
+        print(e)
+        return Response(status=400)
+
+
+@api_view(['POST'])
+def delete_account(request):
+    try:
+        id = int(request.data['id'])
+        user = User.objects.get(id=id)
+        password_to_check = request.data['password']
+        _pass = user.check_password(password_to_check)
+        if(_pass):
+            user.delete()
+            return Response(status=200)
+        else:
+            return Response(status=417)
+
     except Exception as e:
         print(e)
         return Response(status=400)
