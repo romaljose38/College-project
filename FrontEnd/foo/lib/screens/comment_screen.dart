@@ -9,6 +9,7 @@ import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
+import 'package:foo/screens/post_tile.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
@@ -64,6 +65,8 @@ class _CommentScreenState extends State<CommentScreen>
   int likeCount;
   bool hasLiked;
   String postUrl;
+  String postType;
+  String thumbnailPath;
 
   @override
   void initState() {
@@ -90,6 +93,8 @@ class _CommentScreenState extends State<CommentScreen>
         likeCount = respJson['likeCount'];
         caption = respJson['caption'];
         hasLiked = respJson['hasLiked'];
+        postType = respJson['post_type'];
+        thumbnailPath = respJson['thumbnail'];
         postUrl = 'http://' + localhost + respJson['file'];
       });
       respJson['comment_set'].forEach((e) {
@@ -356,6 +361,65 @@ class _CommentScreenState extends State<CommentScreen>
     return Future.value(false);
   }
 
+  postImage(height) => Container(
+        height: height,
+        width: double.infinity,
+        // margin: EdgeInsets.symmetric(horizontal: 5),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: CachedNetworkImageProvider(postUrl),
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+  Container postAudio(height) => Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        // boxShadow: [BoxShadow()],
+        // borderRadius: BorderRadius.circular(25),
+        image: DecorationImage(
+          image: CachedNetworkImageProvider(thumbnailPath),
+          // image: CachedNetworkImageProvider(widget.post.postUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Center(
+        child: Player(url: postUrl),
+      ));
+
+  Container postAudioBlurred(height) => Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: CachedNetworkImageProvider(thumbnailPath),
+          // image: CachedNetworkImageProvider(widget.post.postUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Center(
+          child: BackdropFilter(
+        child: Player(url: postUrl),
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      )));
+
+  Container postVideo(height) => Container(
+      height: 540,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        // boxShadow: [BoxShadow()],
+        // borderRadius: BorderRadius.circular(25),
+        image: DecorationImage(
+          image: CachedNetworkImageProvider(thumbnailPath),
+          // image: CachedNetworkImageProvider(widget.post.postUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Center(
+        child: Icon(Icons.play_arrow),
+      ));
+
   @override
   Widget build(BuildContext context) {
     var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
@@ -420,20 +484,17 @@ class _CommentScreenState extends State<CommentScreen>
             alignment: Alignment.topCenter,
             children: [
               Hero(
-                tag: "profile_${widget.heroIndex}",
-                child: Container(
-                  height: height,
-                  width: double.infinity,
-                  // margin: EdgeInsets.symmetric(horizontal: 5),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30.0),
-                    image: DecorationImage(
-                      image: CachedNetworkImageProvider(postUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
+                  tag: "profile_${widget.heroIndex}",
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: postType == "img"
+                        ? postImage(height)
+                        : (postType == "aud")
+                            ? postAudio(height)
+                            : (postType == "vid")
+                                ? postVideo(height)
+                                : postAudioBlurred(height),
+                  )),
               Positioned(
                 top: 10,
                 left: 10,
