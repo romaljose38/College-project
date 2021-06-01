@@ -26,7 +26,6 @@ class _EditProfileState extends State<EditProfile>
   TextEditingController _aboutController = TextEditingController();
   AnimationController _controller;
   File imageFile;
-  String curPath;
 
   bool absorbing = false;
 
@@ -46,8 +45,9 @@ class _EditProfileState extends State<EditProfile>
     await setPrefs();
     _usernameController.text = _prefs.getString("username");
     Directory dir = await getApplicationDocumentsDirectory();
+    _aboutController.text = _prefs.getString("about") ?? "";
     setState(() {
-      curPath = dir.path + '/images/dp/dp.jpg';
+      imageFile = File(dir.path + '/images/dp/dp.jpg');
     });
   }
 
@@ -235,18 +235,11 @@ class _EditProfileState extends State<EditProfile>
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Center(
-                              child: (curPath == null)
-                                  ? SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        backgroundColor: Colors.purple,
-                                      ))
+                              child: (imageFile != null)
+                                  ? Image.file(imageFile, fit: BoxFit.cover)
                                   // : Image.file(File(curPath))
-                                  : (imageFile != null)
-                                      ? Image.file(imageFile)
-                                      : Image.asset("assets/images/user3.png",
-                                          fit: BoxFit.cover)),
+                                  : Image.asset("assets/images/dp/dp.jpg",
+                                      fit: BoxFit.cover)),
                         ),
                         Positioned(
                             top: 5,

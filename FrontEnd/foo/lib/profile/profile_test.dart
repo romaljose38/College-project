@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:foo/chat/chatscreen.dart';
+import 'package:foo/media_players.dart';
 import 'package:foo/screens/comment_screen.dart';
 import 'package:foo/settings/settings_page.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,6 +29,7 @@ class Profile extends StatelessWidget {
   String fullName;
   int friendsCount;
   int postsCount;
+  String about;
 
   Profile({this.userId, this.myProfile = false});
 
@@ -50,7 +52,9 @@ class Profile extends StatelessWidget {
     isMe = respJson['isMe'];
     friendsCount = respJson['friends_count'];
     postsCount = respJson['post_count'];
-    // userDpUrl = respJson['dp']
+    about = respJson['about'];
+
+    userDpUrl = respJson['dp'];
     print(userId);
     print(respJson);
     print(respJson.runtimeType);
@@ -63,10 +67,12 @@ class Profile extends StatelessWidget {
       postList.insert(
           0,
           Post(
+              type: e['type'],
               username: respJson['username'],
               postUrl: 'http://' + localhost + e['url'],
               commentCount: e['comments'],
               likeCount: e['likes'],
+              thumbNailPath: 'http://' + localhost + e['thumbnail'],
               postId: e['id']));
     });
 
@@ -88,9 +94,10 @@ class Profile extends StatelessWidget {
                     userName: this.profUserName,
                     userId: this.userId,
                     fullName: this.fullName,
-                    userDpUrl: "assets/images/user4.png",
+                    userDpUrl: this.userDpUrl,
                     requestStatus: this.requestStatus,
                     curUser: this.curUser,
+                    about: this.about,
                     friendsCount: this.friendsCount,
                     postsCount: this.postsCount,
                     isMe: this.isMe);
@@ -115,6 +122,7 @@ class ProfileTest extends StatefulWidget {
   String requestStatus;
   String curUser;
   String fullName;
+  String about;
   bool isMe;
   int friendsCount;
   int postsCount;
@@ -125,6 +133,7 @@ class ProfileTest extends StatefulWidget {
       this.userName,
       this.userId,
       this.userDpUrl,
+      this.about,
       this.friendsCount,
       this.postsCount,
       this.requestStatus,
@@ -140,7 +149,7 @@ class ProfileTest extends StatefulWidget {
 class _ProfileTestState extends State<ProfileTest>
     with TickerProviderStateMixin {
   AnimationController animationController;
-  AnimationController _profileAnimationController;
+
   Animation animation;
   OverlayEntry overlayEntry;
   bool hasSentRequest = false;
@@ -151,8 +160,7 @@ class _ProfileTestState extends State<ProfileTest>
     super.initState();
     // getData();
     requestStatus = widget.requestStatus;
-    _profileAnimationController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     animation = Tween<double>(begin: 0, end: 1).animate(animationController);
@@ -310,7 +318,9 @@ class _ProfileTestState extends State<ProfileTest>
 
   SizedBox tripleTier() {
     var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
-
+    Post post0 = widget.posts[0];
+    Post post1 = widget.posts[1];
+    Post post2 = widget.posts[2];
     return SizedBox(
       height: 200,
       child: Row(
@@ -318,14 +328,18 @@ class _ProfileTestState extends State<ProfileTest>
           Expanded(
             flex: 2,
             child: GestureDetector(
-              onLongPressStart: (press) {
-                return showOverlay(context, widget.posts[0].postUrl);
-              },
-              onLongPressEnd: (details) {
-                animationController
-                    .reverse()
-                    .whenComplete(() => overlayEntry.remove());
-              },
+              onLongPressStart: post0.type == "img"
+                  ? (press) {
+                      return showOverlay(context, post0.postUrl);
+                    }
+                  : null,
+              onLongPressEnd: post0.type == "img"
+                  ? (details) {
+                      animationController
+                          .reverse()
+                          .whenComplete(() => overlayEntry.remove());
+                    }
+                  : null,
               onTap: () async {
                 var hasDelete = await Navigator.push(
                     context,
@@ -334,7 +348,7 @@ class _ProfileTestState extends State<ProfileTest>
                               isMe: widget.isMe,
 
                               heroIndex: 0,
-                              postId: widget.posts[0].postId,
+                              postId: post0.postId,
 
                               // ViewPostScreen(post: widget.post, index: widget.index),
                             )));
@@ -344,17 +358,13 @@ class _ProfileTestState extends State<ProfileTest>
                   }
                 }
               },
-              child: Container(
-                margin: EdgeInsets.fromLTRB(8, 0, 5, 0),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(15),
-                  image: DecorationImage(
-                    image: CachedNetworkImageProvider(widget.posts[0].postUrl),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
+              child: post0.type == "img"
+                  ? postImg(post0, isFirst: true)
+                  : (post0.type == "aud")
+                      ? postAudio(post0, isFirst: true)
+                      : (post0.type == "aud_blurred")
+                          ? postAudioBlurred(post0, isFirst: true)
+                          : postVideo(post0, isFirst: true),
             ),
           ),
           Expanded(
@@ -369,7 +379,7 @@ class _ProfileTestState extends State<ProfileTest>
                                   isMe: widget.isMe,
 
                                   heroIndex: 1,
-                                  postId: widget.posts[1].postId,
+                                  postId: post1.postId,
 
                                   // ViewPostScreen(post: widget.post, index: widget.index),
                                 )));
@@ -380,27 +390,27 @@ class _ProfileTestState extends State<ProfileTest>
                       }
                     }
                   },
-                  onLongPressStart: (press) {
-                    return showOverlay(context, widget.posts[1].postUrl);
-                  },
-                  onLongPressEnd: (details) {
-                    animationController
-                        .reverse()
-                        .whenComplete(() => overlayEntry.remove());
-                  },
+                  onLongPressStart: post1.type == "img"
+                      ? (press) {
+                          return showOverlay(context, post1.postUrl);
+                        }
+                      : null,
+                  onLongPressEnd: post1.type == "img"
+                      ? (details) {
+                          animationController
+                              .reverse()
+                              .whenComplete(() => overlayEntry.remove());
+                        }
+                      : null,
                   child: Container(
-                    height: 95,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(15),
-                      image: DecorationImage(
-                        image:
-                            CachedNetworkImageProvider(widget.posts[1].postUrl),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
-                  ),
+                      height: 100,
+                      child: post1.type == "img"
+                          ? postImg(post1, isMinor: true)
+                          : (post1.type == "aud")
+                              ? postAudio(post1, isMinor: true)
+                              : (post1.type == "aud_blurred")
+                                  ? postAudioBlurred(post1, isMinor: true)
+                                  : postVideo(post1, isMinor: true)),
                 ),
                 GestureDetector(
                   onTap: () async {
@@ -411,7 +421,7 @@ class _ProfileTestState extends State<ProfileTest>
                                   isMe: widget.isMe,
 
                                   heroIndex: 2,
-                                  postId: widget.posts[2].postId,
+                                  postId: post2.postId,
 
                                   // ViewPostScreen(post: widget.post, index: widget.index),
                                 )));
@@ -421,27 +431,27 @@ class _ProfileTestState extends State<ProfileTest>
                       }
                     }
                   },
-                  onLongPressStart: (press) {
-                    return showOverlay(context, widget.posts[2].postUrl);
-                  },
-                  onLongPressEnd: (details) {
-                    animationController
-                        .reverse()
-                        .whenComplete(() => overlayEntry.remove());
-                  },
-                  child: Container(
-                    height: 95,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(15),
-                      image: DecorationImage(
-                        image:
-                            CachedNetworkImageProvider(widget.posts[2].postUrl),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    margin: EdgeInsets.fromLTRB(3, 5, 8, 0),
-                  ),
+                  onLongPressStart: post2.type == "img"
+                      ? (press) {
+                          return showOverlay(context, post2.postUrl);
+                        }
+                      : null,
+                  onLongPressEnd: post2.type == "img"
+                      ? (details) {
+                          animationController
+                              .reverse()
+                              .whenComplete(() => overlayEntry.remove());
+                        }
+                      : null,
+                  child: SizedBox(
+                      height: 100,
+                      child: post2.type == "img"
+                          ? postImg(post2, isMinor: true)
+                          : (post2.type == "aud")
+                              ? postAudio(post2, isMinor: true)
+                              : (post2.type == "aud_blurred")
+                                  ? postAudioBlurred(post2, isMinor: true)
+                                  : postVideo(post2, isMinor: true)),
                 )
               ],
             ),
@@ -512,14 +522,14 @@ class _ProfileTestState extends State<ProfileTest>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(25),
               border: Border.all(color: Colors.pink.shade400, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black45.withOpacity(.2),
-                  offset: Offset(0, 2),
-                  spreadRadius: 1,
-                  blurRadius: 6.0,
-                ),
-              ],
+              // boxShadow: [
+              //   BoxShadow(
+              //     color: Colors.black45.withOpacity(.2),
+              //     offset: Offset(0, 2),
+              //     spreadRadius: 1,
+              //     blurRadius: 6.0,
+              //   ),
+              // ],
             ),
             child: Padding(
               padding: const EdgeInsets.all(3.0),
@@ -530,7 +540,8 @@ class _ProfileTestState extends State<ProfileTest>
                     borderRadius: BorderRadius.circular(20),
                     // shape: BoxShape.circle,
                     image: DecorationImage(
-                      image: AssetImage('assets/images/user4.png'),
+                      image:
+                          CachedNetworkImageProvider(getUrl(widget.userDpUrl)),
                       fit: BoxFit.cover,
                     )),
               ),
@@ -556,8 +567,7 @@ class _ProfileTestState extends State<ProfileTest>
       SizedBox(height: 8),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: Text(
-            "Lord i do not want wealth nor children nor learning. If it be thy will, i shall go from birth to birth; but grant me this, that i may love thee without the hope of reward love unselfishly for love's sake.",
+        child: Text(widget.about,
             textAlign: TextAlign.center,
             style: GoogleFonts.raleway(
                 fontSize: 13, color: Colors.black.withOpacity(.7))),
@@ -574,9 +584,7 @@ class _ProfileTestState extends State<ProfileTest>
             IconButton(
               icon: Icon(Icons.exit_to_app_rounded,
                   color: Colors.black, size: 20),
-              onPressed: () {
-                _profileAnimationController.reverse();
-              },
+              onPressed: () {},
             ),
           ],
         ),
@@ -587,57 +595,150 @@ class _ProfileTestState extends State<ProfileTest>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return AnimatedBuilder(
-        animation: _profileAnimationController,
-        builder: (context, child) {
-          print(_profileAnimationController.value);
-          var curVal = _profileAnimationController.value;
-          var val;
-          if (curVal > .3) {
-            val = .7;
-          } else {
-            val = 1 - curVal;
-          }
-          var x = (size.width * .25) * curVal;
-          return Stack(children: [
-            Container(
-              height: size.height,
-              width: size.width,
-              color: Colors.white,
-              child: settingsWidget(),
-            ),
-            Transform(
-              alignment: Alignment.centerRight,
-              transform: Matrix4.identity()
-                ..scale(val)
-                ..translate(x),
-              child: Container(
-                height: size.height,
-                width: size.width,
-                decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(.2),
-                    spreadRadius: .5,
-                    blurRadius: 20,
-                    offset: Offset(-3, 0),
-                  )
-                ]),
-                child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: topPortion(),
-                    ),
-                    ...(widget.posts.length >= 3
-                        ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
-                        : [grid(false)]),
-                  ],
-                ),
-              ),
-            ),
-          ]);
-        });
+    return Container(
+      height: size.height,
+      width: size.width,
+      decoration: BoxDecoration(color: Colors.white, boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(.2),
+          spreadRadius: .5,
+          blurRadius: 20,
+          offset: Offset(-3, 0),
+        )
+      ]),
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: topPortion(),
+          ),
+          ...(widget.posts.length >= 3
+              ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
+              : [grid(false)]),
+        ],
+      ),
+    );
   }
 
+  Container postImg(post, {bool isFirst = false, bool isMinor = false}) =>
+      Container(
+        margin: isFirst
+            ? EdgeInsets.fromLTRB(8, 0, 5, 0)
+            : isMinor
+                ? EdgeInsets.fromLTRB(3, 0, 8, 5)
+                : EdgeInsets.zero,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          image: DecorationImage(
+              image: CachedNetworkImageProvider(
+                post.postUrl,
+              ),
+              fit: BoxFit.cover),
+        ),
+      );
+
+  Widget postVideo(Post post, {bool isFirst = false, bool isMinor = false}) {
+    Widget child = Center(
+      child: Icon(Ionicons.play_circle),
+    );
+    Widget container(child) => Container(
+        margin: isFirst
+            ? EdgeInsets.fromLTRB(8, 0, 5, 0)
+            : isMinor
+                ? EdgeInsets.fromLTRB(3, 0, 8, 5)
+                : EdgeInsets.zero,
+        decoration: BoxDecoration(
+          // boxShadow: [BoxShadow()],
+          borderRadius: BorderRadius.circular(15),
+          image: DecorationImage(
+            image: CachedNetworkImageProvider(post.thumbNailPath),
+            // image: CachedNetworkImageProvider(widget.post.postUrl),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: child);
+
+    if (isFirst) {
+      return container(child);
+    } else {
+      child = Container();
+      return Stack(children: [
+        container(child),
+        Positioned.fill(
+            child: Container(
+                margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(.4),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Center(
+                    child: Icon(Ionicons.videocam_outline,
+                        color: Colors.white, size: 16))))
+      ]);
+    }
+  }
+
+  Widget postAudio(Post post, {bool isFirst = false, bool isMinor = false}) {
+    Widget child = Center(
+      child: Player(url: post.postUrl),
+    );
+    Widget container(child) => Container(
+        margin: isFirst
+            ? EdgeInsets.fromLTRB(8, 0, 5, 0)
+            : isMinor
+                ? EdgeInsets.fromLTRB(3, 0, 8, 5)
+                : EdgeInsets.zero,
+        decoration: BoxDecoration(
+          // boxShadow: [BoxShadow()],
+          borderRadius: BorderRadius.circular(15),
+          image: DecorationImage(
+            image: CachedNetworkImageProvider(post.thumbNailPath),
+            // image: CachedNetworkImageProvider(widget.post.postUrl),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: child);
+
+    if (isFirst) {
+      return container(child);
+    } else {
+      child = Container();
+      return Stack(children: [
+        container(child),
+        Positioned.fill(
+            child: Container(
+                margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(.4),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Center(
+                    child: Icon(Ionicons.headset_outline,
+                        color: Colors.white, size: 16))))
+      ]);
+    }
+  }
+
+  Container postAudioBlurred(Post post,
+          {bool isFirst = false, bool isMinor = false}) =>
+      Container(
+          margin: isFirst
+              ? EdgeInsets.fromLTRB(8, 0, 5, 0)
+              : isMinor
+                  ? EdgeInsets.fromLTRB(3, 0, 8, 5)
+                  : EdgeInsets.zero,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            image: DecorationImage(
+              image: CachedNetworkImageProvider(post.thumbNailPath),
+              // image: CachedNetworkImageProvider(widget.post.postUrl),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Center(
+              child: BackdropFilter(
+            child: Player(url: post.postUrl),
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          )));
   Column threeOrMore() => Column(
         children: [
           tripleTier(),
@@ -666,6 +767,7 @@ class _ProfileTestState extends State<ProfileTest>
               } else {
                 curIndex = index;
               }
+              var post = widget.posts[curIndex];
               return Container(
                 margin: EdgeInsets.symmetric(horizontal: 3, vertical: 5),
                 height: 200,
@@ -681,36 +783,37 @@ class _ProfileTestState extends State<ProfileTest>
                             builder: (_) => CommentScreen(
                                   isMe: widget.isMe,
                                   heroIndex: curIndex,
-                                  postId: widget.posts[curIndex].postId,
+                                  postId: post.postId,
 
                                   // ViewPostScreen(post: widget.post, index: widget.index),
                                 )));
                     if (hasDelete.runtimeType == bool) {
                       if (hasDelete) {
-                        widget.posts.removeAt(1);
+                        widget.posts.removeAt(curIndex);
                       }
                     }
                   },
-                  onLongPressStart: (press) {
-                    return showOverlay(context, widget.posts[curIndex].postUrl);
-                  },
-                  onLongPressEnd: (details) {
-                    animationController
-                        .reverse()
-                        .whenComplete(() => overlayEntry.remove());
-                  },
+                  onLongPressStart: post.type == "img"
+                      ? (press) {
+                          return showOverlay(context, post.postUrl);
+                        }
+                      : null,
+                  onLongPressEnd: post.type == "img"
+                      ? (details) {
+                          animationController
+                              .reverse()
+                              .whenComplete(() => overlayEntry.remove());
+                        }
+                      : null,
                   child: AspectRatio(
                     aspectRatio: 4 / 5,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        image: DecorationImage(
-                            image: CachedNetworkImageProvider(
-                              widget.posts[curIndex].postUrl,
-                            ),
-                            fit: BoxFit.cover),
-                      ),
-                    ),
+                    child: post.type == "img"
+                        ? postImg(post)
+                        : (post.type == "aud")
+                            ? postAudio(post)
+                            : (post.type == "aud_blurred")
+                                ? postAudioBlurred(post)
+                                : Container(),
                   ),
                 ),
               );

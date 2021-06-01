@@ -9,7 +9,7 @@ import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
-import 'package:foo/screens/post_tile.dart';
+import 'package:foo/media_players.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';

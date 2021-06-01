@@ -38,6 +38,26 @@ class _ChatListScreenState extends State<ChatListScreen>
     super.initState();
   }
 
+  Future<List<UserTest>> search(String search) async {
+    var id = _prefs.getInt('id');
+    var resp = await http.get(Uri.http(
+        localhost, '/api/friends', {'name': search, 'id': id.toString()}));
+    var respJson = jsonDecode(resp.body);
+    print(respJson);
+
+    List<UserTest> returList = [];
+    respJson.forEach((e) {
+      print(e);
+      returList.add(UserTest(
+          name: e["username"],
+          id: e['id'],
+          fname: e['f name'],
+          lname: e['l_name']));
+    });
+    print(returList);
+    return returList;
+  }
+
   tiles() => ValueListenableBuilder(
       valueListenable: Hive.box("Threads").listenable(),
       builder: (context, box, widget) {
@@ -262,26 +282,6 @@ class UserTest {
   final String fname;
   final int id;
   UserTest({this.name, this.id, this.lname, this.fname});
-}
-
-Future<List<UserTest>> search(String search) async {
-  print(search);
-  var resp =
-      await http.get(Uri.http(localhost, '/api/users', {'name': search}));
-  var respJson = jsonDecode(resp.body);
-  print(respJson);
-
-  List<UserTest> returList = [];
-  respJson.forEach((e) {
-    print(e);
-    returList.add(UserTest(
-        name: e["username"],
-        id: e['id'],
-        fname: e['f name'],
-        lname: e['l_name']));
-  });
-  print(returList);
-  return returList;
 }
 
 class SearchTile extends StatelessWidget {

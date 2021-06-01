@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:foo/media_players.dart';
 import 'package:foo/screens/feed_icons.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/screens/models/post_model.dart';
@@ -521,48 +522,6 @@ class CurvedBackground extends StatelessWidget {
             // child:
           ),
         ],
-      ),
-    );
-  }
-}
-
-class VideoPlayerProvider extends StatefulWidget {
-  File videoFile;
-
-  VideoPlayerProvider({@required this.videoFile});
-
-  @override
-  _VideoPlayerProviderState createState() => _VideoPlayerProviderState();
-}
-
-class _VideoPlayerProviderState extends State<VideoPlayerProvider> {
-  @override
-  Widget build(BuildContext context) {
-    VideoPlayerController _videoPlayerController =
-        VideoPlayerController.file(widget.videoFile);
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-      ),
-      body: Container(
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
-        alignment: Alignment.center,
-        child: BetterPlayer.file(
-          widget.videoFile.path,
-          betterPlayerConfiguration: BetterPlayerConfiguration(
-            aspectRatio: _videoPlayerController.value.aspectRatio,
-            autoDetectFullscreenDeviceOrientation: true,
-            allowedScreenSleep: false,
-            autoDispose: true,
-            autoPlay: true,
-            fit: BoxFit.contain,
-            controlsConfiguration: BetterPlayerControlsConfiguration(
-              enableSkips: false,
-            ),
-          ),
-        ),
       ),
     );
   }

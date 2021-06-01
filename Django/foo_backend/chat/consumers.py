@@ -287,6 +287,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'notif_id':i.id,
                 })
 
+            elif i.notif_type=="dp_notif":
+                final_list.append({
+                    'type':'dp_update',
+                    'id':int(i.ref_id),
+                    'n_id':i.id
+                })
+
         print(final_list)
         return final_list
 
@@ -812,4 +819,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event))
 
     async def mention_notif(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def dp_update(self, event):
         await self.send(text_data=json.dumps(event))

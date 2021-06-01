@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:foo/models.dart';
 import 'package:foo/test_cred.dart';
 import 'package:http/http.dart' as http;
@@ -177,7 +178,16 @@ class SocketChannel {
       deleteChat(data);
     } else if (data['type'] == 'mention_notif') {
       addMentionNotification(data);
+    } else if (data['type'] == 'dp_update') {
+      removeDpFromCache(data);
     }
+  }
+
+  Future<void> removeDpFromCache(data) async {
+    var id = data['id'];
+    var url = 'http://' + localhost + 'user_$id/profile/dp.jpg';
+    await CachedNetworkImage.evictFromCache(url);
+    sendToChannel(jsonEncode({'n_r': data['n_id']}));
   }
 
   Future<void> addMentionNotification(data) async {
