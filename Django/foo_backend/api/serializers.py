@@ -135,7 +135,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['file','caption','post_type','comment_set','id']
+        fields = ['file','caption','post_type','comment_set','id','thumbnail']
 
     def to_representation(self,instance):
         representation = super().to_representation(instance)
