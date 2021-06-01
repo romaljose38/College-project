@@ -93,7 +93,11 @@ def get_user_list(request):
 def get_posts(request, username):
     try:
         user = User.objects.get(username=username)
-        qs = Post.objects.order_by("-id")[:10]
+        id = request.query_params['id']
+        if(id=="null"):
+            qs = Post.objects.order_by("-id")[:10]
+        else:
+            qs =Post.objects.filter(id__gt=int(id)).order_by('-id')[:10]
         serialized = PostSerializer(qs, many=True, context={"user": user})
         print(serialized.data)
         return Response(status=200, data=serialized.data)

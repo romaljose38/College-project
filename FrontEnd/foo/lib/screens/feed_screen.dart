@@ -112,6 +112,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         // postsList = postsList;
       });
     });
+    hasRequested = false;
   }
 
   @override
@@ -146,9 +147,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     curUser = prefs.getString("username");
     var feedBox = Hive.box("Feed");
     Feed feed;
+    String id;
     if (feedBox.containsKey("feed") && feedBox.get("feed").posts != null) {
       feed = feedBox.get("feed");
-
+      id = feed.posts.first.postId.toString();
       for (int i = feed.posts.length - 1; i >= 0; i--) {
         listKey.currentState
             .insertItem(0, duration: Duration(milliseconds: 100));
@@ -159,12 +161,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       });
     } else {
       feed = Feed();
-
+      id = "null";
       await feedBox.put('feed', feed);
     }
     await _checkConnectionStatus();
     if (isConnected) {
-      var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
+      var response = await http
+          .get(Uri.http(localhost, '/api/$curUser/posts', {"id": id}));
       var respJson = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
@@ -187,8 +190,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                       ? e['thumbnail']
                       : ""),
               type: e['post_type']);
-          feed.addPost(post);
-          feed.save();
+
           if (feed.isNew(e['id'])) {
             listKey.currentState.insertItem(0);
             postsList.insert(0, post);
@@ -198,6 +200,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               itemCount += 1;
             });
           }
+          feed.addPost(post);
+          feed.save();
         });
       }
     }
@@ -487,18 +491,21 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   // }
 
   Future<void> _getNewPosts() async {
-    var response = await http.get(Uri.http(localhost, '/api/$curUser/posts'));
-    var respJson = jsonDecode(utf8.decode(response.bodyBytes));
-
     var feedBox = Hive.box("Feed");
     var feed;
+    var id;
     if (feedBox.containsKey("feed")) {
       feed = feedBox.get('feed');
+      id = feed.posts.first.postId.toString();
     } else {
       feed = Feed();
       await feedBox.put("feed", feed);
+      id = "null";
     }
-
+    var response =
+        await http.get(Uri.http(localhost, '/api/$curUser/posts', {"id": id}));
+    var respJson = jsonDecode(utf8.decode(response.bodyBytes));
+    print(respJson);
     respJson.reversed.toList().forEach((e) {
       Post post = Post(
           username: e['user']['username'],
@@ -519,17 +526,21 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                   : ""),
           type: e['post_type']);
 
-      feed.addPost(post);
-      feed.save();
+      print("old");
       if (feed.isNew(e['id'])) {
-        listKey.currentState.insertItem(0);
-        postsList.insert(0, post);
+        print("iss neww");
+        setState(() {
+          listKey.currentState.insertItem(0);
+          postsList.insert(0, post);
+        });
 
         setState(() {
           itemCount += 1;
           // postsList = postsList;
         });
       }
+      feed.addPost(post);
+      feed.save();
     });
   }
 
@@ -599,10 +610,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           // padding: const EdgeInsets.only(bottom: 40),
           child: RefreshIndicator(
             triggerMode: RefreshIndicatorTriggerMode.anywhere,
-            onRefresh: () {
-              _getNewPosts();
+            onRefresh: () async {
+              await _getNewPosts();
               //_fetchStory();
-              return Future.value('nothing');
+              return true;
             },
             child: CustomScrollView(
               controller: _scrollController,
