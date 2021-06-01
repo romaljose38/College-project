@@ -45,11 +45,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
 
   Future<void> _upload(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String username = prefs.getString('username');
-    var uri =
-        Uri.http(localhost, '/api/upload'); //This web address has to be changed
+    int userId = prefs.getInt('id');
+    var uri = Uri.http(
+        localhost, '/api/post_upload'); //This web address has to be changed
     var request = http.MultipartRequest('POST', uri)
-      ..fields['username'] = username
+      ..fields['user_id'] = userId.toString()
       ..fields['type'] = 'img'
       ..fields['caption'] = captionController.text
       ..files.add(await http.MultipartFile.fromPath(
