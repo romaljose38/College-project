@@ -251,6 +251,7 @@ class Story(models.Model):
 
     user = models.ForeignKey(User, related_name="stories", on_delete=models.CASCADE)
     file = models.FileField(upload_to=user_story_directory_path)
+    caption = models.TextField(max_length=1000)
     time_created = models.DateTimeField(auto_now_add=True)
     views = models.ManyToManyField(User, related_name="story_views", blank=True)
     

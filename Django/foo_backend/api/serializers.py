@@ -41,7 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
             representation['dobVerified'] = False
         else:
             representation['dobVerified'] = True
-            representation['dp'] = instance.user.profile.profile_pic.url
+            representation['dp'] = instance.profile.profile_pic.url
         return representation
 
 

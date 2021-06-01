@@ -429,12 +429,16 @@ class Story extends HiveObject {
   @HiveField(7)
   List<StoryComment> comments = <StoryComment>[];
 
+  @HiveField(8)
+  String caption;
+
   Story(
       {this.file,
       this.views,
       this.time,
       this.viewed,
       this.storyId,
+      this.caption,
       this.notificationId});
 
   String display() {
@@ -456,7 +460,10 @@ class UserStoryModel extends HiveObject {
   @HiveField(3)
   DateTime timeOfLastStory;
 
-  UserStoryModel({this.username, this.userId, this.stories});
+  @HiveField(4)
+  String dpUrl;
+
+  UserStoryModel({this.username, this.userId, this.stories, this.dpUrl});
 
   int hasUnSeen() {
     //If the userstorymodel has a story that is unseen it returns the index of that story or otherwise return -1

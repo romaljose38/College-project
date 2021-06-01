@@ -265,9 +265,10 @@ def story_upload_handler(request):
     try:
         file = request.data['file']
         username = request.data['username']
+        caption = request.data['caption']
         print(request.data)
         user = User.objects.get(username=username)
-        story = Story.objects.create(file=file, user=user)
+        story = Story.objects.create(file=file, user=user, caption=caption)
         story.save()
         return Response(status=200)
     except Exception as e:

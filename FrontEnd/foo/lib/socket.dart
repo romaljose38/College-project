@@ -296,12 +296,13 @@ class SocketChannel {
     var storyBox = Hive.box('MyStories');
     print(data);
 
-    if (storyBox.containsKey(data['u'])) {
-      var userStory = storyBox.get(data['u']);
+    if (storyBox.containsKey(data['u_id'])) {
+      var userStory = storyBox.get(data['u_id']);
       userStory.addStory(Story(
         file: data['url'],
         time: DateTime.parse(data['time']),
         storyId: data['s_id'],
+        caption: data['caption'],
         notificationId: data['n_id'],
       ));
       userStory.save();
@@ -314,16 +315,17 @@ class SocketChannel {
         file: data['url'],
         time: DateTime.parse(data['time']),
         storyId: data['s_id'],
+        caption: data['caption'],
         notificationId: data['n_id'],
       ));
 
-      storyBox.put(data['u'], newUser);
+      storyBox.put(data['u_id'], newUser);
     }
     sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }
 
   void addStoryView(data) {
-    String me = _prefs.getString('username');
+    int me = _prefs.getInt('id');
     var storyBox = Hive.box('MyStories');
     print(data);
 
@@ -339,7 +341,7 @@ class SocketChannel {
   }
 
   void addStoryComment(data) {
-    String me = _prefs.getString('username');
+    int me = _prefs.getInt('id');
     var storyBox = Hive.box('MyStories');
     print(data);
 
@@ -360,7 +362,7 @@ class SocketChannel {
     var storyBox = Hive.box('MyStories');
     print(data);
 
-    var userStory = storyBox.get(data['u']);
+    var userStory = storyBox.get(data['u_id']);
     userStory.deleteOldStory(id: data['s_id'].toInt());
     userStory.save();
     sendToChannel(jsonEncode({'s_r': data['n_id']}));

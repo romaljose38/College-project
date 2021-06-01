@@ -7,6 +7,7 @@ import 'package:ionicons/ionicons.dart';
 import 'package:video_trimmer/video_trimmer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
@@ -23,12 +24,14 @@ class StoryUploadPick extends StatelessWidget {
 
   StoryUploadPick({this.myStory, this.myProfPic});
 
-  Future<void> _uploadStory(BuildContext context, File mediaFile) async {
+  Future<void> _uploadStory(
+      BuildContext context, File mediaFile, String caption) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String username = prefs.getString('username');
     var uri = Uri.http(localhost, '/api/story_upload');
     var request = http.MultipartRequest('POST', uri)
       ..fields['username'] = username
+      ..fields['caption'] = caption
       ..files.add(await http.MultipartFile.fromPath(
         'file',
         mediaFile.path,
@@ -50,7 +53,8 @@ class StoryUploadPick extends StatelessWidget {
       onTap: () {
         if (myStory != null && !myStory.isEmpty()) {
           Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => MyStoryScreen(storyObject: myStory)));
+              builder: (context) =>
+                  MyStoryScreen(storyObject: myStory, profilePic: myProfPic)));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Long press to add a new moment")));
@@ -378,10 +382,19 @@ class _CropMyImageState extends State<CropMyImage> {
   bool _isCropping = false;
   bool _isUploading = false;
 
+  TextEditingController _captionController;
+
   @override
   void initState() {
     super.initState();
     requestPermission();
+    _captionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    super.dispose();
   }
 
   Future<void> requestPermission() async {
@@ -429,7 +442,7 @@ class _CropMyImageState extends State<CropMyImage> {
 
     print("$file");
     print(file.path);
-    Navigator.of(context).push(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
           builder: (context) => CropMyImage(
                 file: file,
@@ -485,70 +498,139 @@ class _CropMyImageState extends State<CropMyImage> {
   Widget build(BuildContext context) {
     return AbsorbPointer(
       absorbing: _isUploading,
-      child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size(double.infinity, 100),
-          child: Container(
-            padding: EdgeInsets.only(top: 35),
-            color: Colors.black,
-            child: Row(
-              children: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    setState(() {
-                      _isCropping = false;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-                Spacer(),
-                _isCropping
-                    ? Container()
-                    : IconButton(
-                        icon: Icon(Icons.crop, color: Colors.white),
-                        onPressed: () {
-                          setState(() {
-                            _isCropping = true;
-                          });
-                          _openImage();
-                        },
-                      ),
-                _isCropping
-                    ? Container()
-                    : _isUploading
-                        ? Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: CircularProgressIndicator(),
-                          )
-                        : IconButton(
-                            icon: Icon(Icons.upload_file, color: Colors.white),
-                            onPressed: () {
-                              String fileFormat =
-                                  widget.file.path.split('.').last;
-                              Directory(dirPath).createSync(recursive: true);
-                              filePath = dirPath +
-                                  '/${DateTime.now().millisecondsSinceEpoch}.' +
-                                  fileFormat;
-                              widget.file.copySync(filePath);
-                              File uploadFile = File(filePath);
-                              widget.file.delete();
-                              print(uploadFile);
-                              setState(() {
-                                _isUploading = true;
-                              });
-                              widget.uploadFunc(context, uploadFile);
-                            },
-                          ),
-              ],
+      child: WillPopScope(
+        onWillPop: () {
+          if (_isCropping == false) {
+            Navigator.pop(context);
+          } else {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (context) => CropMyImage(
+                    file: widget.file, uploadFunc: widget.uploadFunc)));
+          }
+          return Future.value(false);
+        },
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          extendBodyBehindAppBar: true,
+          appBar: PreferredSize(
+            preferredSize: Size(double.infinity, 100),
+            child: Container(
+              padding: EdgeInsets.only(top: 35),
+              color: Colors.black,
+              child: Row(
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      if (_isCropping == false) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.of(context).pushReplacement(MaterialPageRoute(
+                            builder: (context) => CropMyImage(
+                                file: widget.file,
+                                uploadFunc: widget.uploadFunc)));
+                      }
+                      // setState(() {
+                      //   _isCropping = false;
+                      // });
+                      //Navigator.pop(context);
+                    },
+                  ),
+                  Spacer(),
+                  _isCropping
+                      ? Container()
+                      : IconButton(
+                          icon: Icon(Icons.crop, color: Colors.white),
+                          onPressed: () {
+                            setState(() {
+                              _isCropping = true;
+                            });
+                            _openImage();
+                          },
+                        ),
+                  _isCropping
+                      ? Container()
+                      : _isUploading
+                          ? Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: CircularProgressIndicator(),
+                            )
+                          : IconButton(
+                              icon:
+                                  Icon(Icons.upload_file, color: Colors.white),
+                              onPressed: () {
+                                String fileFormat =
+                                    widget.file.path.split('.').last;
+                                Directory(dirPath).createSync(recursive: true);
+                                filePath = dirPath +
+                                    '/${DateTime.now().millisecondsSinceEpoch}.' +
+                                    fileFormat;
+                                widget.file.copySync(filePath);
+                                File uploadFile = File(filePath);
+                                widget.file.delete();
+                                print(uploadFile);
+                                setState(() {
+                                  _isUploading = true;
+                                });
+                                widget.uploadFunc(context, uploadFile,
+                                    _captionController.text);
+                              },
+                            ),
+                ],
+              ),
             ),
           ),
-        ),
-        body: Container(
-          color: Colors.black,
-          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
-          child: _sample == null ? _buildOpeningImage() : _buildCroppingImage(),
+          body: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  //height: MediaQuery.of(context).size.height - 40,
+                  color: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 40.0, horizontal: 20.0),
+                  child: _sample == null
+                      ? _buildOpeningImage()
+                      : _buildCroppingImage(),
+                ),
+              ),
+              Offstage(
+                offstage: _sample != null,
+                child: Container(
+                  height: 50,
+                  width: double.infinity,
+                  // child: Expanded(
+                  child: TextField(
+                    cursorColor: Colors.white,
+                    cursorWidth: .8,
+                    style: GoogleFonts.lato(color: Colors.white),
+                    controller: _captionController,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintStyle: GoogleFonts.sourceSansPro(color: Colors.grey),
+                      hintText: "Add a caption",
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.grey.withOpacity(.4), width: .6),
+                      ),
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.grey.withOpacity(.4), width: .6),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.grey.withOpacity(.4), width: .8),
+                      ),
+                      isCollapsed: true,
+                      contentPadding: EdgeInsets.only(
+                          left: 20, right: 8.0, top: 5.0, bottom: 8.0),
+                    ),
+                  ),
+                  // ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

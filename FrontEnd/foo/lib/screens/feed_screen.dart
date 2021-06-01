@@ -32,6 +32,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   ScrollController _scrollController = ScrollController();
   SharedPreferences prefs;
   String curUser;
+  int curUserId;
   int itemCount = 0;
   bool isConnected = false;
   GlobalKey<SliverAnimatedListState> listKey;
@@ -145,6 +146,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   Future<void> setInitialData() async {
     prefs = await SharedPreferences.getInstance();
     curUser = prefs.getString("username");
+    curUserId = prefs.getInt("id");
     var feedBox = Hive.box("Feed");
     Feed feed;
     String id;
@@ -255,9 +257,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           var myStoryList = [];
           //_getCurrentStoryViewer();
 
-          if (curUser != null) {
+          if (curUserId != null) {
             for (int item = 0; item < boxList.length; item++) {
-              if (boxList[item].username == curUser) {
+              print("USERID = ${box.get(boxList[item].userId).stories}");
+              if (boxList[item].userId == curUserId) {
                 myStory = boxList[item];
               } else {
                 if (boxList[item].hasUnSeen() == -1) {

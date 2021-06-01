@@ -86,7 +86,7 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
                         });
                       }),
                   IconButton(
-                    icon: Icon(Icons.delete),
+                    icon: Icon(Icons.delete, color: Colors.grey),
                     onPressed: _submitDeleteHandler,
                   ),
                   SizedBox(width: 20),

@@ -65,6 +65,7 @@ def story_created_notif(sender, instance, created, **kwargs):
                     'u_id':instance.user.id,
                     's_id':instance.id,
                     'url':instance.file.url,
+                    'caption':instance.caption,
                     'n_id':notification.id,
                     'time':instance.time_created.strftime("%Y-%m-%d %H:%M:%S"),
                 }
@@ -146,7 +147,7 @@ def story_deleted_notif(sender, instance, **kwargs):
             print(user.username)
             _dict = {
                 'type':'story_delete',
-                'u':instance.user.username,
+                'u':instance.user.id,
                 's_id':instance.id,
                 'n_id':notification.id,
             }

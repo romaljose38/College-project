@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
 import 'package:foo/test_cred.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -354,6 +355,16 @@ class _StoryScreenState extends State<StoryScreen>
               ),
               Align(
                 alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
                 child: TextButton(
                   child: Text("Reply", style: TextStyle(color: Colors.white)),
                   onPressed: () {
@@ -465,7 +476,7 @@ class UserInfo extends StatelessWidget {
           // backgroundImage: CachedNetworkImageProvider(
           //   profilePic,
           // ),
-          backgroundImage: AssetImage(profilePic),
+          backgroundImage: FileImage(File(profilePic)),
         ),
         const SizedBox(width: 10.0),
         Expanded(
@@ -515,6 +526,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
   File mediaFile;
   String mediaType;
   String timeUploaded;
+  String caption;
   VideoPlayerController videoController;
   AnimationController _animController;
   TransformationController transformationController;
@@ -583,6 +595,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
         mediaFile = value;
         mediaType = _getTypeOf(stories[_currentIndex].file);
         timeUploaded = _formatTime(stories[_currentIndex].time);
+        caption = stories[_currentIndex].caption;
       });
       // videoController?.pause();
       if (mediaType == 'video') {
@@ -652,6 +665,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
 
   @override
   Widget build(BuildContext context) {
+    print(caption);
     return GestureDetector(
       onTapDown: (_) {
         _animController.stop();
@@ -726,10 +740,27 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                         username: username,
                         // timeUploaded: "53 minutes ago",
                         timeUploaded: timeUploaded,
-                        profilePic: 'assets/images/user0.png',
+                        profilePic:
+                            widget.profilePic, //'assets/images/user0.png',
                       ),
                     ),
                   ],
+                ),
+              ),
+              Align(
+                alignment: Alignment(0, 0.9),
+                child: Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$caption',
+                      style: GoogleFonts.lato(color: Colors.white),
+                    ),
+                  ),
                 ),
               ),
               Align(

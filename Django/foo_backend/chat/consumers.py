@@ -303,6 +303,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             'u_id':notif.story.user.id,
                             's_id':notif.story.id,
                             'url':notif.story.file.url,
+                            'caption':notif.story.caption,
                             'n_id':notif.id,
                             'time':notif.story.time_created.strftime("%Y-%m-%d %H:%M:%S"),
                         },
@@ -319,7 +320,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif notif.notif_type=="story_delete":
                 final_list.append({
                     'type':'story_delete',
-                    'u':notif.from_user.username,
+                    'u':notif.from_user.id,
                     's_id':notif.storyId,
                     'n_id':notif.id,
                     },

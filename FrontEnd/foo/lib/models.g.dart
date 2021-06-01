@@ -379,6 +379,7 @@ class StoryAdapter extends TypeAdapter<Story> {
       time: fields[2] as DateTime,
       viewed: fields[3] as bool,
       storyId: fields[4] as int,
+      caption: fields[8] as String,
       notificationId: fields[5] as int,
     )
       ..viewedUsers = (fields[6] as List)?.cast<StoryUser>()
@@ -388,7 +389,7 @@ class StoryAdapter extends TypeAdapter<Story> {
   @override
   void write(BinaryWriter writer, Story obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.file)
       ..writeByte(1)
@@ -404,7 +405,9 @@ class StoryAdapter extends TypeAdapter<Story> {
       ..writeByte(6)
       ..write(obj.viewedUsers)
       ..writeByte(7)
-      ..write(obj.comments);
+      ..write(obj.comments)
+      ..writeByte(8)
+      ..write(obj.caption);
   }
 
   @override
@@ -432,13 +435,14 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       username: fields[0] as String,
       userId: fields[1] as int,
       stories: (fields[2] as List)?.cast<Story>(),
+      dpUrl: fields[4] as String,
     )..timeOfLastStory = fields[3] as DateTime;
   }
 
   @override
   void write(BinaryWriter writer, UserStoryModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -446,7 +450,9 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       ..writeByte(2)
       ..write(obj.stories)
       ..writeByte(3)
-      ..write(obj.timeOfLastStory);
+      ..write(obj.timeOfLastStory)
+      ..writeByte(4)
+      ..write(obj.dpUrl);
   }
 
   @override
