@@ -39,7 +39,6 @@ dependencies:
   file_picker: ^3.0.1
   video_player: ^2.1.1
   image_picker: ^0.7.4
-  flappy_search_bar: ^1.7.2
   record: ^2.1.1
   hive: ^2.0.4
   hive_flutter: ^1.0.0
@@ -63,7 +62,7 @@ dependencies:
   better_player: ^0.0.68
   image_cropper: ^1.4.0
   flutter_image_compress: ^1.0.0
-  flutter_sound_lite: ^8.1.4
+  flutter_staggered_grid_view: ^0.4.0
   
 
 dev_dependencies:

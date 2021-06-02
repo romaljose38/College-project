@@ -41,7 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
             representation['dobVerified'] = False
         else:
             representation['dobVerified'] = True
-            representation['dp'] = instance.user.profile.profile_pic.url
+            representation['dp'] = instance.user.profile.profile_pic.url if instance.user.profile.profile_pic else ''
         return representation
 
 
@@ -49,7 +49,13 @@ class UserCustomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username','f_name','l_name','id']
+        fields = ['f_name','l_name','id']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['username'] = instance.username_alias
+        representation['dp'] = instance.profile.profile_pic.url if instance.profile.profile_pic else ''
+        return representation
 
 class PostSerializer(serializers.ModelSerializer):
     user = UserCustomSerializer()
@@ -57,12 +63,13 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ["file","user",'id',"post_type",'caption','thumbnail']
+        fields = ["file","user",'id',"post_type",'caption']
 
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         user = self.context['user']
+        representation['thumbnail'] = instance.thumbnail.url if instance.thumbnail else ''
         representation['comment_count']=instance.comment_set.all().count()
         if user in instance.likes.all():
             representation['hasLiked'] = True
@@ -76,7 +83,12 @@ class PostRelatedField(serializers.RelatedField):
 
     def to_representation(self,instance):
       
-        return {'id':instance.id,'url':instance.file.url,'likes':instance.likes.count(),'type':instance.post_type,'comments':instance.comment_set.all().count(),'thumbnail':instance.thumbnail.url if instance.thumbnail else ""}
+        return {'id':instance.id,
+                'url':instance.file.url,
+                'likes':instance.likes.count(),
+                'type':instance.post_type,
+                'comments':instance.comment_set.all().count(),
+                'thumbnail':instance.thumbnail.url if instance.thumbnail else ""}
 
     def get_queryset(self):
         return Post.objects.all()
@@ -89,12 +101,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["f_name","l_name","username","id","email","posts","about"]
+        fields = ["f_name","l_name","id","email","posts","about"]
         # depth = 1
 
 
     def to_representation(self,instance):
         representation = super().to_representation(instance)
+        representation['username']=instance.username_alias
         request = self.context['request']
         cur_user = self.context['cur_user']
         if(instance.profile.profile_pic):
@@ -140,11 +153,15 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['file','caption','post_type','comment_set','id','thumbnail']
+        fields = ['file','caption','post_type','comment_set','id']
 
     def to_representation(self,instance):
         representation = super().to_representation(instance)
+        representation ['thumbnail'] = instance.thumbnail.url if instance.thumbnail else ''
         user = self.context['user']
+        representation['dp'] =  instance.user.profile.profile_pic.url if instance.user.profile.profile_pic else ''
+        representation['username'] = instance.user.username_alias
+        representation['user_id'] = instance.user.id
         representation['comment_count']=instance.comment_set.all().count()
         if user in instance.likes.all():
             representation['hasLiked'] = True
@@ -174,7 +191,9 @@ class UserStorySerializer(serializers.ModelSerializer):
 
     def to_representation(self,instance):
         if instance.stories.all().count()>0:
-            representation = super().to_representation(instance);
+            representation = super().to_representation(instance)
+            
+            representation['dp'] = instance.profile.profile_pic.url if instance.profile.profile_pic else ''
             return representation
         else:
-            return;
+            return

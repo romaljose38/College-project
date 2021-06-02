@@ -32,6 +32,7 @@ class PostTile extends StatefulWidget {
 class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   bool hasLiked = false;
   int likeCount = 0;
+  int commentCount;
   int postId;
   String userName;
   AnimationController _animController;
@@ -44,6 +45,8 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
+    commentCount = widget.post.commentCount ?? 0;
 
     //Controller and animation for single tap overlay
     _animController =
@@ -118,7 +121,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
     var feedBox = Hive.box("Feed");
     Feed feed = feedBox.get('feed');
     if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
-      feed.updatePostStatus(id, status);
+      feed.updatePostStatus(id, status, commentCount);
       feed.save();
     }
   }
@@ -237,8 +240,26 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
           fit: BoxFit.cover,
         ),
       ),
-      child: Center(
-        child: Icon(Icons.play_arrow),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+              context,
+              PageRouteBuilder(
+                  pageBuilder: (context, animation, secAnimation) =>
+                      VideoPlayerProvider(videoUrl: widget.post.postUrl),
+                  transitionsBuilder:
+                      (context, animation, secAnimation, child) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
+                              .animate(animation),
+                      child: child,
+                    );
+                  }));
+        },
+        child: Center(
+          child: Icon(Ionicons.play_circle, size: 45, color: Colors.white),
+        ),
       ));
 
   BoxDecoration cardDecorationWithShadow() {
@@ -287,17 +308,35 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                         // ViewPostScreen(post: widget.post, index: widget.index),
                       )));
           print("got back something");
-          print(result);
+          if (likeCount != result['likeCount']) {
+            setState(() {
+              likeCount = result['likeCount'];
+            });
+          }
+          if (commentCount != result['commentCount']) {
+            setState(() {
+              commentCount = result['commentCount'];
+            });
+          }
+          if (hasLiked != result['hasLiked']) {
+            setState(() {
+              hasLiked = result['hasLiked'];
+            });
+          }
         },
         onDoubleTap: likePost,
-        onLongPressStart: (details) {
-          showOverlay(context, url: widget.post.postUrl);
-        },
-        onLongPressEnd: (details) {
-          _overlayanimController
-              .reverse()
-              .whenComplete(() => overlayEntry.remove());
-        },
+        onLongPressStart: (widget.post.type == "img")
+            ? (details) {
+                showOverlay(context, url: widget.post.postUrl);
+              }
+            : null,
+        onLongPressEnd: (widget.post.type == "img")
+            ? (details) {
+                _overlayanimController
+                    .reverse()
+                    .whenComplete(() => overlayEntry.remove());
+              }
+            : null,
         child: Stack(
           children: [
             Hero(
@@ -334,7 +373,8 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
                         image: DecorationImage(
-                          image: AssetImage(widget.post.userDpUrl),
+                          image:
+                              CachedNetworkImageProvider(widget.post.userDpUrl),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -442,7 +482,10 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                                   SizedBox(width: 5),
                                   // SizedBox(width: 25),
                                   Text(
-                                    widget.post.likeCount.toString(),
+                                    (widget.post.likeCount ?? 0) == 0
+                                        ? ""
+                                        : (widget.post.likeCount ?? 0)
+                                            .toString(),
                                     style: TextStyle(
                                       fontSize: 11.0,
                                       color: Colors.white,
@@ -470,18 +513,20 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                               icon: Icon(Ionicons.chatbox, color: Colors.white),
                               iconSize: 25.0,
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ViewPostScreen(
-                                      post: widget.post,
-                                    ),
-                                  ),
-                                );
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (_) => ViewPostScreen(
+                                //       post: widget.post,
+                                //     ),
+                                //   ),
+                                // );
                               },
                             ),
                             Text(
-                              widget.post.commentCount.toString(),
+                              (widget.post.commentCount ?? 0) == 0
+                                  ? ""
+                                  : (widget.post.commentCount ?? 0).toString(),
                               style: TextStyle(
                                 fontSize: 13.0,
                                 color: Colors.white,
@@ -501,7 +546,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                         padding: const EdgeInsets.only(right: 15),
                         child: ExpandableText(
                           // "It is good to love god for hope of reward in this or the next world, but it is better to love god for love's sake",
-                          widget.post.caption,
+                          widget.post.caption ?? "",
                         ),
                       ),
                     ),

@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:flappy_search_bar/flappy_search_bar.dart';
-import 'package:flappy_search_bar/search_bar_style.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/models.dart';
+import 'package:foo/search_bar/flappy_search_bar.dart';
+import 'package:foo/search_bar/search_bar_style.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
@@ -51,6 +52,7 @@ class _ChatListScreenState extends State<ChatListScreen>
       returList.add(UserTest(
           name: e["username"],
           id: e['id'],
+          dp: 'http://' + localhost + e['dp'],
           fname: e['f name'],
           lname: e['l_name']));
     });
@@ -281,7 +283,8 @@ class UserTest {
   final String lname;
   final String fname;
   final int id;
-  UserTest({this.name, this.id, this.lname, this.fname});
+  final String dp;
+  UserTest({this.name, this.id, this.lname, this.fname, this.dp});
 }
 
 class SearchTile extends StatelessWidget {
@@ -356,7 +359,7 @@ class SearchTile extends StatelessWidget {
                     child: Image(
                       height: 60.0,
                       width: 60.0,
-                      image: AssetImage('assets/images/user4.png'),
+                      image: CachedNetworkImageProvider(user.dp),
                       fit: BoxFit.cover,
                     ),
                   ),

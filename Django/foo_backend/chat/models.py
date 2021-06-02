@@ -204,7 +204,7 @@ class Post(models.Model):
     
     user = models.ForeignKey(User, related_name="posts", on_delete=models.CASCADE)
     file = models.FileField(upload_to = user_directory_path)
-    post_type = models.CharField(max_length=5)
+    post_type = models.CharField(max_length=15)
     time_created = models.DateTimeField(auto_now_add=True)
     caption = models.CharField(max_length=100)
     thumbnail = models.FileField(upload_to = post_thumbnail_path, null=True, blank=True)
@@ -256,7 +256,7 @@ class Story(models.Model):
     
 class StoryComment(models.Model):
 
-    username = models.CharField(max_length=50)
+    user = models.ForeignKey(User,on_delete=models.CASCADE, null=True)
     story = models.ForeignKey(Story, related_name="story_comment", on_delete=models.CASCADE)
     comment = models.TextField(max_length=1000)
     time_created = models.DateTimeField(auto_now_add=True)

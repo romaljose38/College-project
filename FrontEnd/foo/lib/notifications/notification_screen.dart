@@ -1,11 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
 import 'package:foo/notifications/friend_request_tile.dart';
 import 'package:foo/notifications/mention_tile.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 class NotificationScreen extends StatelessWidget {
+  Future<String> getDp() async {
+    var dir = await getApplicationDocumentsDirectory();
+    return dir.path + "/images/dp/dp.jpg";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,16 +35,30 @@ class NotificationScreen extends StatelessWidget {
                     width: 60,
                     height: 60,
                     child: Stack(children: [
-                      CircleAvatar(
-                        child: ClipOval(
-                          child: Image(
-                            height: 60.0,
-                            width: 60.0,
-                            image: AssetImage("assets/images/user0.png"),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
+                      FutureBuilder(
+                          future: getDp(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return CircleAvatar(
+                                child: ClipOval(
+                                  child: Image(
+                                    height: 60.0,
+                                    width: 60.0,
+                                    image: FileImage(File(snapshot.data)),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            }
+                            return SizedBox(
+                              height: 50,
+                              width: 50,
+                              child: CircularProgressIndicator(
+                                backgroundColor: Colors.purple,
+                              ),
+                            );
+                          }),
                       Positioned(
                         right: 19,
                         top: 5,

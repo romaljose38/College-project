@@ -1,31 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
 import 'package:foo/media_players.dart';
+import 'package:foo/screens/search_screen.dart';
+import 'package:foo/search_bar/flappy_search_bar.dart';
+import 'package:foo/search_bar/search_bar_style.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../colour_palette.dart';
 import 'dart:math' as math;
-
-class UserTest {
-  final String name;
-  final String l_name;
-  final String f_name;
-  final int id;
-  UserTest({this.name, this.id, this.l_name, this.f_name});
-}
 
 class CommentScreen extends StatefulWidget {
   final int postId;
@@ -43,7 +39,7 @@ class CommentScreen extends StatefulWidget {
 }
 
 class _CommentScreenState extends State<CommentScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   TextEditingController _commentController = TextEditingController();
   bool hasCommentExpanded = false;
   bool hasTextExpanded = false;
@@ -52,8 +48,13 @@ class _CommentScreenState extends State<CommentScreen>
   FocusNode textFocus = FocusNode();
 
   //
+  SharedPreferences prefs;
+  //
+
+  //
   List mentionList = [];
   bool overlayVisible = false;
+  FocusNode mentionFocus = FocusNode();
   Animation animation;
   OverlayEntry overlayEntry;
   AnimationController animationController;
@@ -67,21 +68,41 @@ class _CommentScreenState extends State<CommentScreen>
   String postUrl;
   String postType;
   String thumbnailPath;
+  String userName;
+  String userDp;
+  int userId;
+  String myDpPath;
+
+  //
 
   @override
   void initState() {
     super.initState();
     _getComments();
+
+    //
+    _loveAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _loveAnimation =
+        Tween<double>(begin: 0, end: 1).animate(_loveAnimationController);
+
+    //
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     animation = Tween<double>(begin: 0, end: 1).animate(animationController);
 
+    setPrefs();
     // detectHeight();
+  }
+
+  setPrefs() async {
+    prefs = await SharedPreferences.getInstance();
   }
 
   Future<void> _getComments() async {
     var prefs = await SharedPreferences.getInstance();
     var curId = prefs.getInt('id');
+    var dir = await getApplicationDocumentsDirectory();
 
     var response = await http.get(Uri.http(localhost,
         '/api/${widget.postId}/post_detail', {'id': curId.toString()}));
@@ -89,12 +110,18 @@ class _CommentScreenState extends State<CommentScreen>
       var respJson = jsonDecode(utf8.decode(response.bodyBytes));
       print(respJson);
       setState(() {
+        myDpPath = dir.path + '/images/dp/dp.jpg';
+        userDp = 'http://' + localhost + respJson['dp'];
+        userName = respJson['username'];
+        userId = respJson['user_id'];
         commentCount = respJson['comment_set'].length;
         likeCount = respJson['likeCount'];
         caption = respJson['caption'];
         hasLiked = respJson['hasLiked'];
         postType = respJson['post_type'];
-        thumbnailPath = respJson['thumbnail'];
+        thumbnailPath = (respJson['post_type'] != 'img')
+            ? 'http://' + localhost + respJson['thumbnail']
+            : '';
         postUrl = 'http://' + localhost + respJson['file'];
       });
       respJson['comment_set'].forEach((e) {
@@ -106,7 +133,7 @@ class _CommentScreenState extends State<CommentScreen>
               CommentTile(
                   comment: Comment(
                       comment: comment,
-                      userdpUrl: "assets/images/user3.png",
+                      userdpUrl: 'http://' + localhost + e['dp'],
                       username: e['user'])));
         });
       });
@@ -159,15 +186,19 @@ class _CommentScreenState extends State<CommentScreen>
 
     _commentController.text = "";
     if (response.statusCode == 200) {
+      updatePostInHive(widget.postId, hasLiked);
+      var dir = await getApplicationDocumentsDirectory();
       setState(() {
         commentsList.insert(
             0,
             CommentTile(
                 comment: Comment(
                     comment: mapToSend,
-                    userdpUrl: "assets/images/user3.png",
+                    isMe: true,
+                    userdpUrl: dir.path + '/images/dp/dp.jpg',
                     username: username)));
       });
+      commentCount += 1;
     }
   }
 
@@ -184,67 +215,62 @@ class _CommentScreenState extends State<CommentScreen>
       returList.add(UserTest(
           name: e["username"],
           id: e['id'],
-          f_name: e['f_name'],
-          l_name: e['l_name']));
+          dp: 'http://' + localhost + e['dp'],
+          fname: e['f_name'],
+          lname: e['l_name']));
     });
     return returList;
   }
 
   showOverlay(BuildContext context) {
-    overlayVisible = true;
     OverlayState overlayState = Overlay.of(context);
     overlayEntry = OverlayEntry(
       builder: (context) => Scaffold(
         backgroundColor: Colors.black.withOpacity(.3),
-        body: FadeTransition(
-          opacity: animation,
-          child: GestureDetector(
-            onTap: () {
-              animationController
-                  .reverse()
-                  .whenComplete(() => {overlayEntry.remove()});
-            },
-            child: Container(
-              // clipBehavior: Clip.antiAlias,
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.transparent,
-
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.95,
-                      height: MediaQuery.of(context).size.height * 0.3,
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: SearchBar<UserTest>(
-                          minimumChars: 1,
-                          onSearch: search,
-                          onError: (err) {
-                            print(err);
-                            return Container();
-                          },
-                          onItemFound: (UserTest user, int index) {
-                            return GestureDetector(
-                              onTap: () {
-                                print("$start, $end");
-                                _commentController.text = insertAtChangedPoint(
-                                    '@${user.name}', start, end);
-                                print(user.name);
-                                mentionList.add(user.name);
-                              },
-                              child: ListTile(
-                                title: Text(user.name),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+        body: Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width * .9,
+            height: MediaQuery.of(context).size.height * .7,
+            // clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: FadeTransition(
+              opacity: animation,
+              child: GestureDetector(
+                onTap: () {
+                  animationController.reverse().whenComplete(() {
+                    overlayEntry.remove();
+                    mentionFocus.unfocus();
+                    textFocus.requestFocus();
+                  });
+                },
+                child: SearchBar<UserTest>(
+                  onCancelled: () {},
+                  focusNode: mentionFocus,
+                  minimumChars: 1,
+                  searchBarPadding:
+                      EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  searchBarStyle:
+                      SearchBarStyle(borderRadius: BorderRadius.circular(8)),
+                  onSearch: search,
+                  onError: (err) {
+                    print(err);
+                    return Container();
+                  },
+                  onItemFound: (UserTest user, int index) {
+                    return GestureDetector(
+                      onTap: () {
+                        print("$start, $end");
+                        _commentController.text =
+                            insertAtChangedPoint('@${user.name}', start, end);
+                        print(user.name);
+                        mentionList.add(user.name);
+                      },
+                      child: MentionSearchTile(user: user),
+                    );
+                  },
                 ),
               ),
             ),
@@ -252,11 +278,13 @@ class _CommentScreenState extends State<CommentScreen>
         ),
       ),
     );
-    animationController.addListener(() {
-      overlayState.setState(() {});
+
+    animationController.forward().whenComplete(() {
+      overlayState.insert(overlayEntry);
+      overlayVisible = true;
+      textFocus.unfocus();
+      mentionFocus.requestFocus();
     });
-    animationController.forward();
-    overlayState.insert(overlayEntry);
   }
 
   Future<void> deletePost() async {
@@ -276,6 +304,67 @@ class _CommentScreenState extends State<CommentScreen>
     }
   }
 
+  //
+
+  bool hasTapped = false;
+  AnimationController _loveAnimationController;
+  Animation _loveAnimation;
+
+//
+  Future<void> likePost() async {
+    print(hasLiked);
+    print(likeCount);
+
+    if (hasLiked) {
+      var response = await http.get(Uri.http(localhost, 'api/remove_like', {
+        'username': prefs.getString("username"),
+        'id': widget.postId.toString(),
+      }));
+      if (response.statusCode == 200) {
+        setState(() {
+          hasLiked = false;
+          likeCount -= 1;
+        });
+      }
+      updatePostInHive(widget.postId, false);
+    } else {
+      var response = await http.get(Uri.http(localhost, '/api/add_like', {
+        'username': prefs.getString("username"),
+        'id': widget.postId.toString(),
+      }));
+      if (response.statusCode == 200) {
+        setState(() {
+          hasLiked = true;
+          likeCount += 1;
+        });
+      }
+
+      updatePostInHive(widget.postId, true);
+    }
+    setState(() {
+      hasTapped = true;
+    });
+    _loveAnimationController.forward().whenComplete(
+          () => Future.delayed(Duration(milliseconds: 800), () {
+            _loveAnimationController.reverse().whenComplete(() {
+              setState(() {
+                hasTapped = false;
+              });
+            });
+          }),
+        );
+  }
+
+  void updatePostInHive(int id, bool status) {
+    var feedBox = Hive.box("Feed");
+    Feed feed = feedBox.get('feed');
+    if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
+      feed.updatePostStatus(id, status, commentCount);
+      feed.save();
+    }
+  }
+
+  //
   String insertAtChangedPoint(String word, int start, int end) {
     String text = _commentController.text;
     String newText = text.replaceRange(start, end, word);
@@ -311,7 +400,7 @@ class _CommentScreenState extends State<CommentScreen>
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       image: DecorationImage(
-                        image: AssetImage("assets/images/user4.png"),
+                        image: FileImage(File(myDpPath ?? "")),
                         fit: BoxFit.cover,
                       )),
                 ),
@@ -357,7 +446,20 @@ class _CommentScreenState extends State<CommentScreen>
 
   Future<bool> _onWillPop() async {
     print("nope you r not goin");
-    Navigator.pop(context, {"likes": likeCount, "comments": commentCount});
+    if (overlayVisible ?? false) {
+      animationController.reverse().whenComplete(() {
+        overlayEntry.remove();
+        mentionFocus.unfocus();
+        textFocus.requestFocus();
+      });
+      overlayVisible = false;
+      return Future.value(false);
+    }
+    Navigator.pop(context, {
+      "likeCount": likeCount,
+      "commentCount": commentCount,
+      'hasLiked': hasLiked
+    });
     return Future.value(false);
   }
 
@@ -405,7 +507,7 @@ class _CommentScreenState extends State<CommentScreen>
       )));
 
   Container postVideo(height) => Container(
-      height: 540,
+      height: height,
       width: double.infinity,
       decoration: BoxDecoration(
         // boxShadow: [BoxShadow()],
@@ -416,8 +518,26 @@ class _CommentScreenState extends State<CommentScreen>
           fit: BoxFit.cover,
         ),
       ),
-      child: Center(
-        child: Icon(Icons.play_arrow),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+              context,
+              PageRouteBuilder(
+                  pageBuilder: (context, animation, secAnimation) =>
+                      VideoPlayerProvider(videoUrl: postUrl),
+                  transitionsBuilder:
+                      (context, animation, secAnimation, child) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
+                              .animate(animation),
+                      child: child,
+                    );
+                  }));
+        },
+        child: Center(
+          child: Icon(Ionicons.play_circle, size: 45, color: Colors.white),
+        ),
       ));
 
   @override
@@ -485,16 +605,44 @@ class _CommentScreenState extends State<CommentScreen>
             children: [
               Hero(
                   tag: "profile_${widget.heroIndex}",
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: postType == "img"
-                        ? postImage(height)
-                        : (postType == "aud")
-                            ? postAudio(height)
-                            : (postType == "vid")
-                                ? postVideo(height)
-                                : postAudioBlurred(height),
+                  child: GestureDetector(
+                    onDoubleTap: likePost,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: postType == "img"
+                          ? postImage(height)
+                          : (postType == "aud")
+                              ? postAudio(height)
+                              : (postType == "vid")
+                                  ? postVideo(height)
+                                  : postAudioBlurred(height),
+                    ),
                   )),
+              //
+              Positioned(
+                top: 0,
+                child: hasTapped
+                    ? ScaleTransition(
+                        scale: _loveAnimation,
+                        child: Container(
+                          height: height,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            // color: Colors.black.withOpacity(.4),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Center(
+                            child: Icon(Ionicons.heart,
+                                size: 60, color: Colors.white),
+                          ),
+                        ),
+                      )
+                    : Container(),
+              ),
+
+              //
+
               Positioned(
                 top: 10,
                 left: 10,
@@ -509,14 +657,34 @@ class _CommentScreenState extends State<CommentScreen>
                           ),
                         );
                       },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          image: DecorationImage(
-                            image: AssetImage("assets/images/user3.png"),
-                            fit: BoxFit.cover,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                  pageBuilder:
+                                      (context, animation, secAnimation) =>
+                                          Profile(userId: userId),
+                                  transitionsBuilder: (context, animation,
+                                      secAnimation, child) {
+                                    return SlideTransition(
+                                      position: Tween<Offset>(
+                                              begin: Offset(1, 0),
+                                              end: Offset(0, 0))
+                                          .animate(animation),
+                                      child: child,
+                                    );
+                                  }));
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            image: DecorationImage(
+                              image: CachedNetworkImageProvider(userDp ?? ""),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),
@@ -531,7 +699,7 @@ class _CommentScreenState extends State<CommentScreen>
                           // borderRadius: BorderRadius.circular(20),
                           ),
                       child: Text(
-                        "john_doe",
+                        userName ?? "",
                         style: GoogleFonts.raleway(
                           fontSize: 15,
                           color: Colors.white,
@@ -563,33 +731,40 @@ class _CommentScreenState extends State<CommentScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            constraints: BoxConstraints(maxWidth: 69),
-                            color: Colors.red.shade700,
-                            height: 37,
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Ionicons.heart,
-                                      color: Colors.white, size: 22),
-                                  SizedBox(width: 5),
-                                  // SizedBox(width: 25),
-                                  Text(
-                                    (likeCount != null)
-                                        ? likeCount.toString()
-                                        : "",
-                                    style: TextStyle(
-                                      fontSize: 11.0,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: likePost,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              constraints: BoxConstraints(maxWidth: 69),
+                              color: (hasLiked ?? false)
+                                  ? Colors.red.shade700
+                                  : Colors.transparent,
+                              height: 37,
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                    sigmaX: (hasLiked ?? false) ? 0 : 15,
+                                    sigmaY: (hasLiked ?? false) ? 0 : 15),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Icon(Ionicons.heart,
+                                        color: Colors.white, size: 22),
+                                    SizedBox(width: 5),
+                                    // SizedBox(width: 25),
+                                    Text(
+                                      ((likeCount != null) && (likeCount != 0))
+                                          ? likeCount.toString()
+                                          : "",
+                                      style: TextStyle(
+                                        fontSize: 11.0,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -612,7 +787,7 @@ class _CommentScreenState extends State<CommentScreen>
                                 onPressed: () {},
                               ),
                               Text(
-                                (commentCount != null)
+                                ((commentCount != null) && (commentCount != 0))
                                     ? commentCount.toString()
                                     : "",
                                 style: TextStyle(
@@ -664,7 +839,7 @@ class _CommentScreenState extends State<CommentScreen>
                                             : ImageFilter.blur(
                                                 sigmaX: 0, sigmaY: 0),
                                         child: new Text(
-                                          "It is good to love god sake of loving, but it is more important to liv t is good to love god for the sake of loving, but it is more i",
+                                          caption ?? "",
                                           softWrap: true,
                                           style: TextStyle(color: Colors.white),
                                           overflow: hasTextExpanded
@@ -820,7 +995,9 @@ class CommentTile extends StatelessWidget {
             //   ),
             // ],
             image: DecorationImage(
-              image: AssetImage(comment.userdpUrl),
+              image: comment.isMe
+                  ? FileImage(File(comment.userdpUrl))
+                  : CachedNetworkImageProvider(comment.userdpUrl),
               fit: BoxFit.cover,
             ),
           ),
@@ -868,6 +1045,62 @@ class CommentTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class MentionSearchTile extends StatelessWidget {
+  final UserTest user;
+
+  MentionSearchTile({this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          // width: MediaQuery.of(context).size.width * .95,
+          // margin: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            // borderRadius: BorderRadius.circular(20),
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: Palette.lavender,
+            //     offset: Offset(0, 0),
+            //     blurRadius: 7,
+            //     spreadRadius: 1,
+            //   )
+            // ]
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 25,
+                child: ClipOval(
+                  child:
+                      CachedNetworkImage(imageUrl: user.dp, fit: BoxFit.cover),
+                ),
+              ),
+              SizedBox(
+                width: 15,
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(this.user.name ?? "",
+                      style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.w600, fontSize: 15)),
+                  SizedBox(height: 6),
+                  Text(this.user.fname ?? "", style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Divider(),
+      ],
     );
   }
 }

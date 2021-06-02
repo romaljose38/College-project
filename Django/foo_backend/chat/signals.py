@@ -110,6 +110,7 @@ def story_created_notif_celery(id):
                     'type':'story_add',
                     'u':instance.user.username,
                     'u_id':instance.user.id,
+                    'dp':instance.user.profile.profile_pic.url if instance.user.profile.profile_pic else "",
                     's_id':instance.id,
                     'url':instance.file.url,
                     'n_id':notification.id,
@@ -152,6 +153,7 @@ def story_viewed_celery(instance_id, id):
         channel_layer = get_channel_layer()
         user_id = id
         user = User.objects.get(id=user_id)
+
         time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
         notif = StoryNotification(notif_type="story_view",to_user=instance.user,from_user=user,story=instance,time_created=time)
         notif.save()
@@ -159,6 +161,7 @@ def story_viewed_celery(instance_id, id):
             _dict = {
                 'type':'story_view',
                 'u':user.username,
+                'dp':user.profile.profile_pic.url if user.profile.profile_pic else '',
                 'id':instance.id,
                 'n_id':notif.id,
                 'time':time
@@ -191,12 +194,14 @@ def story_comment_celery(id):
         instance =StoryComment.objects.get(id=id)
         channel_layer = get_channel_layer()
         story = instance.story
+
         user = story.user
         time = timezone.now().strftime("%Y-%m-%d %H:%M:%S") 
         if instance.story.user.profile.online:
             _dict = {
                 'type':'story_comment',
-                'u':instance.username,
+                'u':instance.user.username,
+                'dp':instance.user.profile.profile_pic.url if instance.user.profile.profile_pic else '',
                 'comment':instance.comment,
                 'c_id':instance.id,
                 's_id':instance.story.id,
@@ -229,7 +234,7 @@ def story_deleted_notif(sender, instance, **kwargs):
 @app.task()
 def story_deleted_notif_celery(user_id,story_id):
         _user = User.objects.get(id=user_id)
-        friends_qs = user.profile.friends.all()
+        friends_qs = _user.profile.friends.all()
         channel_layer = get_channel_layer()
         test=[]
         for user in friends_qs:

@@ -341,9 +341,10 @@ def user_story_commented(request):
     try:
         print(request.data)
         username = request.data['username']
+        user = User.objects.get(username=username)
         story = Story.objects.get(id=int(request.data['id']))
         commentInstance = StoryComment.objects.create(
-            username=username, story=story, comment=request.data['comment'])
+            user=user, story=story, comment=request.data['comment'])
         commentInstance.save()
 
         return Response(status=200)
@@ -670,7 +671,8 @@ def get_user_details(request):
         data = {
             'f_name':user.f_name,
             'l_name':user.l_name,
-            'dp':user.profile.profile_pic.url
+            'dp':user.profile.profile_pic.url,
+            'id':user.id,
         }
         return Response(status=200, data=data)
     except Exception as e:

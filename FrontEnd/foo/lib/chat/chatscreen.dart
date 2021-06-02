@@ -10,6 +10,7 @@ import 'package:foo/chat/chatcloud.dart';
 import 'package:foo/chat/forward_screen.dart';
 import 'package:foo/chat/listscreen.dart';
 import 'package:foo/custom_overlay.dart';
+import 'package:foo/profile/profile_test.dart';
 import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -870,21 +871,42 @@ class _ChatScreenState extends State<ChatScreen>
                           //       imageUrl: widget.thread.second?.dpUrl),
                           //   radius: 20,
                           // ),
-                          Container(
-                              height: 56,
-                              width: 56,
-                              //child: Text(this.thread.second.name[0].toUpperCase()),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                image: DecorationImage(
-                                    fit: BoxFit.cover,
-                                    image: CachedNetworkImageProvider(
-                                      thread.second.dpUrl == null
-                                          ? ''
-                                          : 'http://$localhost' +
-                                              thread.second?.dpUrl,
-                                    )),
-                              )),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  PageRouteBuilder(
+                                      pageBuilder: (context, animation,
+                                              secAnimation) =>
+                                          Profile(
+                                              userId: thread.second?.userId),
+                                      transitionsBuilder: (context, animation,
+                                          secAnimation, child) {
+                                        return SlideTransition(
+                                          position: Tween<Offset>(
+                                                  begin: Offset(1, 0),
+                                                  end: Offset(0, 0))
+                                              .animate(animation),
+                                          child: child,
+                                        );
+                                      }));
+                            },
+                            child: Container(
+                                height: 56,
+                                width: 56,
+                                //child: Text(this.thread.second.name[0].toUpperCase()),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  image: DecorationImage(
+                                      fit: BoxFit.cover,
+                                      image: CachedNetworkImageProvider(
+                                        thread.second.dpUrl == null
+                                            ? ''
+                                            : 'http://$localhost' +
+                                                thread.second?.dpUrl,
+                                      )),
+                                )),
+                          ),
                           Spacer(),
                           Column(
                               mainAxisAlignment: MainAxisAlignment.center,

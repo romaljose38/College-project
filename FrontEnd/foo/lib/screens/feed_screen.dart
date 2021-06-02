@@ -55,13 +55,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     _tileAnimationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     listKey = GlobalKey<SliverAnimatedListState>();
-
     //_fetchStory();
     super.initState();
     setInitialData();
     // _getNewPosts();
     _getMyProfPic();
-
     _scrollController
       ..addListener(() {
         if (_scrollController.position.maxScrollExtent -
@@ -89,7 +87,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       Post post = Post(
           username: e['user']['username'],
           postUrl: 'http://' + localhost + e['file'],
-          userDpUrl: 'assets/images/user0.png',
+          userDpUrl: 'http://' + localhost + e['user']['dp'],
           postId: e['id'],
           userId: e['user']['id'],
           commentCount: e['comment_count'],
@@ -175,7 +173,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           Post post = Post(
               username: e['user']['username'],
               postUrl: 'http://' + localhost + e['file'],
-              userDpUrl: 'assets/images/user0.png',
+              userDpUrl: 'http://' + localhost + e['user']['dp'],
               postId: e['id'],
               commentCount: e['comment_count'],
               caption: e['caption'],
@@ -510,7 +508,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       Post post = Post(
           username: e['user']['username'],
           postUrl: 'http://' + localhost + e['file'],
-          userDpUrl: 'assets/images/user0.png',
+          userDpUrl: 'http://' + localhost + e['user']['dp'],
           postId: e['id'],
           userId: e['user']['id'],
           commentCount: e['comment_count'],
@@ -526,9 +524,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                   : ""),
           type: e['post_type']);
 
-      print("old");
       if (feed.isNew(e['id'])) {
-        print("iss neww");
         setState(() {
           listKey.currentState.insertItem(0);
           postsList.insert(0, post);
