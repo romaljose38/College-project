@@ -230,7 +230,7 @@ def story_deleted_notif(sender, instance, **kwargs):
 @app.task()
 def story_deleted_notif_celery(user_id,story_id):
         _user = User.objects.get(id=user_id)
-        friends_qs = user.profile.friends.all()
+        friends_qs = _user.profile.friends.all()
         channel_layer = get_channel_layer()
         test=[]
         for user in friends_qs:
@@ -240,7 +240,7 @@ def story_deleted_notif_celery(user_id,story_id):
                 print(user.username)
                 _dict = {
                     'type':'story_delete',
-                    'u':_user.username,
+                    'u_id':_user.id,
                     's_id':story_id,
                     'n_id':notification.id,
                 }

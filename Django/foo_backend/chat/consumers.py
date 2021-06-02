@@ -327,7 +327,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif notif.notif_type=="story_delete":
                 final_list.append({
                     'type':'story_delete',
-                    'u':notif.from_user.id,
+                    'u_id':notif.from_user.id,
                     's_id':notif.storyId,
                     'n_id':notif.id,
                     },

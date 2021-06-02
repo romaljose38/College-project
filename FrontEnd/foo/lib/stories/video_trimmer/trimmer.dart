@@ -17,12 +17,19 @@ import 'package:foo/stories/video_trimmer/videoediting.dart';
 
 import 'package:foo/stories/story_new.dart';
 
-class StoryUploadPick extends StatelessWidget {
-  final Trimmer _trimmer = Trimmer();
+class StoryUploadPick extends StatefulWidget {
   final String myProfPic;
   final myStory;
 
   StoryUploadPick({this.myStory, this.myProfPic});
+
+  @override
+  _StoryUploadPickState createState() => _StoryUploadPickState();
+}
+
+class _StoryUploadPickState extends State<StoryUploadPick> {
+  final Trimmer _trimmer = Trimmer();
+  String myProfPic;
 
   Future<void> _uploadStory(
       BuildContext context, File mediaFile, String caption) async {
@@ -48,13 +55,19 @@ class StoryUploadPick extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    myProfPic = widget.myProfPic;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (myStory != null && !myStory.isEmpty()) {
+        if (widget.myStory != null && !widget.myStory.isEmpty()) {
           Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) =>
-                  MyStoryScreen(storyObject: myStory, profilePic: myProfPic)));
+              builder: (context) => MyStoryScreen(
+                  storyObject: widget.myStory, profilePic: myProfPic)));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Long press to add a new moment")));
@@ -118,7 +131,7 @@ class StoryUploadPick extends StatelessWidget {
                 //     Color.fromRGBO(190, 190, 190, 1),
                 //   ],
                 // ],
-                colors: (myStory != null && !myStory.isEmpty())
+                colors: (widget.myStory != null && !widget.myStory.isEmpty())
                     ? [
                         Color.fromRGBO(250, 87, 142, 1),
                         Color.fromRGBO(202, 136, 18, 1),

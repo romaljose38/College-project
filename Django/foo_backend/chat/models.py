@@ -68,7 +68,8 @@ class User(AbstractBaseUser):
     staff = models.BooleanField(default=False) # a admin user; non super-user
     admin = models.BooleanField(default=False)
     username_alias = models.CharField(max_length=100, unique=True, null=True, blank=True) # a superuser
-    about =models.TextField(blank=True,null=True)
+    about = models.TextField(default='')
+    #about =models.TextField(blank=True,null=True)
     # notice the absence of a "Password field", that is built in.
 
     USERNAME_FIELD = 'email'

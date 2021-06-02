@@ -53,7 +53,7 @@ class _EditProfileState extends State<EditProfile>
 
   Future<File> testCompressAndGetFile(File file) async {
     String targetPath = (await getApplicationDocumentsDirectory()).path +
-        '/images/dp/dp.jpg'; //'/storage/emulated/0/foo/profile_pic/dp.jpg';
+        '/images/dp/dp_new.jpg'; //'/storage/emulated/0/foo/profile_pic/dp.jpg';
     await Permission.storage.request();
     try {
       File(targetPath).createSync(recursive: true);
@@ -75,10 +75,10 @@ class _EditProfileState extends State<EditProfile>
     String path = 'images/dp/dp.jpg';
     final byteData = await rootBundle.load('assets/$path');
 
-    File('${(await getApplicationDocumentsDirectory()).path}/$path')
+    File('${(await getApplicationDocumentsDirectory()).path}/images/dp/dp_new.jpg')
         .createSync(recursive: true);
-    final file =
-        File('${(await getApplicationDocumentsDirectory()).path}/$path');
+    final file = File(
+        '${(await getApplicationDocumentsDirectory()).path}/images/dp/dp_new.jpg');
     await file.writeAsBytes(byteData.buffer
         .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
 
@@ -90,11 +90,23 @@ class _EditProfileState extends State<EditProfile>
       absorbing = true;
     });
     int userId = _prefs.getInt('id');
+    String oldFilePath =
+        (await getApplicationDocumentsDirectory()).path + '/images/dp/dp.jpg';
     File file;
-    if (imageFile != null) {
-      file = await testCompressAndGetFile(imageFile);
-    } else {
-      file = await getImageFileFromAssets();
+    try {
+      if (imageFile != null) {
+        file = await testCompressAndGetFile(imageFile);
+      } else {
+        file = await getImageFileFromAssets();
+      }
+      File(oldFilePath).createSync();
+      File oldFile = File(oldFilePath);
+      oldFile.deleteSync();
+      file.renameSync(oldFilePath);
+      file = File(oldFilePath);
+    } catch (e) {
+      print("Photo insertion failed");
+      file.deleteSync();
     }
     CustomOverlay overlay =
         CustomOverlay(context: context, animationController: _controller);
@@ -118,6 +130,7 @@ class _EditProfileState extends State<EditProfile>
           absorbing = false;
         });
         overlay.show("Profile update successfully");
+        FileImage(file).evict();
       } else {
         setState(() {
           absorbing = false;
@@ -185,7 +198,7 @@ class _EditProfileState extends State<EditProfile>
                 )),
           ),
           GestureDetector(
-            onTap: absorbing ? null : _submitHandler,
+            onTap: _submitHandler, //absorbing ? null : _submitHandler,
             child: Container(
                 height: 50,
                 width: 50,

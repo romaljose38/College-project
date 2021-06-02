@@ -747,18 +747,21 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                   ],
                 ),
               ),
-              Align(
-                alignment: Alignment(0, 0.9),
-                child: Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$caption',
-                      style: GoogleFonts.lato(color: Colors.white),
+              Offstage(
+                offstage: caption == '',
+                child: Align(
+                  alignment: Alignment(0, 0.9),
+                  child: Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$caption',
+                        style: GoogleFonts.lato(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),

@@ -61,7 +61,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     super.initState();
     setInitialData();
     // _getNewPosts();
-    _getMyProfPic();
+    //_getMyProfPic();
 
     _scrollController
       ..addListener(() {
@@ -223,7 +223,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   //The widget to display the stories which fetches data using the websocket
 
-  Future<void> _getMyProfPic() async {
+  Future<String> _getMyProfPic() async {
     prefs = await SharedPreferences.getInstance();
     var pic =
         (await getApplicationDocumentsDirectory()).path + '/images/dp/dp.jpg';
@@ -239,9 +239,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         print(e);
       }
     }
-    setState(() {
-      myProfPic = pic;
-    });
+    // setState(() {
+    //   myProfPic = pic;
+    // });
+    return pic;
   }
 
   Widget _newHoriz() {
@@ -289,7 +290,18 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 if (index == 0) {
                   return Column(
                     children: [
-                      StoryUploadPick(myStory: myStory, myProfPic: myProfPic),
+                      FutureBuilder(
+                          future: _getMyProfPic(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return StoryUploadPick(
+                                  myStory: myStory, myProfPic: snapshot.data);
+                            } else {
+                              return CircularProgressIndicator();
+                            }
+                          }),
+                      //StoryUploadPick(myStory: myStory, myProfPic: myProfPic),
                       Text(
                         "Momentos",
                         overflow: TextOverflow.ellipsis,
