@@ -86,7 +86,7 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
                         });
                       }),
                   IconButton(
-                    icon: Icon(Icons.delete),
+                    icon: Icon(Icons.delete, color: Colors.grey),
                     onPressed: _submitDeleteHandler,
                   ),
                   SizedBox(width: 20),
@@ -116,8 +116,9 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
       itemBuilder: (context, index) {
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: CachedNetworkImageProvider(
-                'https://image.cnbcfm.com/api/v1/image/105753692-1550781987450gettyimages-628353178.jpeg?v=1550782124'),
+            backgroundImage:
+                CachedNetworkImageProvider(storyViewers[index].profilePicture),
+            //'https://image.cnbcfm.com/api/v1/image/105753692-1550781987450gettyimages-628353178.jpeg?v=1550782124'),
           ),
           title: Text(storyViewers[index].username),
           subtitle: Text(timeago.format(storyViewers[index].viewedTime)),
@@ -132,8 +133,9 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
       itemBuilder: (context, index) {
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: CachedNetworkImageProvider(
-                'https://image.cnbcfm.com/api/v1/image/105753692-1550781987450gettyimages-628353178.jpeg?v=1550782124'),
+            backgroundImage:
+                CachedNetworkImageProvider(comments[index].profilePicture),
+            //'https://image.cnbcfm.com/api/v1/image/105753692-1550781987450gettyimages-628353178.jpeg?v=1550782124'),
           ),
           title: Text(comments[index].username),
           subtitle: Text(comments[index].comment),

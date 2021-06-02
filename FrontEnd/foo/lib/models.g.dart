@@ -60,13 +60,14 @@ class UserAdapter extends TypeAdapter<User> {
       dpUrl: fields[1] as String,
       f_name: fields[2] as String,
       l_name: fields[3] as String,
+      userId: fields[4] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, User obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(2)
       ..write(obj.f_name)
       ..writeByte(3)
-      ..write(obj.l_name);
+      ..write(obj.l_name)
+      ..writeByte(4)
+      ..write(obj.userId);
   }
 
   @override
@@ -379,6 +382,7 @@ class StoryAdapter extends TypeAdapter<Story> {
       time: fields[2] as DateTime,
       viewed: fields[3] as bool,
       storyId: fields[4] as int,
+      caption: fields[8] as String,
       notificationId: fields[5] as int,
     )
       ..viewedUsers = (fields[6] as List)?.cast<StoryUser>()
@@ -388,7 +392,7 @@ class StoryAdapter extends TypeAdapter<Story> {
   @override
   void write(BinaryWriter writer, Story obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.file)
       ..writeByte(1)
@@ -404,7 +408,9 @@ class StoryAdapter extends TypeAdapter<Story> {
       ..writeByte(6)
       ..write(obj.viewedUsers)
       ..writeByte(7)
-      ..write(obj.comments);
+      ..write(obj.comments)
+      ..writeByte(8)
+      ..write(obj.caption);
   }
 
   @override
@@ -432,13 +438,14 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       username: fields[0] as String,
       userId: fields[1] as int,
       stories: (fields[2] as List)?.cast<Story>(),
+      dpUrl: fields[4] as String,
     )..timeOfLastStory = fields[3] as DateTime;
   }
 
   @override
   void write(BinaryWriter writer, UserStoryModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -446,7 +453,9 @@ class UserStoryModelAdapter extends TypeAdapter<UserStoryModel> {
       ..writeByte(2)
       ..write(obj.stories)
       ..writeByte(3)
-      ..write(obj.timeOfLastStory);
+      ..write(obj.timeOfLastStory)
+      ..writeByte(4)
+      ..write(obj.dpUrl);
   }
 
   @override
@@ -472,11 +481,11 @@ class StoryUserAdapter extends TypeAdapter<StoryUser> {
     };
     return StoryUser(
       username: fields[2] as String,
+      profilePicture: fields[3] as String,
       viewedTime: fields[4] as DateTime,
     )
       ..fName = fields[0] as String
-      ..lName = fields[1] as String
-      ..profilePicture = fields[3] as String;
+      ..lName = fields[1] as String;
   }
 
   @override
@@ -518,10 +527,11 @@ class StoryCommentAdapter extends TypeAdapter<StoryComment> {
     };
     return StoryComment(
       username: fields[0] as String,
+      profilePicture: fields[1] as String,
       viewedTime: fields[2] as DateTime,
       comment: fields[3] as String,
       commentId: fields[4] as int,
-    )..profilePicture = fields[1] as String;
+    );
   }
 
   @override

@@ -1,6 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_sound_lite/flutter_sound.dart';
 import 'package:foo/notification_handler.dart';
 import 'package:foo/socket.dart';
 import 'package:ionicons/ionicons.dart';

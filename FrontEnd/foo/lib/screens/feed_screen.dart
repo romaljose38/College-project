@@ -32,6 +32,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   ScrollController _scrollController = ScrollController();
   SharedPreferences prefs;
   String curUser;
+  int curUserId;
   int itemCount = 0;
   bool isConnected = false;
   GlobalKey<SliverAnimatedListState> listKey;
@@ -59,7 +60,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     super.initState();
     setInitialData();
     // _getNewPosts();
-    _getMyProfPic();
+    //_getMyProfPic();
+
     _scrollController
       ..addListener(() {
         if (_scrollController.position.maxScrollExtent -
@@ -143,20 +145,23 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   Future<void> setInitialData() async {
     prefs = await SharedPreferences.getInstance();
     curUser = prefs.getString("username");
+    curUserId = prefs.getInt("id");
     var feedBox = Hive.box("Feed");
     Feed feed;
     String id;
     if (feedBox.containsKey("feed") && feedBox.get("feed").posts != null) {
       feed = feedBox.get("feed");
-      id = feed.posts.first.postId.toString();
-      for (int i = feed.posts.length - 1; i >= 0; i--) {
-        listKey.currentState
-            .insertItem(0, duration: Duration(milliseconds: 100));
-        postsList.insert(0, feed.posts[i]);
+      if (feed.posts.length > 0) {
+        id = feed.posts.first.postId.toString();
+        for (int i = feed.posts.length - 1; i >= 0; i--) {
+          listKey.currentState
+              .insertItem(0, duration: Duration(milliseconds: 100));
+          postsList.insert(0, feed.posts[i]);
+        }
+        setState(() {
+          itemCount += postsList.length;
+        });
       }
-      setState(() {
-        itemCount += postsList.length;
-      });
     } else {
       feed = Feed();
       id = "null";
@@ -165,7 +170,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     await _checkConnectionStatus();
     if (isConnected) {
       var response = await http
-          .get(Uri.http(localhost, '/api/$curUser/posts', {"id": id}));
+          .get(Uri.http(localhost, '/api/$curUser/posts', {"id": (id ?? '0')}));
       var respJson = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
@@ -219,7 +224,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   //The widget to display the stories which fetches data using the websocket
 
-  Future<void> _getMyProfPic() async {
+  Future<String> _getMyProfPic() async {
     prefs = await SharedPreferences.getInstance();
     var pic =
         (await getApplicationDocumentsDirectory()).path + '/images/dp/dp.jpg';
@@ -235,9 +240,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         print(e);
       }
     }
-    setState(() {
-      myProfPic = pic;
-    });
+    // setState(() {
+    //   myProfPic = pic;
+    // });
+    return pic;
   }
 
   Widget _newHoriz() {
@@ -253,9 +259,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           var myStoryList = [];
           //_getCurrentStoryViewer();
 
-          if (curUser != null) {
+          if (curUserId != null) {
             for (int item = 0; item < boxList.length; item++) {
-              if (boxList[item].username == curUser) {
+              print("USERID = ${box.get(boxList[item].userId).stories}");
+              if (boxList[item].userId == curUserId) {
                 myStory = boxList[item];
               } else {
                 if (boxList[item].hasUnSeen() == -1) {
@@ -284,7 +291,18 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 if (index == 0) {
                   return Column(
                     children: [
-                      StoryUploadPick(myStory: myStory, myProfPic: myProfPic),
+                      FutureBuilder(
+                          future: _getMyProfPic(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return StoryUploadPick(
+                                  myStory: myStory, myProfPic: snapshot.data);
+                            } else {
+                              return CircularProgressIndicator();
+                            }
+                          }),
+                      //StoryUploadPick(myStory: myStory, myProfPic: myProfPic),
                       Text(
                         "Momentos",
                         overflow: TextOverflow.ellipsis,
@@ -299,7 +317,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             builder: (context) => StoryBuilder(
                                   myStoryList: myStoryList,
                                   initialPage: index - 1,
-                                  profilePic: pst.stories,
+                                  //profilePic: pst.stories,
                                 )),
                       );
                     },
@@ -341,10 +359,12 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                       color: Colors.black,
                                       borderRadius: BorderRadius.circular(23),
                                       image: DecorationImage(
-                                        image:
-                                            AssetImage(pst.stories[index - 1]),
-                                        // image: NetworkImage(
-                                        //     'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
+                                        // image:
+                                        //     AssetImage(pst.stories[index - 1]),
+                                        image: NetworkImage(
+                                          myStoryList[index - 1].dpUrl,
+                                        ),
+                                        //'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
                                         fit: BoxFit.cover,
                                       )),
                                 ),

@@ -2,7 +2,8 @@ from django.db.models.signals import post_save, pre_delete, m2m_changed
 from .models import (
     Profile, 
     ChatMessage, 
-    FriendRequest, 
+    FriendRequest,
+    Notification,
     Story,
     StoryNotification,
     StoryComment,
@@ -114,6 +115,7 @@ def story_created_notif_celery(id):
                     'dp':instance.user.profile.profile_pic.url if instance.user.profile.profile_pic else "",
                     's_id':instance.id,
                     'url':instance.file.url,
+                    'caption':instance.caption,
                     'n_id':notification.id,
                     'time':instance.time_created.strftime("%Y-%m-%d %H:%M:%S"),
                 }
@@ -245,7 +247,7 @@ def story_deleted_notif_celery(user_id,story_id):
                 print(user.username)
                 _dict = {
                     'type':'story_delete',
-                    'u':_user.username,
+                    'u_id':_user.id,
                     's_id':story_id,
                     'n_id':notification.id,
                 }
@@ -312,7 +314,7 @@ def tell_them_i_have_changed_my_dp(id):
     for friend in friends_qs:
         notif = Notification(notif_to=friend,ref_id=str(user_id),type="dp_notif")
         notif.save()
-        if friends.profile.online:
+        if friend.profile.online:
             _dict = {
                 'type':'dp_update',
                 'id':user_id,
