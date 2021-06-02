@@ -8,6 +8,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:http/http.dart';
 import 'package:foo/test_cred.dart';
 import 'package:video_player/video_player.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:foo/stories/modalsheetviews.dart';
 
 import 'dart:io';
@@ -89,13 +90,14 @@ class StoryScreen extends StatefulWidget {
   final UserStoryModel storyObject;
   final PageController storyBuilderController;
   final int userCount;
-  final String profilePic;
+  //final String profilePic;
 
-  StoryScreen(
-      {this.storyObject,
-      this.storyBuilderController,
-      this.userCount,
-      this.profilePic});
+  StoryScreen({
+    this.storyObject,
+    this.storyBuilderController,
+    this.userCount,
+    /*this.profilePic*/
+  });
 
   @override
   _StoryScreenState createState() => _StoryScreenState();
@@ -104,11 +106,13 @@ class StoryScreen extends StatefulWidget {
 class _StoryScreenState extends State<StoryScreen>
     with SingleTickerProviderStateMixin, StoryEssentials {
   String username;
+  String profilePic;
   List<Story> stories;
   int _currentIndex;
   File mediaFile;
   String mediaType;
   String timeUploaded;
+  String caption;
   ValueNotifier notifier;
   VideoPlayerController videoController;
   AnimationController _animController;
@@ -163,6 +167,7 @@ class _StoryScreenState extends State<StoryScreen>
 
   void _setEssentialVariables() {
     username = widget.storyObject.username;
+    profilePic = widget.storyObject.dpUrl;
     stories = widget.storyObject.stories;
     _currentIndex = widget.storyObject.hasUnSeen();
     if (_currentIndex == -1) _currentIndex = 0;
@@ -176,6 +181,7 @@ class _StoryScreenState extends State<StoryScreen>
         mediaFile = value;
         mediaType = _getTypeOf(stories[_currentIndex].file);
         timeUploaded = _formatTime(stories[_currentIndex].time);
+        caption = stories[_currentIndex].caption;
       });
       // videoController?.pause();
       if (mediaType == 'video') {
@@ -347,10 +353,29 @@ class _StoryScreenState extends State<StoryScreen>
                         username: username,
                         // timeUploaded: "53 minutes ago",
                         timeUploaded: timeUploaded,
-                        profilePic: widget.profilePic,
+                        profilePic: profilePic, //widget.profilePic,
                       ),
                     ),
                   ],
+                ),
+              ),
+              Offstage(
+                offstage: caption == '',
+                child: Align(
+                  alignment: Alignment(0, 0.9),
+                  child: Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$caption',
+                        style: GoogleFonts.lato(color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               Align(
@@ -458,12 +483,14 @@ class UserInfo extends StatelessWidget {
   final String username;
   final String timeUploaded;
   final String profilePic;
+  final bool mine;
 
   const UserInfo(
       {Key key,
       @required this.username,
       @required this.timeUploaded,
-      @required this.profilePic})
+      @required this.profilePic,
+      this.mine = false})
       : super(key: key);
 
   @override
@@ -476,7 +503,9 @@ class UserInfo extends StatelessWidget {
           // backgroundImage: CachedNetworkImageProvider(
           //   profilePic,
           // ),
-          backgroundImage: FileImage(File(profilePic)),
+          backgroundImage: mine
+              ? FileImage(File(profilePic))
+              : CachedNetworkImageProvider(profilePic),
         ),
         const SizedBox(width: 10.0),
         Expanded(
@@ -740,6 +769,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                         username: username,
                         // timeUploaded: "53 minutes ago",
                         timeUploaded: timeUploaded,
+                        mine: true,
                         profilePic:
                             widget.profilePic, //'assets/images/user0.png',
                       ),
