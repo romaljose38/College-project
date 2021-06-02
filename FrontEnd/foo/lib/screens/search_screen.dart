@@ -126,7 +126,7 @@ Future<List<UserTest>> search(String search) async {
         name: e["username"],
         id: e['id'],
         dp: 'http://' + localhost + e['dp'],
-        fname: e['f name'],
+        fname: e['f_name'],
         lname: e['l_name']));
   });
   print(returList);

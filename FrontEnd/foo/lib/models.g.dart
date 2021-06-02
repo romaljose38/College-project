@@ -60,13 +60,14 @@ class UserAdapter extends TypeAdapter<User> {
       dpUrl: fields[1] as String,
       f_name: fields[2] as String,
       l_name: fields[3] as String,
+      userId: fields[4] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, User obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(2)
       ..write(obj.f_name)
       ..writeByte(3)
-      ..write(obj.l_name);
+      ..write(obj.l_name)
+      ..writeByte(4)
+      ..write(obj.userId);
   }
 
   @override
@@ -478,11 +481,11 @@ class StoryUserAdapter extends TypeAdapter<StoryUser> {
     };
     return StoryUser(
       username: fields[2] as String,
+      profilePicture: fields[3] as String,
       viewedTime: fields[4] as DateTime,
     )
       ..fName = fields[0] as String
-      ..lName = fields[1] as String
-      ..profilePicture = fields[3] as String;
+      ..lName = fields[1] as String;
   }
 
   @override
@@ -524,10 +527,11 @@ class StoryCommentAdapter extends TypeAdapter<StoryComment> {
     };
     return StoryComment(
       username: fields[0] as String,
+      profilePicture: fields[1] as String,
       viewedTime: fields[2] as DateTime,
       comment: fields[3] as String,
       commentId: fields[4] as int,
-    )..profilePicture = fields[1] as String;
+    );
   }
 
   @override

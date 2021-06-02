@@ -2,7 +2,8 @@ from django.db.models.signals import post_save, pre_delete, m2m_changed
 from .models import (
     Profile, 
     ChatMessage, 
-    FriendRequest, 
+    FriendRequest,
+    Notification,
     Story,
     StoryNotification,
     StoryComment,
@@ -310,9 +311,9 @@ def tell_them_i_have_changed_my_dp(id):
     friends_qs = instance.profile.friends.all()
     channel_layer = get_channel_layer()
     for friend in friends_qs:
-        notif = Notification(to_user=friend,ref_id=str(user_id),type="dp_notif")
+        notif = Notification(notif_to=friend,ref_id=str(user_id),type="dp_notif")
         notif.save()
-        if friends.profile.online:
+        if friend.profile.online:
             _dict = {
                 'type':'dp_update',
                 'id':user_id,

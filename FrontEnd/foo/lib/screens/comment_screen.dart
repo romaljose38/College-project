@@ -125,6 +125,7 @@ class _CommentScreenState extends State<CommentScreen>
         postUrl = 'http://' + localhost + respJson['file'];
       });
       respJson['comment_set'].forEach((e) {
+        print("MYE = $e");
         var comment = jsonDecode(e['comment']);
 
         setState(() {

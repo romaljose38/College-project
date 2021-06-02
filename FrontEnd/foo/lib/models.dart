@@ -560,7 +560,7 @@ class StoryUser extends HiveObject {
   @HiveField(4)
   DateTime viewedTime;
 
-  StoryUser({this.username, this.viewedTime});
+  StoryUser({this.username, this.profilePicture, this.viewedTime});
 }
 
 @HiveType(typeId: 10)
@@ -580,5 +580,10 @@ class StoryComment extends HiveObject {
   @HiveField(4)
   int commentId;
 
-  StoryComment({this.username, this.viewedTime, this.comment, this.commentId});
+  StoryComment(
+      {this.username,
+      this.profilePicture,
+      this.viewedTime,
+      this.comment,
+      this.commentId});
 }

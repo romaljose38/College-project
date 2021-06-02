@@ -319,8 +319,7 @@ class SocketChannel {
     } else {
       UserStoryModel newUser = UserStoryModel()
         ..username = data['u']
-        ..dpUrl =
-            'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'
+        ..dpUrl = 'http://$localhost' + data['dp']
         ..userId = data['u_id']
         ..stories = <Story>[];
       newUser.addStory(Story(
@@ -345,6 +344,7 @@ class SocketChannel {
     userStory.addView(
         StoryUser(
           username: data['u'],
+          profilePicture: 'http://$localhost' + data['dp'],
           viewedTime: DateTime.parse(data['time']),
         ),
         data['id'].toInt());
@@ -361,6 +361,7 @@ class SocketChannel {
     userStory.addComment(
         StoryComment(
           username: data['u'],
+          profilePicture: 'http://$localhost' + data['dp'],
           viewedTime: DateTime.parse(data['time']),
           commentId: data['c_id'],
           comment: data['comment'],

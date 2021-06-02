@@ -151,15 +151,17 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     String id;
     if (feedBox.containsKey("feed") && feedBox.get("feed").posts != null) {
       feed = feedBox.get("feed");
-      id = feed.posts.first.postId.toString();
-      for (int i = feed.posts.length - 1; i >= 0; i--) {
-        listKey.currentState
-            .insertItem(0, duration: Duration(milliseconds: 100));
-        postsList.insert(0, feed.posts[i]);
+      if (feed.posts.length > 0) {
+        id = feed.posts.first.postId.toString();
+        for (int i = feed.posts.length - 1; i >= 0; i--) {
+          listKey.currentState
+              .insertItem(0, duration: Duration(milliseconds: 100));
+          postsList.insert(0, feed.posts[i]);
+        }
+        setState(() {
+          itemCount += postsList.length;
+        });
       }
-      setState(() {
-        itemCount += postsList.length;
-      });
     } else {
       feed = Feed();
       id = "null";
@@ -168,7 +170,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     await _checkConnectionStatus();
     if (isConnected) {
       var response = await http
-          .get(Uri.http(localhost, '/api/$curUser/posts', {"id": id}));
+          .get(Uri.http(localhost, '/api/$curUser/posts', {"id": (id ?? '0')}));
       var respJson = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
