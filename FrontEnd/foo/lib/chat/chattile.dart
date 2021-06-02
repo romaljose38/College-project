@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:foo/profile/profile_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'chatscreen.dart';
 import 'package:foo/models.dart';
@@ -122,20 +123,38 @@ class ChatTile extends StatelessWidget {
                         );
                       }));
             },
-            leading: Container(
-                height: 56,
-                width: 56,
-                //child: Text(this.thread.second.name[0].toUpperCase()),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  image: DecorationImage(
-                      fit: BoxFit.cover,
-                      image: CachedNetworkImageProvider(
-                        thread.second.dpUrl == null
-                            ? ''
-                            : 'http://$localhost' + thread.second?.dpUrl,
-                      )),
-                )),
+            leading: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                        pageBuilder: (context, animation, secAnimation) =>
+                            Profile(userId: this.thread.second?.userId),
+                        transitionsBuilder:
+                            (context, animation, secAnimation, child) {
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                                    begin: Offset(1, 0), end: Offset(0, 0))
+                                .animate(animation),
+                            child: child,
+                          );
+                        }));
+              },
+              child: Container(
+                  height: 56,
+                  width: 56,
+                  //child: Text(this.thread.second.name[0].toUpperCase()),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: CachedNetworkImageProvider(
+                          thread.second.dpUrl == null
+                              ? ''
+                              : 'http://$localhost' + thread.second?.dpUrl,
+                        )),
+                  )),
+            ),
             title:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(

@@ -453,7 +453,7 @@ class LandingPageState extends State<LandingPage>
                     disabledColor: Colors.green,
                     onPressed: () => setState(() => _page = 2)),
                 IconButton(
-                    icon: Icon(Ionicons.settings_outline,
+                    icon: Icon(Ionicons.notifications_circle_outline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
                     onPressed: () => setState(() => _page = 3)),

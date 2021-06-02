@@ -465,6 +465,7 @@ class SocketChannel {
     thread.second.f_name = decodedResp['f_name'];
     thread.second.l_name = decodedResp['l_name'];
     thread.second.dpUrl = decodedResp['dp'];
+    thread.second.userId = decodedResp['id'];
     thread.save();
   }
 

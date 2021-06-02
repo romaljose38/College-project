@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flappy_search_bar/flappy_search_bar.dart';
-import 'package:flappy_search_bar/search_bar_style.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/profile/profile_test.dart';
+import 'package:foo/search_bar/flappy_search_bar.dart';
+import 'package:foo/search_bar/search_bar_style.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -19,6 +20,7 @@ class SearchScreen extends StatelessWidget {
 
       if (resp.statusCode == 200) {
         var respJson = jsonDecode(resp.body);
+        print(respJson);
         List<UserTest> returList = [];
         respJson.forEach((e) {
           print(e);
@@ -26,6 +28,7 @@ class SearchScreen extends StatelessWidget {
               name: e["username"],
               id: e['id'],
               fname: e['f name'],
+              dp: 'http://' + localhost + e['dp'],
               lname: e['l_name']));
         });
         print(returList);
@@ -105,7 +108,8 @@ class UserTest {
   final String lname;
   final String fname;
   final int id;
-  UserTest({this.name, this.id, this.lname, this.fname});
+  final String dp;
+  UserTest({this.name, this.id, this.lname, this.fname, this.dp});
 }
 
 Future<List<UserTest>> search(String search) async {
@@ -121,6 +125,7 @@ Future<List<UserTest>> search(String search) async {
     returList.add(UserTest(
         name: e["username"],
         id: e['id'],
+        dp: 'http://' + localhost + e['dp'],
         fname: e['f name'],
         lname: e['l_name']));
   });
@@ -163,28 +168,16 @@ class SearchTile extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white,
-              // borderRadius: BorderRadius.circular(20),
-              // boxShadow: [
-              //   BoxShadow(
-              //     color: Palette.lavender,
-              //     offset: Offset(0, 0),
-              //     blurRadius: 7,
-              //     spreadRadius: 1,
-              //   )
-              // ]
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 30,
                   child: ClipOval(
-                    child: Image(
-                      height: 60.0,
-                      width: 60.0,
-                      image: AssetImage('assets/images/user4.png'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                      child: CachedNetworkImage(
+                          imageUrl: user.dp,
+                          errorWidget: (_, a, s) =>
+                              Image.asset('assets/images/dp/dp.jpg'))),
                 ),
                 SizedBox(
                   width: 15,
@@ -196,7 +189,8 @@ class SearchTile extends StatelessWidget {
                         style: GoogleFonts.raleway(
                             fontWeight: FontWeight.w600, fontSize: 17)),
                     SizedBox(height: 6),
-                    Text(this.user.fname ?? "", style: TextStyle(fontSize: 13)),
+                    Text((this.user.fname ?? "") + (this.user.lname ?? ""),
+                        style: TextStyle(fontSize: 13)),
                   ],
                 ),
               ],

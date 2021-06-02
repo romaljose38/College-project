@@ -258,7 +258,7 @@ class Story(models.Model):
     
 class StoryComment(models.Model):
 
-    username = models.CharField(max_length=50)
+    user = models.ForeignKey(User,on_delete=models.CASCADE, null=True)
     story = models.ForeignKey(Story, related_name="story_comment", on_delete=models.CASCADE)
     comment = models.TextField(max_length=1000)
     time_created = models.DateTimeField(auto_now_add=True)

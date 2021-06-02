@@ -18,7 +18,10 @@ class User extends HiveObject {
   @HiveField(3)
   String l_name;
 
-  User({this.name, this.dpUrl, this.f_name, this.l_name});
+  @HiveField(4)
+  int userId;
+
+  User({this.name, this.dpUrl, this.f_name, this.l_name, this.userId});
 }
 
 @HiveType(typeId: 1)
@@ -283,8 +286,9 @@ class Comment {
   String username;
   String userdpUrl;
   Map comment;
+  bool isMe;
 
-  Comment({this.username, this.userdpUrl, this.comment});
+  Comment({this.username, this.userdpUrl, this.comment, this.isMe = false});
 }
 
 @HiveType(typeId: 4)
@@ -332,9 +336,10 @@ class Feed extends HiveObject {
     posts.removeWhere((element) => (element.postId == id));
   }
 
-  updatePostStatus(int id, bool status) {
+  updatePostStatus(int id, bool status, int commentCount) {
     this.posts.forEach((element) {
       if (element.postId == id) {
+        element.commentCount = commentCount;
         if ((status == true) & (element.haveLiked == true)) {
           return;
         }

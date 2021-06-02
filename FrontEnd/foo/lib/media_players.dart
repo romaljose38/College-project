@@ -100,28 +100,33 @@ class _PlayerState extends State<Player> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          width: 100,
-          height: 100,
-          child: CircularProgressIndicator(
-            value: valState,
-            strokeWidth: 1,
-            backgroundColor: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            child: CircularProgressIndicator(
+              value: valState,
+              strokeWidth: 1,
+              backgroundColor: Colors.white,
+            ),
           ),
-        ),
-        Positioned(
-            top: 22,
-            left: 20,
-            child: IconButton(
-              icon: Icon(
-                  this.isPlaying ? Ionicons.pause_circle : Ionicons.play_circle,
-                  size: 45,
-                  color: Colors.white),
-              onPressed: playerStateChange,
-            )),
-      ],
+          Positioned(
+              top: 22,
+              left: 20,
+              child: IconButton(
+                icon: Icon(
+                    this.isPlaying
+                        ? Ionicons.pause_circle
+                        : Ionicons.play_circle,
+                    size: 45,
+                    color: Colors.white),
+                onPressed: playerStateChange,
+              )),
+        ],
+      ),
     );
   }
 }
@@ -137,11 +142,37 @@ class VideoPlayerProvider extends StatefulWidget {
 }
 
 class _VideoPlayerProviderState extends State<VideoPlayerProvider> {
+  VideoPlayerController _videoPlayerController;
+  BetterPlayerController _controller;
+  BetterPlayerDataSource source;
   @override
-  Widget build(BuildContext context) {
-    VideoPlayerController _videoPlayerController = (widget.videoFile != null)
+  void initState() {
+    super.initState();
+    _videoPlayerController = (widget.videoFile != null)
         ? VideoPlayerController.file(widget.videoFile)
         : VideoPlayerController.network(widget.videoUrl);
+    source = (widget.videoFile != null)
+        ? BetterPlayerDataSource.file(widget.videoFile.path)
+        : BetterPlayerDataSource.network(widget.videoUrl);
+    _controller =
+        BetterPlayerController(btrPlayerConf(), betterPlayerDataSource: source);
+  }
+
+  btrPlayerConf() => BetterPlayerConfiguration(
+        fullScreenByDefault: true,
+        aspectRatio: _videoPlayerController.value.aspectRatio,
+        autoDetectFullscreenDeviceOrientation: true,
+        allowedScreenSleep: false,
+        autoDispose: true,
+        autoPlay: true,
+        fit: BoxFit.contain,
+        controlsConfiguration: BetterPlayerControlsConfiguration(
+          enableSkips: false,
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -150,21 +181,19 @@ class _VideoPlayerProviderState extends State<VideoPlayerProvider> {
       body: Container(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        alignment: Alignment.center,
-        child: BetterPlayer.file(
-          widget.videoFile.path,
-          betterPlayerConfiguration: BetterPlayerConfiguration(
-            aspectRatio: _videoPlayerController.value.aspectRatio,
-            autoDetectFullscreenDeviceOrientation: true,
-            allowedScreenSleep: false,
-            autoDispose: true,
-            autoPlay: true,
-            fit: BoxFit.contain,
-            controlsConfiguration: BetterPlayerControlsConfiguration(
-              enableSkips: false,
-            ),
-          ),
+        // alignment: Alignment.center,
+        child: BetterPlayer(
+          controller: _controller,
         ),
+        // child: (widget.videoFile != null)
+        //     ? BetterPlayer.file(widget.videoFile.path,
+        //         betterPlayerConfiguration:
+        //             btrPlayerConf(_videoPlayerController))
+        //     : BetterPlayer.network(
+        //         widget.videoUrl,
+        //         betterPlayerConfiguration:
+        //             btrPlayerConf(_videoPlayerController),
+        //       ),
       ),
     );
   }

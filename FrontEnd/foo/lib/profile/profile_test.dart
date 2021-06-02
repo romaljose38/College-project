@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/media_players.dart';
 import 'package:foo/screens/comment_screen.dart';
@@ -13,6 +12,7 @@ import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:foo/screens/feed_icons.dart' as icons;
 import '../models.dart';
 import '../test_cred.dart';
 import 'dart:math' as math;
@@ -478,7 +478,7 @@ class _ProfileTestState extends State<ProfileTest>
                 GoogleFonts.raleway(fontWeight: FontWeight.w700, fontSize: 18),
           ),
           IconButton(
-            icon: Icon(Icons.settings, color: Colors.black, size: 20),
+            icon: Icon(icons.Feed.colon, color: Colors.black, size: 20),
             onPressed: () {
               Navigator.push(
                 context,
@@ -638,7 +638,7 @@ class _ProfileTestState extends State<ProfileTest>
 
   Widget postVideo(Post post, {bool isFirst = false, bool isMinor = false}) {
     Widget child = Center(
-      child: Icon(Ionicons.play_circle),
+      child: Icon(Ionicons.play_circle, size: 45, color: Colors.white),
     );
     Widget container(child) => Container(
         margin: isFirst
@@ -665,13 +665,14 @@ class _ProfileTestState extends State<ProfileTest>
         container(child),
         Positioned.fill(
             child: Container(
-                margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
+                margin:
+                    isMinor ? EdgeInsets.fromLTRB(3, 0, 8, 5) : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(.4),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Center(
-                    child: Icon(Ionicons.videocam_outline,
+                    child: Icon(Ionicons.videocam,
                         color: Colors.white, size: 16))))
       ]);
     }
@@ -706,7 +707,8 @@ class _ProfileTestState extends State<ProfileTest>
         container(child),
         Positioned.fill(
             child: Container(
-                margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
+                margin:
+                    isMinor ? EdgeInsets.fromLTRB(3, 0, 8, 5) : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(.4),
                   borderRadius: BorderRadius.circular(15),
@@ -718,15 +720,19 @@ class _ProfileTestState extends State<ProfileTest>
     }
   }
 
-  Container postAudioBlurred(Post post,
-          {bool isFirst = false, bool isMinor = false}) =>
-      Container(
+  Widget postAudioBlurred(Post post,
+      {bool isFirst = false, bool isMinor = false}) {
+    Widget child = BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Center(child: Player(url: post.postUrl)));
+    Widget container(child) => Container(
           margin: isFirst
               ? EdgeInsets.fromLTRB(8, 0, 5, 0)
               : isMinor
                   ? EdgeInsets.fromLTRB(3, 0, 8, 5)
                   : EdgeInsets.zero,
           decoration: BoxDecoration(
+            // boxShadow: [BoxShadow()],
             borderRadius: BorderRadius.circular(15),
             image: DecorationImage(
               image: CachedNetworkImageProvider(post.thumbNailPath),
@@ -734,11 +740,36 @@ class _ProfileTestState extends State<ProfileTest>
               fit: BoxFit.cover,
             ),
           ),
-          child: Center(
-              child: BackdropFilter(
-            child: Player(url: post.postUrl),
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          )));
+          child:
+              ClipRRect(borderRadius: BorderRadius.circular(15), child: child),
+        );
+
+    if (isFirst) {
+      return container(child);
+    } else {
+      child = Container();
+      return Stack(children: [
+        container(child),
+        Positioned.fill(
+            child: Container(
+                margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(.4),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                    child: Center(
+                        child: Icon(Ionicons.headset_outline,
+                            color: Colors.white, size: 16)),
+                  ),
+                )))
+      ]);
+    }
+  }
+
   Column threeOrMore() => Column(
         children: [
           tripleTier(),
@@ -813,7 +844,7 @@ class _ProfileTestState extends State<ProfileTest>
                             ? postAudio(post)
                             : (post.type == "aud_blurred")
                                 ? postAudioBlurred(post)
-                                : Container(),
+                                : postVideo(post),
                   ),
                 ),
               );
