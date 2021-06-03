@@ -486,7 +486,8 @@ class _MediaCloudState extends State<MediaCloud> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onLongPress: (widget.msgObj.haveReachedServer ?? false)
+      onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
+              (widget.msgObj.isMe == false)
           ? () {
               print("on long press");
               // widget.outerSetState(() {
@@ -500,7 +501,8 @@ class _MediaCloudState extends State<MediaCloud> {
               print(widget.forwardMap);
             }
           : null,
-      onTap: (widget.msgObj.haveReachedServer ?? false)
+      onTap: (widget.msgObj.haveReachedServer ?? false) ||
+              (widget.msgObj.isMe == false)
           ? (widget.hasSelectedSomething ?? false)
               ? () {
                   if (hasSelected == true) {
@@ -526,11 +528,10 @@ class _MediaCloudState extends State<MediaCloud> {
           : null,
       child: Container(
         child: widget.disableSwipe ? cloudContent() : swipeAble(),
-        color: (widget.hasSelectedSomething &&
-                widget.forwardMap.containsKey(widget.msgObj.id) &&
-                hasSelected)
-            ? Colors.blue.withOpacity(.3)
-            : Colors.transparent,
+        color: //(widget.hasSelectedSomething &&
+            (widget.forwardMap.containsKey(widget.msgObj.id) && hasSelected)
+                ? Colors.blue.withOpacity(.3)
+                : Colors.transparent,
       ),
     );
   }

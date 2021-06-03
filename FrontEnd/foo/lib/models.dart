@@ -159,10 +159,10 @@ class Thread extends HiveObject {
         continue;
       }
       if (chatList[index].id == id) {
-        if (chatList[index + 1].msgType == "date" &&
-            chatList[index - 1].msgType == "date") {
-          chatList.removeAt(index - 1);
-        }
+        // if (chatList[index + 1].msgType == "date" &&
+        //     chatList[index - 1].msgType == "date") {
+        //   chatList.removeAt(index - 1);
+        // }
         if (chatList[index].msgType == "aud" ||
             chatList[index].msgType == "img") {
           if (File(chatList[index].filePath).existsSync()) {

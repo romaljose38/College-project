@@ -227,7 +227,8 @@ class _ReplyCloudState extends State<ReplyCloud> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onLongPress: (widget.msgObj.haveReachedServer ?? false)
+      onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
+              (widget.msgObj.isMe == false)
           ? () {
               print("on long press");
               // widget.outerSetState(() {
@@ -241,7 +242,8 @@ class _ReplyCloudState extends State<ReplyCloud> {
               print(widget.forwardMap);
             }
           : null,
-      onTap: (widget.msgObj.haveReachedServer ?? false)
+      onTap: (widget.msgObj.haveReachedServer ?? false) ||
+              (widget.msgObj.isMe == false)
           ? (widget.hasSelectedSomething ?? false)
               ? () {
                   if (hasSelected == true) {
@@ -266,11 +268,10 @@ class _ReplyCloudState extends State<ReplyCloud> {
               : null
           : null,
       child: Container(
-          color: (widget.hasSelectedSomething &&
-                  widget.forwardMap.containsKey(widget.msgObj.id) &&
-                  hasSelected)
-              ? Colors.blue.withOpacity(.3)
-              : Colors.transparent,
+          color: //(widget.hasSelectedSomething &&
+              (widget.forwardMap.containsKey(widget.msgObj.id) && hasSelected)
+                  ? Colors.blue.withOpacity(.3)
+                  : Colors.transparent,
           width: double.infinity,
           child:
               widget.disableSwipe ? cloudContent(context) : swipeAble(context)),

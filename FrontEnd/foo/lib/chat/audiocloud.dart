@@ -385,7 +385,8 @@ class _AudioCloudState extends State<AudioCloud> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onLongPress: (widget.msgObj.haveReachedServer ?? false)
+        onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
+                (widget.msgObj.isMe == false)
             ? () {
                 print("on long press");
                 // widget.outerSetState(() {
@@ -399,7 +400,8 @@ class _AudioCloudState extends State<AudioCloud> {
                 print(widget.forwardMap);
               }
             : null,
-        onTap: (widget.msgObj.haveReachedServer ?? false)
+        onTap: (widget.msgObj.haveReachedServer ?? false) ||
+                (widget.msgObj.isMe == false)
             ? (widget.hasSelectedSomething ?? false)
                 ? () {
                     if (hasSelected == true) {
@@ -424,11 +426,10 @@ class _AudioCloudState extends State<AudioCloud> {
                 : null
             : null,
         child: Container(
-            color: (widget.hasSelectedSomething &&
-                    widget.forwardMap.containsKey(widget.msgObj.id) &&
-                    hasSelected)
-                ? Colors.blue.withOpacity(.3)
-                : Colors.transparent,
+            color: //(widget.hasSelectedSomething &&
+                (widget.forwardMap.containsKey(widget.msgObj.id) && hasSelected)
+                    ? Colors.blue.withOpacity(.3)
+                    : Colors.transparent,
             child: widget.disableSwipe ? cloudContent() : swipeAble()));
   }
 }

@@ -57,6 +57,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
         widget.mediaInserted.path,
       ));
     try {
+      setState(() {
+        uploading = true;
+      });
       var response = await request.send();
 
       if (response.statusCode == 200) {
@@ -64,7 +67,13 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (_) => LandingPage()));
       }
+      setState(() {
+        uploading = false;
+      });
     } catch (e) {
+      setState(() {
+        uploading = false;
+      });
       print(e);
       CustomOverlay overlay = CustomOverlay(
           context: context, animationController: _animationController);
@@ -282,14 +291,16 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            TextButton(
-              onPressed: () => _upload(context),
-              child: Text(
-                "Next",
-                style:
-                    GoogleFonts.lato(fontSize: 17, fontWeight: FontWeight.w500),
-              ),
-            )
+            uploading
+                ? CircularProgressIndicator()
+                : TextButton(
+                    onPressed: () => _upload(context),
+                    child: Text(
+                      "Next",
+                      style: GoogleFonts.lato(
+                          fontSize: 17, fontWeight: FontWeight.w500),
+                    ),
+                  )
           ],
         ),
       ),

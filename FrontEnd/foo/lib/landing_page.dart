@@ -60,6 +60,7 @@ class LandingPageState extends State<LandingPage>
     super.initState();
     checkSocket();
 
+    curpgviewIndex = widget.index;
     _pageController = PageController(initialPage: widget.index);
     animationController = AnimationController(
       vsync: this,
@@ -110,7 +111,10 @@ class LandingPageState extends State<LandingPage>
   }
 
   Future<dynamic> handleEntry(String payload) async {
-    await Navigator.push(
+    setState(() {
+      curpgviewIndex = 1;
+    });
+    await Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (_) => LandingPage(index: 1)));
   }
 

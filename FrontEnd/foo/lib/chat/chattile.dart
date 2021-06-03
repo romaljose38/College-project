@@ -158,7 +158,7 @@ class ChatTile extends StatelessWidget {
             title:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(
-                this.thread.second.name,
+                this.thread.second.f_name + ' ' + this.thread.second.l_name,
                 style: TextStyle(
                     color: Color.fromRGBO(60, 82, 111, 1),
                     fontWeight: FontWeight.w700,

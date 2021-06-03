@@ -549,9 +549,9 @@ class _ChatScreenState extends State<ChatScreen>
     });
     setState(() {
       isForwarding = false;
+      forwardedMsgs.clear();
     });
     currentThread.save();
-    forwardedMsgs.clear();
   }
 
   deleteForEveryone() {
@@ -994,12 +994,20 @@ class _ChatScreenState extends State<ChatScreen>
                 if (_prefs.containsKey("${otherUser}_hasNew") &&
                     _prefs.getBool("${otherUser}_hasNew") &&
                     !overlayVisible) {
-                  if (_itemPositionsListener.itemPositions.value.last.index >
-                      4) {
-                    showOverlay();
-                  } else {
+                  try {
+                    if ((_itemPositionsListener
+                                ?.itemPositions?.value?.last?.index >
+                            4) ??
+                        -1) {
+                      showOverlay();
+                    } else {
+                      removeKey();
+                    }
+                  } catch (e) {
+                    print(e);
                     removeKey();
                   }
+                  //removeKey();
                   // if (_scrollController.hasClients) {
                   //   if ((_scrollController?.offset ?? 0) < 300) {
                   //     removeKey();

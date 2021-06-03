@@ -347,10 +347,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for comment in story.story_comment.all():
                 final_list.append({
                     'type':'story_comment', #For the client to identify
-                    'u':comment.username,
+                    'u':comment.user.username,
                     'comment':comment.comment,
                     'c_id':comment.id,
-                    'dp':comment.user.profile.profile_pic.url if comment.user.profile_pic else '',
+                    'dp':comment.user.profile.profile_pic.url if comment.user.profile.profile_pic else '',
                     's_id':story.id,
                     'time':comment.time_created.strftime("%Y-%m-%d %H:%M:%S"),
                 },
