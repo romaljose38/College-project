@@ -192,11 +192,11 @@ class _ChatCloudState extends State<ChatCloud> {
                     : null
                 : null,
             child: Container(
-                color: (widget.hasSelectedSomething &&
-                        widget.forwardMap.containsKey(widget.msgObj.id) &&
-                        hasSelected)
-                    ? Colors.blue.withOpacity(.3)
-                    : Colors.transparent,
+                color: //(widget.hasSelectedSomething &&
+                    (widget.forwardMap.containsKey(widget.msgObj.id) &&
+                            hasSelected)
+                        ? Colors.blue.withOpacity(.3)
+                        : Colors.transparent,
                 child: swipeAble(context)));
     // child: (this.widget.disableSwipe ?? false)
     //     ? cloudContent(context)

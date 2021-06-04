@@ -30,6 +30,7 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
   bool hasImage = false;
   bool _isBlurred = false;
   File imageFile;
+  bool uploading = false;
 
   @override
   void initState() {
@@ -71,12 +72,22 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
     try {
       var response = await request.send();
 
+      setState(() {
+        uploading = true;
+      });
+
       if (response.statusCode == 200) {
         print('Uploaded');
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (_) => LandingPage()));
       }
+      setState(() {
+        uploading = false;
+      });
     } catch (e) {
+      setState(() {
+        uploading = false;
+      });
       print(e);
       CustomOverlay overlay = CustomOverlay(
           context: context, animationController: _animationController);
@@ -420,14 +431,16 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            TextButton(
-              onPressed: () => _upload(context),
-              child: Text(
-                "Next",
-                style:
-                    GoogleFonts.lato(fontSize: 17, fontWeight: FontWeight.w500),
-              ),
-            )
+            uploading
+                ? CircularProgressIndicator()
+                : TextButton(
+                    onPressed: () => _upload(context),
+                    child: Text(
+                      "Next",
+                      style: GoogleFonts.lato(
+                          fontSize: 17, fontWeight: FontWeight.w500),
+                    ),
+                  )
           ],
         ),
       ),

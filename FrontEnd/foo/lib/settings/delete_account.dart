@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:foo/auth/login.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -85,6 +86,10 @@ class _DeleteConfirmState extends State<DeleteConfirm>
         _focusNode.unfocus();
         if (response.statusCode == 200) {
           await wipeEveryThing();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+            (Route<dynamic> route) => false,
+          );
         } else if (response.statusCode == 417) {
           print("password incorrect");
 

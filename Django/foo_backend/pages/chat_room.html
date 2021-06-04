@@ -121,8 +121,8 @@ var socket = new WebSocket('ws://192.168.1.37:8000/ws/chat_room/{{user}}/');
         socket.send(JSON.stringify(
             {
             "type": "seen_ticker",
-            "from": "romal",
-            "to": "deepika",
+            "from": "pranav",
+            "to": "romal",
             "id": msg.id,
           }
         ));
@@ -157,7 +157,7 @@ var socket = new WebSocket('ws://192.168.1.37:8000/ws/chat_room/{{user}}/');
          document.querySelector('#typing').onclick = function(e) {
 
             socket.send(JSON.stringify({
-                'to':"deepika",
+                'to':"romal",
                 'type':'typing_status',
                 'status':'typing'
 
@@ -167,7 +167,7 @@ var socket = new WebSocket('ws://192.168.1.37:8000/ws/chat_room/{{user}}/');
         document.querySelector('#stopped').onclick = function(e) {
 
             socket.send(JSON.stringify({
-                'to':"deepika",
+                'to':"romal",
                 'type':'typing_status',
                 'status':'stopped'
 

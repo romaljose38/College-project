@@ -226,55 +226,56 @@ class _ReplyCloudState extends State<ReplyCloud> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onLongPress: (widget.msgObj.haveReachedServer ?? false)
-          ? () {
-              print("on long press");
-              // widget.outerSetState(() {
-              //   widget.hasSelectedSomething = true;
-              // });
-              widget.outerSetState();
-              setState(() {
-                hasSelected = true;
-              });
-              widget.forwardMap[widget.msgObj.id] = widget.msgObj;
-              print(widget.forwardMap);
-            }
-          : null,
-      onTap: (widget.msgObj.haveReachedServer ?? false)
-          ? (widget.hasSelectedSomething ?? false)
-              ? () {
-                  if (hasSelected == true) {
-                    if (widget.forwardMap.length == 1) {
-                      widget.forwardRemover();
-                      widget.outerSetState(false);
-                      widget.forwardMap.remove(widget.msgObj.id);
-                    } else {
-                      widget.forwardMap.remove(widget.msgObj.id);
-                    }
-                    setState(() {
-                      hasSelected = false;
-                    });
-                  } else if (hasSelected == false) {
-                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+    return this.widget.disableSwipe
+        ? cloudContent(context)
+        : GestureDetector(
+            onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false)
+                ? () {
+                    print("on long press");
+                    // widget.outerSetState(() {
+                    //   widget.hasSelectedSomething = true;
+                    // });
+                    widget.outerSetState();
                     setState(() {
                       hasSelected = true;
                     });
+                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                    print(widget.forwardMap);
                   }
-                  print(widget.forwardMap);
-                }
-              : null
-          : null,
-      child: Container(
-          color: (widget.hasSelectedSomething &&
-                  widget.forwardMap.containsKey(widget.msgObj.id) &&
-                  hasSelected)
-              ? Colors.blue.withOpacity(.3)
-              : Colors.transparent,
-          width: double.infinity,
-          child:
-              widget.disableSwipe ? cloudContent(context) : swipeAble(context)),
-    );
+                : null,
+            onTap: (widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false)
+                ? (widget.hasSelectedSomething ?? false)
+                    ? () {
+                        if (hasSelected == true) {
+                          if (widget.forwardMap.length == 1) {
+                            widget.forwardRemover();
+                            widget.outerSetState(false);
+                            widget.forwardMap.remove(widget.msgObj.id);
+                          } else {
+                            widget.forwardMap.remove(widget.msgObj.id);
+                          }
+                          setState(() {
+                            hasSelected = false;
+                          });
+                        } else if (hasSelected == false) {
+                          widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                          setState(() {
+                            hasSelected = true;
+                          });
+                        }
+                        print(widget.forwardMap);
+                      }
+                    : null
+                : null,
+            child: Container(
+                color: //(widget.hasSelectedSomething &&
+                    (widget.forwardMap.containsKey(widget.msgObj.id) &&
+                            hasSelected)
+                        ? Colors.blue.withOpacity(.3)
+                        : Colors.transparent,
+                child: swipeAble(context)));
     // return Row(mainAxisAlignment: MainAxisAlignment.start,
     //     // msgObj.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
     //     children: [cloudContent(context)]);

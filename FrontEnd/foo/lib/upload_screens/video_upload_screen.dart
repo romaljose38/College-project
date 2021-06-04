@@ -40,6 +40,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
   AnimationController _animationController;
   Animation _animation;
   // VideoPlayerController _controller;
+  bool uploading = false;
 
   GestureDetector bottomSheetTile(
           String type, Color color, IconData icon, Function onTap) =>
@@ -207,6 +208,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
           (imageFile == null) ? _generatedThumbnail.path : imageFile.path));
 
     try {
+      setState(() {
+        uploading = true;
+      });
       var response = await request.send();
 
       if (response.statusCode == 200) {
@@ -214,7 +218,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (_) => LandingPage()));
       }
+      setState(() {
+        uploading = false;
+      });
     } catch (e) {
+      setState(() {
+        uploading = false;
+      });
       print(e);
       CustomOverlay overlay = CustomOverlay(
           context: context, animationController: _animationController);
@@ -445,7 +455,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                _upload(context);
+              },
               child: Text(
                 "Next",
                 style:

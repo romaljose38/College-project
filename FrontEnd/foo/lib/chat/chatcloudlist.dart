@@ -216,7 +216,7 @@ class _ChatCloudListState extends State<ChatCloudList>
     } else {
       widget.forwardMsgHandler();
       setState(() {
-        hasSelectedSomething = !hasSelectedSomething;
+        hasSelectedSomething = true; //!hasSelectedSomething;
       });
     }
   }
