@@ -566,6 +566,7 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   showDeletionSheet() {
+    if (focusNode.hasFocus) focusNode.unfocus();
     bool _deleteForEveryone = false;
     showDialog(
         context: context,
@@ -1113,7 +1114,6 @@ class _RecordAppState extends State<RecordApp>
   @override
   void initState() {
     super.initState();
-
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
