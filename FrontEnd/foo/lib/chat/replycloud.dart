@@ -244,8 +244,9 @@ class _ReplyCloudState extends State<ReplyCloud> {
                     print(widget.forwardMap);
                   }
                 : null,
-            onTap: (widget.msgObj.haveReachedServer ?? false) ||
-                    (widget.msgObj.isMe == false)
+            onTap: (((widget.msgObj.haveReachedServer ?? false) ||
+                        (widget.msgObj.isMe == false)) &&
+                    widget.forwardMap.length >= 1)
                 ? (widget.hasSelectedSomething ?? false)
                     ? () {
                         if (hasSelected == true) {

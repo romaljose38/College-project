@@ -166,8 +166,14 @@ class _ChatCloudState extends State<ChatCloud> {
                     print(widget.forwardMap);
                   }
                 : null,
+<<<<<<< HEAD
             onTap: ((widget.msgObj.haveReachedServer ?? false) ||
                     (widget.msgObj.isMe == false))
+=======
+            onTap: (((widget.msgObj.haveReachedServer ?? false) ||
+                        (widget.msgObj.isMe == false)) &&
+                    widget.forwardMap.length >= 1)
+>>>>>>> 884951aaf568843ea7754e79c0e5dfce52e395b2
                 ? (widget.hasSelectedSomething ?? false)
                     ? () {
                         if (hasSelected == true) {
