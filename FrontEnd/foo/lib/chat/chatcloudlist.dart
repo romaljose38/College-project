@@ -66,7 +66,7 @@ class _ChatCloudListState extends State<ChatCloudList>
   // }
 
   removeForward() {
-    widget.forwardMsgHandler();
+    widget.forwardMsgHandler(false);
   }
 
   scroller(id) async {

@@ -14,6 +14,7 @@ import 'package:foo/profile/profile_test.dart';
 import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ionicons/ionicons.dart';
 
 import 'chatcloudlist.dart';
 import 'dart:convert';
@@ -169,9 +170,11 @@ class _ChatScreenState extends State<ChatScreen>
 
   void sendSeenTickerIfNeeded() async {
     _prefs = await SharedPreferences.getInstance();
+
     if ((thread.chatList != null) &&
         thread.chatList.length > 0 &&
-        thread.chatList.last.isMe != true &&
+        (thread.chatList.last.isMe != true) &&
+        (thread.chatList.last.id != null) &&
         (thread.chatList.last.id != _prefs.getInt("lastSeenId"))) {
       var seenTicker = {
         "type": "seen_ticker",
@@ -571,42 +574,55 @@ class _ChatScreenState extends State<ChatScreen>
     showDialog(
         context: context,
         builder: (context) {
-          return AlertDialog(
-            content: CheckboxListTile(
-              value: false,
-              onChanged: (val) {},
-              title: Text("Delete for everyone"),
-            ),
-            title: Text((forwardedMsgs.length > 1)
-                ? "Do you want to delete these messages?"
-                : "Do you want to delete this message?"),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    if (_deleteForEveryone) {
-                      if (SocketChannel.isConnected) {
-                        deleteForEveryone();
-                        deleteforMe();
-                        Navigator.pop(context);
+          return StatefulBuilder(
+            builder: (context, setter) => AlertDialog(
+              contentPadding: EdgeInsets.all(10),
+              content: CheckboxListTile(
+                activeColor: Colors.black,
+                value: _deleteForEveryone,
+                onChanged: (val) {
+                  setter(() {
+                    _deleteForEveryone = val;
+                  });
+                },
+                title: Text("Delete for everyone",
+                    style:
+                        TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+              ),
+              title: Text(
+                  (forwardedMsgs.length > 1)
+                      ? "Do you want to delete these messages?"
+                      : "Do you want to delete this message?",
+                  style: GoogleFonts.lato(
+                      fontWeight: FontWeight.w400, fontSize: 18)),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      if (_deleteForEveryone) {
+                        if (SocketChannel.isConnected) {
+                          deleteForEveryone();
+                          deleteforMe();
+                          Navigator.pop(context);
+                        } else {
+                          CustomOverlay overlay = CustomOverlay(
+                              context: context,
+                              animationController: _animationController);
+                          overlay.show(
+                              "Something went wrong.\n Please check your network connection and try again later");
+                        }
                       } else {
-                        CustomOverlay overlay = CustomOverlay(
-                            context: context,
-                            animationController: _animationController);
-                        overlay.show(
-                            "Something went wrong.\n Please check your network connection and try again later");
+                        deleteforMe();
                       }
-                    } else {
-                      deleteforMe();
-                    }
-                    Navigator.pop(context);
-                  },
-                  child: Text("Yes")),
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text("No")),
-            ],
+                      Navigator.pop(context);
+                    },
+                    child: Text("Yes")),
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text("No")),
+              ],
+            ),
           );
         });
     // showModalBottomSheet(
@@ -1353,7 +1369,7 @@ class _RecordAppState extends State<RecordApp>
                 child: Text("Cancel"),
               ),
               IconButton(
-                icon: Icon(Icons.send),
+                icon: Icon(Ionicons.send_outline),
                 onPressed: () {
                   setState(() {
                     _isRecording = false;
@@ -1486,7 +1502,7 @@ class ImageThumb extends StatelessWidget {
                   return Container(
                     width: 70,
                     child: Row(
-                      children: [Icon(Icons.image), Text("Image")],
+                      children: [Icon(Ionicons.image_outline), Text("Image")],
                     ),
                   );
                 }

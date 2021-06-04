@@ -579,47 +579,47 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         // extendBody: true,
         // backgroundColor: Color.fromRGBO(24, 4, 29, 1),
         // backgroundColor: Color.fromRGBO(218, 228, 237, 1),
-        floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
-        floatingActionButton: TextButton(
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  var feedBox = Hive.box("Feed");
-                  Feed feed = feedBox.get("feed");
-                  listKey.currentState.insertItem(0);
-                  postsList.insert(0, feed.posts[0]);
-                },
-                child: Text(
-                  "hoi",
-                  style: TextStyle(color: Colors.black, fontSize: 30),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  if (isStacked) {
-                    _tileAnimationController
-                        .reverse()
-                        .whenComplete(() => setState(() {
-                              isStacked = false;
-                            }));
-                  } else {
-                    _tileAnimationController
-                        .forward()
-                        .whenComplete(() => setState(() {
-                              isStacked = true;
-                            }));
-                  }
-                },
-                child: Text(
-                  "anm",
-                  style: TextStyle(color: Colors.black, fontSize: 30),
-                ),
-              ),
-            ],
-          ),
-          onPressed: () {},
-        ),
+        // floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
+        // floatingActionButton: TextButton(
+        //   child: Row(
+        //     children: [
+        //       GestureDetector(
+        //         onTap: () {
+        //           var feedBox = Hive.box("Feed");
+        //           Feed feed = feedBox.get("feed");
+        //           listKey.currentState.insertItem(0);
+        //           postsList.insert(0, feed.posts[0]);
+        //         },
+        //         child: Text(
+        //           "hoi",
+        //           style: TextStyle(color: Colors.black, fontSize: 30),
+        //         ),
+        //       ),
+        //       GestureDetector(
+        //         onTap: () {
+        //           if (isStacked) {
+        //             _tileAnimationController
+        //                 .reverse()
+        //                 .whenComplete(() => setState(() {
+        //                       isStacked = false;
+        //                     }));
+        //           } else {
+        //             _tileAnimationController
+        //                 .forward()
+        //                 .whenComplete(() => setState(() {
+        //                       isStacked = true;
+        //                     }));
+        //           }
+        //         },
+        //         child: Text(
+        //           "anm",
+        //           style: TextStyle(color: Colors.black, fontSize: 30),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        //   onPressed: () {},
+        // ),
         backgroundColor: Colors.white,
         body: Container(
           // margin: EdgeInsets.only(bottom: 40),

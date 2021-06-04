@@ -27,7 +27,7 @@ class SearchScreen extends StatelessWidget {
           returList.add(UserTest(
               name: e["username"],
               id: e['id'],
-              fname: e['f name'],
+              fname: e['f_name'],
               dp: 'http://' + localhost + e['dp'],
               lname: e['l_name']));
         });
@@ -140,6 +140,8 @@ class SearchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(user.fname);
+    print(user.lname);
     return Column(
       children: [
         GestureDetector(
@@ -171,13 +173,17 @@ class SearchTile extends StatelessWidget {
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  child: ClipOval(
-                      child: CachedNetworkImage(
-                          imageUrl: user.dp,
-                          errorWidget: (_, a, s) =>
-                              Image.asset('assets/images/dp/dp.jpg'))),
+                Container(
+                  height: 65,
+                  width: 65,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(27),
+                    child: CachedNetworkImage(
+                        imageUrl: user.dp,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, a, s) =>
+                            Image.asset('assets/images/dp/dp.jpg')),
+                  ),
                 ),
                 SizedBox(
                   width: 15,
@@ -189,7 +195,8 @@ class SearchTile extends StatelessWidget {
                         style: GoogleFonts.raleway(
                             fontWeight: FontWeight.w600, fontSize: 17)),
                     SizedBox(height: 6),
-                    Text((this.user.fname ?? "") + (this.user.lname ?? ""),
+                    Text(
+                        (this.user.fname ?? "") + " " + (this.user.lname ?? ""),
                         style: TextStyle(fontSize: 13)),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/profile/profile_test.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'chatscreen.dart';
 import 'package:foo/models.dart';
@@ -167,19 +168,91 @@ class ChatTile extends StatelessWidget {
               SizedBox(
                 height: 8,
               ),
-              Text(
-                (thread.chatList.length != 0)
-                    ? ((thread.chatList.last.msgType == "txt")
-                        ? (thread.chatList.last.message ?? "") //"text"
-                        : "media")
-                    : "",
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color.fromRGBO(100, 115, 142, 1),
-                  fontWeight: FontWeight.w200,
-                  fontSize: 15,
-                ),
-              ),
+              recentChat(),
             ])));
+  }
+
+  recentChat() {
+    var recentIndex = thread.chatList.length - 1;
+    text(text) => Text(
+          text,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: Color.fromRGBO(100, 115, 142, 1),
+            fontWeight: FontWeight.w200,
+            fontSize: 15,
+          ),
+        );
+    // if (thread.chatList.last.msgType == "txt" ||
+    //     thread.chatList.last.msgType == "reply_txt") {
+    //   return text(thread.chatList.last.message);
+    // } else if (thread.chatList.last.msgType == "date") {
+    //   if (thread.chatList[recentIndex].msgType == "txt" ||
+    //       thread.chatList[recentIndex].msgType == "reply_txt")
+    //     return text(thread.chatList[thread.chatList.length - 1].message);
+    // } else if (thread.chatList.last.msgType == "img" ||
+    //     thread.chatList.last.msgType == "reply_img") {
+    //   return Icon(Ionicons.camera_outline, size: 13, color: Colors.grey);
+    // }
+    print(thread.chatList[recentIndex].msgType);
+    switch (thread.chatList.last.msgType) {
+      case "img":
+      case "reply_img":
+        {
+          return Icon(Ionicons.camera_outline, size: 13, color: Colors.grey);
+        }
+      case "aud":
+      case "reply_aud":
+        {
+          return Icon(Ionicons.headset_outline, size: 13);
+        }
+      case "txt":
+      case "reply_txt":
+        {
+          return text(thread.chatList.last.message);
+        }
+
+      default:
+        {
+          print("in default");
+          switch (thread.chatList[recentIndex].msgType) {
+            case "img":
+            case "reply_img":
+              {
+                return Icon(Ionicons.camera_outline,
+                    size: 13, color: Colors.grey);
+              }
+            case "aud":
+            case "reply_aud":
+              {
+                return Icon(Ionicons.headset_outline, size: 13);
+              }
+            case "txt":
+            case "reply_txt":
+              {
+                return text(thread.chatList[recentIndex].message);
+              }
+            default:
+              switch (thread.chatList[recentIndex - 1].msgType) {
+                case "img":
+                case "reply_img":
+                  {
+                    return Icon(Ionicons.camera_outline,
+                        size: 13, color: Colors.grey);
+                  }
+                case "aud":
+                case "reply_aud":
+                  {
+                    return Icon(Ionicons.headset_outline, size: 13);
+                  }
+                case "txt":
+                case "reply_txt":
+                  {
+                    return text(thread.chatList[recentIndex - 1].message);
+                  }
+              }
+          }
+        }
+    }
   }
 }

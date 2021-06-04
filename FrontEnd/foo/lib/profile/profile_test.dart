@@ -106,6 +106,7 @@ class Profile extends StatelessWidget {
                     profileId: this.profileUserId,
                     friendsCount: this.friendsCount,
                     postsCount: this.postsCount,
+                    myProfile: this.myProfile,
                     isMe: this.isMe);
               }
               return Center(
@@ -134,12 +135,14 @@ class ProfileTest extends StatefulWidget {
   int profileId;
   int friendsCount;
   int postsCount;
+  bool myProfile;
 
   ProfileTest(
       {Key key,
       this.posts,
       this.userName,
       this.userId,
+      this.myProfile,
       this.userDpUrl,
       this.about,
       this.profileId,
@@ -479,13 +482,17 @@ class _ProfileTestState extends State<ProfileTest>
   topPortion() {
     return Column(children: [
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.black, size: 20),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            icon: Icon(Icons.arrow_back,
+                color: widget.myProfile ? Colors.white : Colors.black,
+                size: 20),
+            onPressed: widget.myProfile
+                ? null
+                : () {
+                    Navigator.pop(context);
+                  },
           ),
           Text(
             "Profile",

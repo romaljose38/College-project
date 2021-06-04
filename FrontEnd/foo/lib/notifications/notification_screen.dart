@@ -23,14 +23,14 @@ class NotificationScreen extends StatelessWidget {
           child: Column(
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  IconButton(
-                      icon: Icon(Icons.arrow_back, size: 18),
-                      onPressed: () {
-                        // return _showModal(context);
-                      }),
-                  Spacer(),
+                  // IconButton(
+                  //     icon: Icon(Icons.arrow_back, size: 18),
+                  //     onPressed: () {
+                  //       // return _showModal(context);
+                  //     }),
+                  // Spacer(),
                   SizedBox(
                     width: 60,
                     height: 60,
