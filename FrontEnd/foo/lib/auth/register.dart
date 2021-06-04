@@ -408,10 +408,12 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
     print(_lNameController.value.text);
     print(finalDateString);
     print(userId);
+    var fName = _fNameController.text;
+    var lName = _lNameController.text;
     var url = Uri.http(localhost, '/api/dob_upload');
     var request = http.MultipartRequest('POST', url)
-      ..fields['f_name'] = _fNameController.text
-      ..fields['l_name'] = _lNameController.text
+      ..fields['f_name'] = fName
+      ..fields['l_name'] = lName
       ..fields['date'] = finalDateString
       ..fields['id'] = userId.toString()
       ..files.add(await http.MultipartFile.fromPath('file', file.path));
@@ -420,6 +422,8 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
       var response = await request.send();
 
       if (response.statusCode == 200) {
+        _prefs.setString("f_name", fName);
+        _prefs.setString("l_name", lName);
         _prefs.setBool('loggedIn', true);
         Navigator.pushNamed(context, '/landingPage');
       } else {

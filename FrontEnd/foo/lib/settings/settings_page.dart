@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:foo/settings/account_settings.dart';
 import 'package:foo/settings/delete_account.dart';
 import 'package:foo/settings/password_confirm.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Settings extends StatelessWidget {
   actionButtons(context) => Row(
@@ -26,6 +30,16 @@ class Settings extends StatelessWidget {
           ),
         ],
       );
+  getUsernameAndDp() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    var dir = await getApplicationDocumentsDirectory();
+    print(dir.path);
+    return {
+      'name': prefs.getString("f_name") + " " + prefs.getString("l_name"),
+      'dir': dir.path
+    };
+  }
 
   editProfile(context) => GestureDetector(
         onTap: () {
@@ -42,39 +56,50 @@ class Settings extends StatelessWidget {
             }),
           );
         },
-        child: ListTile(
-          title: Text(
-            "Pranav P",
-            style: GoogleFonts.raleway(
-                fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
-          ),
-          subtitle: Text(
-            "Personal info",
-            style: GoogleFonts.raleway(
-                fontSize: 11, fontWeight: FontWeight.w400, color: Colors.grey),
-          ),
-          leading: Container(
-              height: 50,
-              width: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Center(
-                child:
-                    Icon(Icons.person, size: 27, color: Colors.grey.shade500),
-              )),
-          trailing: Container(
-              height: 50,
-              width: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Icon(Icons.arrow_forward, color: Colors.black),
-              )),
-        ),
+        child: FutureBuilder(
+            future: getUsernameAndDp(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                print(snapshot.data);
+                return ListTile(
+                  title: Text(
+                    snapshot.data['name'],
+                    style: GoogleFonts.raleway(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black),
+                  ),
+                  subtitle: Text(
+                    "Personal info",
+                    style: GoogleFonts.raleway(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.grey),
+                  ),
+                  leading: Container(
+                    height: 50,
+                    width: 50,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(20),
+                        image: DecorationImage(
+                            image: FileImage(File(
+                                snapshot.data['dir'] + '/images/dp/dp.jpg')))),
+                  ),
+                  trailing: Container(
+                      height: 50,
+                      width: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.arrow_forward, color: Colors.black),
+                      )),
+                );
+              }
+              return Container();
+            }),
       );
 
   deleteMyAccount(context) => GestureDetector(

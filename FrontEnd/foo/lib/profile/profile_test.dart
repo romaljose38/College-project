@@ -482,7 +482,7 @@ class _ProfileTestState extends State<ProfileTest>
   topPortion() {
     return Column(children: [
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back,

@@ -74,6 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
           prefs.setInt(key, value);
         } else if (key == "dobVerified") {
           dobVerified = data[key];
+        } else if (key == "username") {
+          prefs.setString("username", value);
+          prefs.setString("username_alias", value);
         } else {
           prefs.setString(key, value);
         }
