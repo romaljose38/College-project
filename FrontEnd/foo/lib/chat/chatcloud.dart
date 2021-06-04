@@ -151,7 +151,8 @@ class _ChatCloudState extends State<ChatCloud> {
     return this.widget.disableSwipe
         ? cloudContent(context)
         : GestureDetector(
-            onLongPress: (widget.msgObj.haveReachedServer ?? false)
+            onLongPress: ((widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false))
                 ? () {
                     print("on long press");
                     // widget.outerSetState(() {
@@ -165,7 +166,8 @@ class _ChatCloudState extends State<ChatCloud> {
                     print(widget.forwardMap);
                   }
                 : null,
-            onTap: (widget.msgObj.haveReachedServer ?? false)
+            onTap: ((widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false))
                 ? (widget.hasSelectedSomething ?? false)
                     ? () {
                         if (hasSelected == true) {

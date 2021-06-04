@@ -30,6 +30,9 @@ class Profile extends StatelessWidget {
   int friendsCount;
   int postsCount;
   String about;
+  String fName;
+  String lName;
+  int profileUserId;
 
   Profile({this.userId, this.myProfile = false});
 
@@ -53,13 +56,14 @@ class Profile extends StatelessWidget {
     friendsCount = respJson['friends_count'];
     postsCount = respJson['post_count'];
     about = respJson['about'];
+    profileUserId = respJson['id'];
 
     userDpUrl = respJson['dp'];
     print(userId);
     print(respJson);
     print(respJson.runtimeType);
-    var fullName = respJson['f_name'] + " " + respJson['l_name'];
-    this.fullName = fullName;
+    fName = respJson['f_name'];
+    lName = respJson['l_name'];
     var posts = respJson['posts'];
     List<Post> postList = [];
     print(posts.runtimeType);
@@ -93,11 +97,13 @@ class Profile extends StatelessWidget {
                     posts: posts,
                     userName: this.profUserName,
                     userId: this.userId,
-                    fullName: this.fullName,
+                    fName: this.fName,
+                    lName: this.lName,
                     userDpUrl: this.userDpUrl,
                     requestStatus: this.requestStatus,
                     curUser: this.curUser,
                     about: this.about,
+                    profileId: this.profileUserId,
                     friendsCount: this.friendsCount,
                     postsCount: this.postsCount,
                     isMe: this.isMe);
@@ -121,9 +127,11 @@ class ProfileTest extends StatefulWidget {
   String userDpUrl;
   String requestStatus;
   String curUser;
-  String fullName;
+  String fName;
+  String lName;
   String about;
   bool isMe;
+  int profileId;
   int friendsCount;
   int postsCount;
 
@@ -134,10 +142,12 @@ class ProfileTest extends StatefulWidget {
       this.userId,
       this.userDpUrl,
       this.about,
+      this.profileId,
       this.friendsCount,
       this.postsCount,
       this.requestStatus,
-      this.fullName,
+      this.fName,
+      this.lName,
       this.curUser,
       this.isMe})
       : super(key: key);
@@ -264,7 +274,7 @@ class _ProfileTestState extends State<ProfileTest>
     return Row(children: [
       Spacer(),
       Text(
-        widget.fullName,
+        widget.fName + " " + widget.lName,
         style: GoogleFonts.raleway(
           fontSize: 23,
           fontWeight: FontWeight.w600,
@@ -285,7 +295,12 @@ class _ProfileTestState extends State<ProfileTest>
     } else {
       thread = Thread(
         first: User(name: widget.curUser),
-        second: User(name: widget.userName),
+        second: User(
+            name: widget.userName,
+            dpUrl: widget.userDpUrl,
+            f_name: widget.fName,
+            l_name: widget.lName,
+            userId: widget.profileId),
       );
       thread.lastAccessed = DateTime.now();
       await threadBox.put(threadName, thread);

@@ -602,169 +602,173 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
           constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * .7),
           padding: EdgeInsets.fromLTRB(0, 50, 0, 10),
-          child: Column(
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                GestureDetector(
-                  onTap: () {
-                    // _setProfilePic();
-                    showOverlay();
-                  },
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: imageFile == null
-                            ? BoxDecoration(
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                    color: Colors.grey.shade400, width: 1),
-                                image: DecorationImage(
-                                  fit: BoxFit.cover,
-                                  image: AssetImage('assets/images/dp/dp.jpg'),
-                                ),
-
-                                // color: Colors.grey.shade100,
-                              )
-                            : BoxDecoration(
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                    color: Colors.grey.shade400, width: 1),
-                                image: DecorationImage(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  GestureDetector(
+                    onTap: () {
+                      // _setProfilePic();
+                      showOverlay();
+                    },
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: imageFile == null
+                              ? BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                      color: Colors.grey.shade400, width: 1),
+                                  image: DecorationImage(
                                     fit: BoxFit.cover,
-                                    image: FileImage(imageFile)),
-                              ),
-                        // child: Center(
-                        //   child: imageFile == null
-                        //       ? Icon(Icons.person_add_alt_1,
-                        //           size: 50, color: Colors.black)
-                        //       : Container(),
-                        // ),
-                      ),
-                      // Positioned(
-                      //   child: Container(
-                      //     height: 8,
-                      //     width: 8,
-                      //     child: Icon(Icons.add),
-                      //   ),
-                      // )
-                      Container(
-                        height: 100,
-                        width: 100,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          // color: Colors.black.withOpacity(.3),
+                                    image:
+                                        AssetImage('assets/images/dp/dp.jpg'),
+                                  ),
+
+                                  // color: Colors.grey.shade100,
+                                )
+                              : BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                      color: Colors.grey.shade400, width: 1),
+                                  image: DecorationImage(
+                                      fit: BoxFit.cover,
+                                      image: FileImage(imageFile)),
+                                ),
+                          // child: Center(
+                          //   child: imageFile == null
+                          //       ? Icon(Icons.person_add_alt_1,
+                          //           size: 50, color: Colors.black)
+                          //       : Container(),
+                          // ),
                         ),
-                        child: Center(
-                            // child: Text("Change photo"),
-                            ),
-                      )
-                    ],
-                  ),
-                )
-              ]),
-              SizedBox(height: 50),
-              Text(
-                "When is your birthday?",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                      height: 80,
-                      width: 50,
-                      margin: EdgeInsets.all(5),
-                      child: ListWheelScrollView(
-                          controller: _dateController,
-                          itemExtent: 30,
-                          children: [
-                            for (int i = 1; i <= 31; i++)
-                              Text(
-                                '$i',
-                                style: style(),
+                        // Positioned(
+                        //   child: Container(
+                        //     height: 8,
+                        //     width: 8,
+                        //     child: Icon(Icons.add),
+                        //   ),
+                        // )
+                        Container(
+                          height: 100,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            // color: Colors.black.withOpacity(.3),
+                          ),
+                          child: Center(
+                              // child: Text("Change photo"),
                               ),
-                          ],
-                          overAndUnderCenterOpacity: 0.5,
-                          useMagnifier: true,
-                          diameterRatio: 1.5,
-                          offAxisFraction: .5,
-                          physics: BouncingScrollPhysics(),
-                          onSelectedItemChanged: (data) {
-                            date = data + 1;
-                            dateString = date < 10 ? '0$date' : '$date';
-                            print('$dateString/$monthString/$yearString');
-                          })),
-                  Container(
-                      height: 80,
-                      width: 50,
-                      margin: EdgeInsets.all(5),
-                      child: ListWheelScrollView(
-                          controller: _monthController,
-                          itemExtent: 30,
-                          children: [
-                            for (int i = 1; i <= 12; i++)
-                              Text(
-                                months[i],
-                                textAlign: TextAlign.left,
-                                textDirection: TextDirection.ltr,
-                                style: style(),
-                              ),
-                          ],
-                          overAndUnderCenterOpacity: 0.5,
-                          useMagnifier: true,
-                          diameterRatio: 1.5,
-                          offAxisFraction: .5,
-                          physics: BouncingScrollPhysics(),
-                          onSelectedItemChanged: (data) {
-                            month = data + 1;
-                            monthString = month < 10 ? '0$month' : '$month';
-                            print('$dateString/$monthString/$yearString');
-                          })),
-                  Container(
-                      height: 80,
-                      width: 50,
-                      margin: EdgeInsets.all(5),
-                      child: ListWheelScrollView(
-                          controller: _yearController,
-                          itemExtent: 30,
-                          children: [
-                            for (int i = 1980; i <= 2021; i++)
-                              Text(
-                                '$i',
-                                style: style(),
-                              ),
-                          ],
-                          overAndUnderCenterOpacity: 0.5,
-                          useMagnifier: true,
-                          diameterRatio: 1.5,
-                          offAxisFraction: .5,
-                          physics: BouncingScrollPhysics(),
-                          onSelectedItemChanged: (data) {
-                            year = data + 1980; //to increment the index by 1980
-                            yearString = '$year';
-                            print('$dateString/$monthString/$yearString');
-                          }))
-                ],
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: nameField("First Name", _fNameController),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: nameField("Last Name", _lNameController),
-                  ),
-                ],
-              ),
-            ],
+                        )
+                      ],
+                    ),
+                  )
+                ]),
+                SizedBox(height: 50),
+                Text(
+                  "When is your birthday?",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                        height: 80,
+                        width: 50,
+                        margin: EdgeInsets.all(5),
+                        child: ListWheelScrollView(
+                            controller: _dateController,
+                            itemExtent: 30,
+                            children: [
+                              for (int i = 1; i <= 31; i++)
+                                Text(
+                                  '$i',
+                                  style: style(),
+                                ),
+                            ],
+                            overAndUnderCenterOpacity: 0.5,
+                            useMagnifier: true,
+                            diameterRatio: 1.5,
+                            offAxisFraction: .5,
+                            physics: BouncingScrollPhysics(),
+                            onSelectedItemChanged: (data) {
+                              date = data + 1;
+                              dateString = date < 10 ? '0$date' : '$date';
+                              print('$dateString/$monthString/$yearString');
+                            })),
+                    Container(
+                        height: 80,
+                        width: 50,
+                        margin: EdgeInsets.all(5),
+                        child: ListWheelScrollView(
+                            controller: _monthController,
+                            itemExtent: 30,
+                            children: [
+                              for (int i = 1; i <= 12; i++)
+                                Text(
+                                  months[i],
+                                  textAlign: TextAlign.left,
+                                  textDirection: TextDirection.ltr,
+                                  style: style(),
+                                ),
+                            ],
+                            overAndUnderCenterOpacity: 0.5,
+                            useMagnifier: true,
+                            diameterRatio: 1.5,
+                            offAxisFraction: .5,
+                            physics: BouncingScrollPhysics(),
+                            onSelectedItemChanged: (data) {
+                              month = data + 1;
+                              monthString = month < 10 ? '0$month' : '$month';
+                              print('$dateString/$monthString/$yearString');
+                            })),
+                    Container(
+                        height: 80,
+                        width: 50,
+                        margin: EdgeInsets.all(5),
+                        child: ListWheelScrollView(
+                            controller: _yearController,
+                            itemExtent: 30,
+                            children: [
+                              for (int i = 1980; i <= 2021; i++)
+                                Text(
+                                  '$i',
+                                  style: style(),
+                                ),
+                            ],
+                            overAndUnderCenterOpacity: 0.5,
+                            useMagnifier: true,
+                            diameterRatio: 1.5,
+                            offAxisFraction: .5,
+                            physics: BouncingScrollPhysics(),
+                            onSelectedItemChanged: (data) {
+                              year =
+                                  data + 1980; //to increment the index by 1980
+                              yearString = '$year';
+                              print('$dateString/$monthString/$yearString');
+                            }))
+                  ],
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: nameField("First Name", _fNameController),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: nameField("Last Name", _lNameController),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

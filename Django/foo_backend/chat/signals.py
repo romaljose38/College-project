@@ -1,10 +1,15 @@
-from django.db.models.signals import post_save, pre_delete, m2m_changed
+from django.db.models.signals import (
+    post_save, 
+    pre_delete, 
+    m2m_changed,
+    post_delete
+)
 from .models import (
     Profile, 
     ChatMessage, 
-    FriendRequest,
-    Notification,
+    FriendRequest, 
     Story,
+    Post,
     StoryNotification,
     StoryComment,
     Notification,
@@ -19,13 +24,41 @@ from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from django.utils import timezone
 from foo_backend.celery import app
+
+
+from datetime import datetime, timedelta
 # from .signal_registry import profile
 
 User = get_user_model()
 
+
+
+# Signals to delete the media associated with a model if an instance is deleted.
+@receiver(post_delete, sender = User)
+def delete_user_media(sender, instance, **kwargs):
+    if(instance.profile.profile_pic):
+        instance.profile.profile_pic.delete(False)
+
+
+@receiver(post_delete, sender = Story)
+def delete_story_media(sender, instance, **kwargs):
+    if(instance.file):
+        instance.file.delete(False)
+
+
+@receiver(post_delete, sender = Post)
+def delete_post_media(sender, instance, **kwargs):
+    if(instance.file):
+        instance.file.delete(False)
+
+
+@receiver(post_delete, sender = ChatMessage)
+def delete_chat_media(sender, instance, **kwargs):
+    if(instance.file):
+        instance.file.delete(False)
+
+
 # Signal to create a profile when a user object is created
-
-
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:
@@ -115,7 +148,6 @@ def story_created_notif_celery(id):
                     'dp':instance.user.profile.profile_pic.url if instance.user.profile.profile_pic else "",
                     's_id':instance.id,
                     'url':instance.file.url,
-                    'caption':instance.caption,
                     'n_id':notification.id,
                     'time':instance.time_created.strftime("%Y-%m-%d %H:%M:%S"),
                 }
@@ -247,7 +279,7 @@ def story_deleted_notif_celery(user_id,story_id):
                 print(user.username)
                 _dict = {
                     'type':'story_delete',
-                    'u_id':_user.id,
+                    'u':_user.username,
                     's_id':story_id,
                     'n_id':notification.id,
                 }
@@ -321,3 +353,13 @@ def tell_them_i_have_changed_my_dp(id):
                 'n_id':notif.id,
             }
             async_to_sync(channel_layer.group_send)(friend.username, _dict)
+
+
+@app.task(name="story_remover")
+def delete_expired_stories():
+    stories_qs = Story.objects.all()
+    cur_time = datetime.now()
+    for story in stories_qs:
+        story_age = story.time_created - cur_time
+        if(story_age >= timedelta(hours=24)):
+            story.delete()

@@ -49,9 +49,9 @@ class _RendererState extends State<Renderer> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.prefs.containsKey("loggedIn")
-        ? LandingPageProxy()
-        : RegisterView();
+    // return widget.prefs.containsKey("loggedIn")
+    //     ? LandingPageProxy()
+    return RegisterView();
   }
 }
 

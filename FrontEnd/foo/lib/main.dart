@@ -42,11 +42,11 @@ Future<void> main() async {
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   prefs.setString("curUser", "");
-  SocketChannel socket;
-  if (prefs.containsKey('username')) {
-    print("in main");
-    socket = SocketChannel();
-  }
+  // SocketChannel socket;
+  // if (prefs.containsKey('username')) {
+  //   print("in main");
+  //   socket = SocketChannel();
+  // }
 
   await Firebase.initializeApp();
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -79,6 +79,7 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: generateRoute,
 
       home: Renderer(prefs: prefs),
+      // home: CalendarBackground(),
     );
   }
 }
