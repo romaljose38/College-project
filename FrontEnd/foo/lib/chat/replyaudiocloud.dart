@@ -480,53 +480,56 @@ class _AudioReplyCloudState extends State<AudioReplyCloud> {
   @override
   Widget build(BuildContext context) {
     print(widget.msgObj.filePath);
-    return GestureDetector(
-        onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
-                (widget.msgObj.isMe == false)
-            ? () {
-                print("on long press");
-                // widget.outerSetState(() {
-                //   widget.hasSelectedSomething = true;
-                // });
-                widget.outerSetState();
-                setState(() {
-                  hasSelected = true;
-                });
-                widget.forwardMap[widget.msgObj.id] = widget.msgObj;
-                print(widget.forwardMap);
-              }
-            : null,
-        onTap: (widget.msgObj.haveReachedServer ?? false) ||
-                (widget.msgObj.isMe == false)
-            ? (widget.hasSelectedSomething ?? false)
+    return this.widget.disableSwipe
+        ? cloudContent()
+        : GestureDetector(
+            onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false)
                 ? () {
-                    if (hasSelected == true) {
-                      if (widget.forwardMap.length == 1) {
-                        widget.forwardRemover();
-                        widget.outerSetState(false);
-                        widget.forwardMap.remove(widget.msgObj.id);
-                      } else {
-                        widget.forwardMap.remove(widget.msgObj.id);
-                      }
-                      setState(() {
-                        hasSelected = false;
-                      });
-                    } else if (hasSelected == false) {
-                      widget.forwardMap[widget.msgObj.id] = widget.msgObj;
-                      setState(() {
-                        hasSelected = true;
-                      });
-                    }
+                    print("on long press");
+                    // widget.outerSetState(() {
+                    //   widget.hasSelectedSomething = true;
+                    // });
+                    widget.outerSetState();
+                    setState(() {
+                      hasSelected = true;
+                    });
+                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
                     print(widget.forwardMap);
                   }
-                : null
-            : null,
-        child: Container(
-            color: //(widget.hasSelectedSomething &&
-                (widget.forwardMap.containsKey(widget.msgObj.id) && hasSelected)
-                    ? Colors.blue.withOpacity(.3)
-                    : Colors.transparent,
-            child: widget.disableSwipe ? cloudContent() : swipeAble()));
+                : null,
+            onTap: (widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false)
+                ? (widget.hasSelectedSomething ?? false)
+                    ? () {
+                        if (hasSelected == true) {
+                          if (widget.forwardMap.length == 1) {
+                            widget.forwardRemover();
+                            widget.outerSetState(false);
+                            widget.forwardMap.remove(widget.msgObj.id);
+                          } else {
+                            widget.forwardMap.remove(widget.msgObj.id);
+                          }
+                          setState(() {
+                            hasSelected = false;
+                          });
+                        } else if (hasSelected == false) {
+                          widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                          setState(() {
+                            hasSelected = true;
+                          });
+                        }
+                        print(widget.forwardMap);
+                      }
+                    : null
+                : null,
+            child: Container(
+                color: //(widget.hasSelectedSomething &&
+                    (widget.forwardMap.containsKey(widget.msgObj.id) &&
+                            hasSelected)
+                        ? Colors.blue.withOpacity(.3)
+                        : Colors.transparent,
+                child: swipeAble()));
   }
 }
 

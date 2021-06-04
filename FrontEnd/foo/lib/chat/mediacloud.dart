@@ -485,55 +485,56 @@ class _MediaCloudState extends State<MediaCloud> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
-              (widget.msgObj.isMe == false)
-          ? () {
-              print("on long press");
-              // widget.outerSetState(() {
-              //   widget.hasSelectedSomething = true;
-              // });
-              widget.outerSetState();
-              setState(() {
-                hasSelected = true;
-              });
-              widget.forwardMap[widget.msgObj.id] = widget.msgObj;
-              print(widget.forwardMap);
-            }
-          : null,
-      onTap: (widget.msgObj.haveReachedServer ?? false) ||
-              (widget.msgObj.isMe == false)
-          ? (widget.hasSelectedSomething ?? false)
-              ? () {
-                  if (hasSelected == true) {
-                    if (widget.forwardMap.length == 1) {
-                      widget.forwardRemover();
-                      widget.outerSetState(false);
-                      widget.forwardMap.remove(widget.msgObj.id);
-                    } else {
-                      widget.forwardMap.remove(widget.msgObj.id);
-                    }
-                    setState(() {
-                      hasSelected = false;
-                    });
-                  } else if (hasSelected == false) {
-                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+    return this.widget.disableSwipe
+        ? cloudContent()
+        : GestureDetector(
+            onLongPress: (widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false)
+                ? () {
+                    print("on long press");
+                    // widget.outerSetState(() {
+                    //   widget.hasSelectedSomething = true;
+                    // });
+                    widget.outerSetState();
                     setState(() {
                       hasSelected = true;
                     });
+                    widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                    print(widget.forwardMap);
                   }
-                  print(widget.forwardMap);
-                }
-              : null
-          : null,
-      child: Container(
-        child: widget.disableSwipe ? cloudContent() : swipeAble(),
-        color: //(widget.hasSelectedSomething &&
-            (widget.forwardMap.containsKey(widget.msgObj.id) && hasSelected)
-                ? Colors.blue.withOpacity(.3)
-                : Colors.transparent,
-      ),
-    );
+                : null,
+            onTap: (widget.msgObj.haveReachedServer ?? false) ||
+                    (widget.msgObj.isMe == false)
+                ? (widget.hasSelectedSomething ?? false)
+                    ? () {
+                        if (hasSelected == true) {
+                          if (widget.forwardMap.length == 1) {
+                            widget.forwardRemover();
+                            widget.outerSetState(false);
+                            widget.forwardMap.remove(widget.msgObj.id);
+                          } else {
+                            widget.forwardMap.remove(widget.msgObj.id);
+                          }
+                          setState(() {
+                            hasSelected = false;
+                          });
+                        } else if (hasSelected == false) {
+                          widget.forwardMap[widget.msgObj.id] = widget.msgObj;
+                          setState(() {
+                            hasSelected = true;
+                          });
+                        }
+                        print(widget.forwardMap);
+                      }
+                    : null
+                : null,
+            child: Container(
+                color: //(widget.hasSelectedSomething &&
+                    (widget.forwardMap.containsKey(widget.msgObj.id) &&
+                            hasSelected)
+                        ? Colors.blue.withOpacity(.3)
+                        : Colors.transparent,
+                child: swipeAble()));
   }
 }
 
