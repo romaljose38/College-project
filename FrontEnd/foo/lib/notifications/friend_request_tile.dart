@@ -43,8 +43,8 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    super.dispose();
     _animationController.dispose();
+    super.dispose();
   }
 
   void showOverlay() {
@@ -78,6 +78,9 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
           notifsBox.get(widget.notification.notifId);
       currentNotification.hasAccepted = true;
       currentNotification.save();
+      setState(() {
+        child = static();
+      });
 
       _animationController.reverse().whenComplete(() => overlayEntry.remove());
       return true;
