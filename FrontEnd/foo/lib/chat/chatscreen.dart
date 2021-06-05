@@ -151,11 +151,11 @@ class _ChatScreenState extends State<ChatScreen>
         } else if (existingThread.isTyping == false) {
           print("stopped");
           if (mounted) {
-            if (existingThread.isOnline) {
+            if (existingThread.isOnline ?? false) {
               setState(() {
                 userStatus = "Online";
               });
-            } else {
+            } else if (existingThread.lastSeen != null) {
               setState(() {
                 userStatus = timeago.format(existingThread.lastSeen);
               });
@@ -1084,6 +1084,7 @@ class _ChatScreenState extends State<ChatScreen>
             sendImage: _sendImage,
             sendAudio: _sendAudio,
             focusNode: focusNode,
+            prefs: widget.prefs,
           ),
         ]),
       ),
@@ -1097,10 +1098,12 @@ class RecordApp extends StatefulWidget {
   final Function sendAudio;
   final FocusNode focusNode;
   final int refreshId;
+  final SharedPreferences prefs;
 
   RecordApp(
       {this.sendMessage,
       this.sendImage,
+      this.prefs,
       this.sendAudio,
       this.focusNode,
       this.refreshId});
@@ -1126,6 +1129,7 @@ class _RecordAppState extends State<RecordApp>
   Timer _timer;
   FocusNode _chatFocus;
   bool hasSent = false;
+  int curSec;
 
   @override
   void initState() {
@@ -1211,13 +1215,12 @@ class _RecordAppState extends State<RecordApp>
     _startTimer();
     animateMicColor();
     dynamic appDir = await getApplicationDocumentsDirectory();
-    path = appDir.path +
-        '/Audio/' +
-        DateTime.now().millisecondsSinceEpoch.toString() +
-        '.m4a';
+    curSec = DateTime.now().millisecondsSinceEpoch;
+    path = appDir.path + '/Audio/' + curSec.toString() + '.m4a';
     File(path).createSync(recursive: true);
     try {
       if (await Record.hasPermission()) {
+        widget.prefs.setInt('lastAudio', curSec);
         await Record.start(path: path);
 
         _isRecording = await Record.isRecording();
@@ -1228,9 +1231,12 @@ class _RecordAppState extends State<RecordApp>
   }
 
   Future<void> _stopRecording() async {
+    print("calling stop");
     await Record.stop();
     // String _path = await recorder.stopRecorder();
-    if (hasSent == false) {
+    if (widget.prefs.getInt('lastAudio') == curSec) {
+      print("sending");
+      widget.prefs.setInt('lastAudio', curSec + 1);
       widget.sendAudio(path);
     }
   }
