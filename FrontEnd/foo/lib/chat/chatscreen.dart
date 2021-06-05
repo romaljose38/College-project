@@ -612,8 +612,8 @@ class _ChatScreenState extends State<ChatScreen>
                         }
                       } else {
                         deleteforMe();
+                        Navigator.pop(context);
                       }
-                      Navigator.pop(context);
                     },
                     child: Text("Yes")),
                 TextButton(

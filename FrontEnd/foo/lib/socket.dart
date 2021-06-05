@@ -55,7 +55,7 @@ class SocketChannel {
       if (resp.statusCode == 200) {
         if (!isConnected) {
           await setPrefs();
-          String wsUrl = 'ws://$localhost:8000/ws/chat_room/' +
+          String wsUrl = 'ws://$localhost/ws/chat_room/' +
               _prefs.getString("username") +
               "/";
           // ignore: unused_local_variable
@@ -301,7 +301,7 @@ class SocketChannel {
     existingThread.save();
   }
 
-  void addNewStory(data) {
+  void addNewStory(data) async {
     var storyBox = Hive.box('MyStories');
     print(data);
 
@@ -329,7 +329,8 @@ class SocketChannel {
         notificationId: data['n_id'],
       ));
 
-      storyBox.put(data['u_id'], newUser);
+      await storyBox.put(data['u_id'], newUser);
+      newUser.save();
     }
     sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }

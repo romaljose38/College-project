@@ -10,6 +10,7 @@ import 'package:foo/test_cred.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:foo/stories/modalsheetviews.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:io';
 import 'dart:async';
@@ -117,6 +118,7 @@ class _StoryScreenState extends State<StoryScreen>
   VideoPlayerController videoController;
   AnimationController _animController;
   TransformationController transformationController;
+  SharedPreferences _prefs;
 
   @override
   initState() {
@@ -192,9 +194,10 @@ class _StoryScreenState extends State<StoryScreen>
       }
 
       if (stories[_currentIndex].viewed == null) {
+        _prefs = await SharedPreferences.getInstance();
         Map<String, String> hasViewedObject = {
           'id': stories[_currentIndex].storyId.toString(),
-          'u_id': widget.storyObject.userId.toString(),
+          'u_id': _prefs.getInt('id').toString(),
         };
 
         Uri url = Uri.http(localhost, 'api/add_view', hasViewedObject);
@@ -360,7 +363,7 @@ class _StoryScreenState extends State<StoryScreen>
                 ),
               ),
               Offstage(
-                offstage: caption == '',
+                offstage: (caption == '' || caption == null),
                 child: Align(
                   alignment: Alignment(0, 0.9),
                   child: Container(
@@ -371,7 +374,7 @@ class _StoryScreenState extends State<StoryScreen>
                     ),
                     child: Center(
                       child: Text(
-                        '$caption',
+                        caption ?? '',
                         style: GoogleFonts.lato(color: Colors.white),
                       ),
                     ),
@@ -634,10 +637,10 @@ class _MyStoryScreenState extends State<MyStoryScreen>
         });
       }
 
-      if (stories[_currentIndex].viewed == null) {
-        widget.storyObject.stories[_currentIndex].viewed = true;
-        widget.storyObject.save();
-      }
+      // if (stories[_currentIndex].viewed == null) {
+      //   widget.storyObject.stories[_currentIndex].viewed = true;
+      //   widget.storyObject.save();
+      // }
       if (mediaType == 'image') {
         _animController.duration = Duration(seconds: 10);
       }
@@ -778,7 +781,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                 ),
               ),
               Offstage(
-                offstage: caption == '',
+                offstage: (caption == '' || caption == null),
                 child: Align(
                   alignment: Alignment(0, 0.9),
                   child: Container(
@@ -789,7 +792,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                     ),
                     child: Center(
                       child: Text(
-                        '$caption',
+                        caption ?? '',
                         style: GoogleFonts.lato(color: Colors.white),
                       ),
                     ),
