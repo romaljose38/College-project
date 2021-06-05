@@ -76,11 +76,18 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
       Box notifsBox = Hive.box("Notifications");
       Notifications currentNotification =
           notifsBox.get(widget.notification.notifId);
-      currentNotification.hasAccepted = true;
-      currentNotification.save();
-      setState(() {
-        child = static();
-      });
+      if (action == "accept") {
+        currentNotification.hasAccepted = true;
+        currentNotification.save();
+        setState(() {
+          child = static();
+        });
+      } else {
+        currentNotification.delete();
+        setState(() {
+          child = Container();
+        });
+      }
 
       _animationController.reverse().whenComplete(() => overlayEntry.remove());
       return true;
