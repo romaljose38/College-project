@@ -8,7 +8,12 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
-class NotificationScreen extends StatelessWidget {
+class NotificationScreen extends StatefulWidget {
+  @override
+  _NotificationScreenState createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends State<NotificationScreen> {
   Future<String> getDp() async {
     var dir = await getApplicationDocumentsDirectory();
     return dir.path + "/images/dp/dp.jpg";
@@ -119,7 +124,8 @@ class NotificationScreen extends StatelessWidget {
                           List notifications = box.values.toList() ?? [];
                           print(notifications);
                           if (notifications.length > 1) {
-                            // notifications.sort((a,b)=>a.)
+                            notifications.sort((a, b) =>
+                                b.timeCreated.compareTo(a.timeCreated));
                           }
                           return ListView.builder(
                             itemCount: notifications.length ?? 0,

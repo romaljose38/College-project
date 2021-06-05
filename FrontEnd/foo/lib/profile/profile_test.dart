@@ -33,6 +33,7 @@ class Profile extends StatelessWidget {
   String fName;
   String lName;
   int profileUserId;
+  int notifId;
 
   Profile({this.userId, this.myProfile = false});
 
@@ -43,14 +44,17 @@ class Profile extends StatelessWidget {
     var response;
     if (myProfile) {
       int myId = _prefs.getInt('id');
-      response = await http.get(
-          Uri.http(localhost, '/api/$myId/profile', {'username': curUser}));
+      response = await http.get(Uri.http(localhost, '/api/$myId/profile',
+          {'curUserId': _prefs.getInt('id').toString()}));
     } else {
-      response = await http.get(
-          Uri.http(localhost, '/api/$userId/profile', {'username': curUser}));
+      response = await http.get(Uri.http(localhost, '/api/$userId/profile',
+          {'curUserId': _prefs.getInt('id').toString()}));
     }
     var respJson = jsonDecode(response.body);
     requestStatus = respJson['requestStatus'];
+    notifId = respJson['requestStatus'] == 'pending_acceptance'
+        ? respJson['notif_id']
+        : -2;
     profUserName = respJson['username'];
     isMe = respJson['isMe'];
     friendsCount = respJson['friends_count'];
@@ -94,6 +98,7 @@ class Profile extends StatelessWidget {
               List posts = snapshot.data;
               if (snapshot.data != null) {
                 return ProfileTest(
+                    key: ValueKey(this.notifId),
                     posts: posts,
                     userName: this.profUserName,
                     userId: this.userId,
@@ -107,6 +112,7 @@ class Profile extends StatelessWidget {
                     friendsCount: this.friendsCount,
                     postsCount: this.postsCount,
                     myProfile: this.myProfile,
+                    notifId: this.notifId,
                     isMe: this.isMe);
               }
               return Center(
@@ -136,6 +142,7 @@ class ProfileTest extends StatefulWidget {
   int friendsCount;
   int postsCount;
   bool myProfile;
+  int notifId;
 
   ProfileTest(
       {Key key,
@@ -145,6 +152,7 @@ class ProfileTest extends StatefulWidget {
       this.myProfile,
       this.userDpUrl,
       this.about,
+      this.notifId,
       this.profileId,
       this.friendsCount,
       this.postsCount,
@@ -162,24 +170,50 @@ class ProfileTest extends StatefulWidget {
 class _ProfileTestState extends State<ProfileTest>
     with TickerProviderStateMixin {
   AnimationController animationController;
-
+  AnimationController _progressAnimationController;
+  Animation _progress;
   Animation animation;
   OverlayEntry overlayEntry;
   bool hasSentRequest = false;
   String requestStatus;
+  bool isAbsorbing = false;
+  OverlayEntry progressOverlay;
 
   @override
   void initState() {
     super.initState();
     // getData();
     requestStatus = widget.requestStatus;
-
+    _progressAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _progress =
+        Tween<double>(begin: 0, end: 1).animate(_progressAnimationController);
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     animation = Tween<double>(begin: 0, end: 1).animate(animationController);
   }
 
   String getUrl(String url) => "http://" + localhost + url;
+  void showProgressOverlay() {
+    OverlayState _state = Overlay.of(context);
+    progressOverlay = OverlayEntry(
+        builder: (context) => FadeTransition(
+            opacity: _progress,
+            child: Scaffold(
+                backgroundColor: Colors.black.withOpacity(.3),
+                body: Center(
+                    child: SizedBox(
+                        height: 70,
+                        width: 70,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1,
+                          backgroundColor: Colors.white,
+                        ))))));
+
+    _progressAnimationController
+        .forward()
+        .whenComplete(() => _state.insert(progressOverlay));
+  }
 
   void showOverlay(BuildContext context, String url) {
     OverlayState overlayState = Overlay.of(context);
@@ -218,42 +252,126 @@ class _ProfileTestState extends State<ProfileTest>
   }
 
   Future<void> sendFriendRequest() async {
+    showProgressOverlay();
+    setState(() {
+      isAbsorbing = true;
+    });
     var resp = await http.get(Uri.http(localhost, '/api/add_friend',
         {'username': widget.curUser, 'id': widget.userId.toString()}));
 
     if (resp.statusCode == 200) {
       setState(() {
         requestStatus = "pending";
+        isAbsorbing = false;
       });
+      progressOverlay.remove();
+    } else {
+      setState(() {
+        isAbsorbing = false;
+      });
+      progressOverlay.remove();
+    }
+  }
+
+  acceptRequest() async {
+    showProgressOverlay();
+    setState(() {
+      isAbsorbing = true;
+    });
+    var resp = await http.get(Uri.http(localhost, '/api/handle_request',
+        {'id': widget.notifId.toString(), 'action': "accept"}));
+    if (resp.statusCode == 200) {
+      Box notifsBox = Hive.box("Notifications");
+      Notifications currentNotification = notifsBox.get(widget.notifId);
+      currentNotification.hasAccepted = true;
+      currentNotification.save();
+      widget.requestStatus = "accepted";
+      setState(() {
+        requestStatus = "accepted";
+        isAbsorbing = false;
+      });
+
+      _progressAnimationController
+          .reverse()
+          .whenComplete(() => progressOverlay.remove());
+    } else {
+      setState(() {
+        isAbsorbing = false;
+      });
+      _progressAnimationController
+          .reverse()
+          .whenComplete(() => progressOverlay.remove());
+    }
+  }
+
+  rejectRequest() async {
+    showProgressOverlay();
+    setState(() {
+      isAbsorbing = true;
+    });
+    var resp = await http.get(Uri.http(localhost, '/api/handle_request',
+        {'id': widget.notifId.toString(), 'action': "reject"}));
+    if (resp.statusCode == 200) {
+      Box notifsBox = Hive.box("Notifications");
+      Notifications currentNotification = notifsBox.get(widget.notifId);
+      widget.requestStatus = "rejected";
+      setState(() {
+        requestStatus = "open";
+        isAbsorbing = false;
+      });
+      currentNotification.delete();
+      _progressAnimationController
+          .reverse()
+          .whenComplete(() => progressOverlay.remove());
+    } else {
+      setState(() {
+        isAbsorbing = false;
+      });
+      _progressAnimationController
+          .reverse()
+          .whenComplete(() => progressOverlay.remove());
     }
   }
 
   //renders the relationship button with the appropriate icon
-  IconButton properStatusButton() {
+  List<Widget> properStatusButton() {
     switch (requestStatus) {
       case "pending":
         {
-          return IconButton(
-              icon: Icon(Icons.more_horiz_outlined), onPressed: () {});
+          return [
+            IconButton(icon: Icon(Icons.more_horiz_outlined), onPressed: () {})
+          ];
         }
       case "accepted":
         {
-          return IconButton(
-              icon: Icon(Ionicons.person_outline), onPressed: () {});
+          return [
+            IconButton(icon: Icon(Ionicons.person_outline), onPressed: () {})
+          ];
+        }
+      case "pending_acceptance":
+        {
+          return [
+            IconButton(icon: Icon(Icons.clear), onPressed: rejectRequest),
+            IconButton(icon: Icon(Icons.check), onPressed: acceptRequest)
+          ];
         }
       case "rejected":
         {
-          return IconButton(
-              icon: Icon(Ionicons.person_add_outline),
-              onPressed: () {
-                print("rejected");
-              });
+          return [
+            IconButton(
+                icon: Icon(Ionicons.person_add_outline),
+                onPressed: () {
+                  print("rejected");
+                })
+          ];
         }
       case "open":
         {
-          return IconButton(
-              icon: Icon(Ionicons.person_add_outline),
-              onPressed: sendFriendRequest);
+          return [
+            IconButton(
+                icon: Icon(Ionicons.person_add_outline),
+                onPressed: sendFriendRequest)
+          ];
         }
     }
   }
@@ -265,7 +383,7 @@ class _ProfileTestState extends State<ProfileTest>
     List widgetList;
     if (!widget.isMe) {
       widgetList = [
-        properStatusButton(),
+        ...properStatusButton(),
         Spacer(),
       ];
       if (requestStatus == "accepted") {
@@ -491,7 +609,7 @@ class _ProfileTestState extends State<ProfileTest>
             onPressed: widget.myProfile
                 ? null
                 : () {
-                    Navigator.pop(context);
+                    Navigator.pop(context, requestStatus);
                   },
           ),
           Text(
@@ -617,26 +735,35 @@ class _ProfileTestState extends State<ProfileTest>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return Container(
-      height: size.height,
-      width: size.width,
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(.2),
-          spreadRadius: .5,
-          blurRadius: 20,
-          offset: Offset(-3, 0),
-        )
-      ]),
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: topPortion(),
+    return WillPopScope(
+      onWillPop: () {
+        Navigator.pop(context, requestStatus);
+        return Future.value(false);
+      },
+      child: AbsorbPointer(
+        absorbing: isAbsorbing,
+        child: Container(
+          height: size.height,
+          width: size.width,
+          decoration: BoxDecoration(color: Colors.white, boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.2),
+              spreadRadius: .5,
+              blurRadius: 20,
+              offset: Offset(-3, 0),
+            )
+          ]),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: topPortion(),
+              ),
+              ...(widget.posts.length >= 3
+                  ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
+                  : [grid(false)]),
+            ],
           ),
-          ...(widget.posts.length >= 3
-              ? [SliverToBoxAdapter(child: tripleTier()), grid(true)]
-              : [grid(false)]),
-        ],
+        ),
       ),
     );
   }
@@ -774,7 +901,8 @@ class _ProfileTestState extends State<ProfileTest>
         container(child),
         Positioned.fill(
             child: Container(
-                margin: EdgeInsets.fromLTRB(3, 0, 8, 5),
+                margin:
+                    isMinor ? EdgeInsets.fromLTRB(3, 0, 8, 5) : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(.4),
                   borderRadius: BorderRadius.circular(15),
