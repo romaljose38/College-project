@@ -478,15 +478,19 @@ class _CommentScreenState extends State<CommentScreen>
   Container postAudio(height) => Container(
       height: height,
       width: double.infinity,
-      decoration: BoxDecoration(
-        // boxShadow: [BoxShadow()],
-        // borderRadius: BorderRadius.circular(25),
-        image: DecorationImage(
-          image: CachedNetworkImageProvider(thumbnailPath),
-          // image: CachedNetworkImageProvider(widget.post.postUrl),
-          fit: BoxFit.cover,
-        ),
-      ),
+      decoration: (thumbnailPath != '')
+          ? BoxDecoration(
+              // boxShadow: [BoxShadow()],
+              // borderRadius: BorderRadius.circular(25),
+              image: DecorationImage(
+                image: CachedNetworkImageProvider(thumbnailPath),
+                // image: CachedNetworkImageProvider(widget.post.postUrl),
+                fit: BoxFit.cover,
+              ),
+            )
+          : BoxDecoration(
+              color: Colors.black,
+            ),
       child: Center(
         child: Player(url: postUrl),
       ));
@@ -494,13 +498,15 @@ class _CommentScreenState extends State<CommentScreen>
   Container postAudioBlurred(height) => Container(
       height: height,
       width: double.infinity,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: CachedNetworkImageProvider(thumbnailPath),
-          // image: CachedNetworkImageProvider(widget.post.postUrl),
-          fit: BoxFit.cover,
-        ),
-      ),
+      decoration: (thumbnailPath != '')
+          ? BoxDecoration(
+              image: DecorationImage(
+                image: CachedNetworkImageProvider(thumbnailPath),
+                // image: CachedNetworkImageProvider(widget.post.postUrl),
+                fit: BoxFit.cover,
+              ),
+            )
+          : BoxDecoration(color: Colors.black),
       child: Center(
           child: BackdropFilter(
         child: Player(url: postUrl),

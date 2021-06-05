@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'models.g.dart';
 
@@ -534,9 +535,24 @@ class UserStoryModel extends HiveObject {
     return true; //return true if stories is null
   }
 
-  void deleteOldStory({int id}) {
+  Future<void> _deleteMediaFromDrive(String url, int id) async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    int prefId = _prefs.getInt('id');
+    String folderPath = (prefId == id)
+        ? '/storage/emulated/0/foo/stories/upload'
+        : '/storage/emulated/0/foo/stories';
+    String fileName = url.split('/').last;
+    String fileNameWithPath = '$folderPath/$fileName';
+    File file = File(fileNameWithPath);
+    if (file.existsSync()) {
+      file.deleteSync();
+    }
+  }
+
+  void deleteOldStory({int id, int userId}) {
     for (int i = 0; i < stories.length; i++) {
       if (stories[i].storyId == id) {
+        _deleteMediaFromDrive(stories[i].file, userId);
         stories.removeAt(i);
       }
     }

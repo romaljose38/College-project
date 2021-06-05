@@ -199,15 +199,19 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   Container postAudio(height) => Container(
       height: height,
       width: double.infinity,
-      decoration: BoxDecoration(
-        // boxShadow: [BoxShadow()],
-        // borderRadius: BorderRadius.circular(25),
-        image: DecorationImage(
-          image: CachedNetworkImageProvider(widget.post.thumbNailPath),
-          // image: CachedNetworkImageProvider(widget.post.postUrl),
-          fit: BoxFit.cover,
-        ),
-      ),
+      decoration: (widget.post.thumbNailPath != '')
+          ? BoxDecoration(
+              // boxShadow: [BoxShadow()],
+              // borderRadius: BorderRadius.circular(25),
+              image: DecorationImage(
+                image: CachedNetworkImageProvider(widget.post.thumbNailPath),
+                // image: CachedNetworkImageProvider(widget.post.postUrl),
+                fit: BoxFit.cover,
+              ),
+            )
+          : BoxDecoration(
+              color: Colors.black,
+            ),
       child: Center(
         child: Player(url: widget.post.postUrl),
       ));
@@ -215,13 +219,17 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
   Container postAudioBlurred(height) => Container(
       height: height,
       width: double.infinity,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: CachedNetworkImageProvider(widget.post.thumbNailPath),
-          // image: CachedNetworkImageProvider(widget.post.postUrl),
-          fit: BoxFit.cover,
-        ),
-      ),
+      decoration: (widget.post.thumbNailPath != '')
+          ? BoxDecoration(
+              image: DecorationImage(
+                image: CachedNetworkImageProvider(widget.post.thumbNailPath),
+                // image: CachedNetworkImageProvider(widget.post.postUrl),
+                fit: BoxFit.cover,
+              ),
+            )
+          : BoxDecoration(
+              color: Colors.black,
+            ),
       child: Center(
           child: BackdropFilter(
         child: Player(url: widget.post.postUrl),
