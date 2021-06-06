@@ -85,6 +85,8 @@ class _ChatScreenState extends State<ChatScreen>
   //
   int refreshId = 0;
 
+  int chatCount;
+
   @override
   void initState() {
     super.initState();
@@ -103,6 +105,7 @@ class _ChatScreenState extends State<ChatScreen>
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     thread = Hive.box('threads').get(threadName);
+    chatCount = thread.chatList.length;
 
     sendSeenTickerIfNeeded();
 
@@ -123,46 +126,49 @@ class _ChatScreenState extends State<ChatScreen>
       print("hive listen");
 
       Thread existingThread = Hive.box('threads').get(threadName);
-      if (mounted) {
-        if (!lastSeenHidden) {
-          if (existingThread.isOnline ?? false) {
-            print("hes online");
-
-            setState(() {
-              userStatus = "Online";
-            });
-          } else {
-            if ((existingThread.lastSeen ?? null) != null) {
-              setState(() {
-                userStatus = timeago.format(existingThread.lastSeen);
-              });
-            }
-          }
-        }
-      }
-      if (!lastSeenHidden) {
-        if (existingThread.isTyping ?? false == true) {
-          print("typing");
-          if (mounted) {
-            setState(() {
-              userStatus = "typing..";
-            });
-          }
-        } else if (existingThread.isTyping == false) {
-          print("stopped");
-          if (mounted) {
+      if (chatCount == existingThread.chatList.length) {
+        if (mounted) {
+          if (!lastSeenHidden) {
             if (existingThread.isOnline ?? false) {
+              print("hes online");
+
               setState(() {
                 userStatus = "Online";
               });
-            } else if (existingThread.lastSeen != null) {
+            } else {
+              if ((existingThread.lastSeen ?? null) != null) {
+                setState(() {
+                  userStatus = timeago.format(existingThread.lastSeen);
+                });
+              }
+            }
+          }
+        }
+        if (!lastSeenHidden) {
+          if (existingThread.isTyping ?? false == true) {
+            print("typing");
+            if (mounted) {
               setState(() {
-                userStatus = timeago.format(existingThread.lastSeen);
+                userStatus = "typing..";
               });
+            }
+          } else if (existingThread.isTyping == false) {
+            print("stopped");
+            if (mounted) {
+              if (existingThread.isOnline ?? false) {
+                setState(() {
+                  userStatus = "Online";
+                });
+              } else if (existingThread.lastSeen != null) {
+                setState(() {
+                  userStatus = timeago.format(existingThread.lastSeen);
+                });
+              }
             }
           }
         }
       }
+      chatCount = existingThread.chatList.length;
     }, onDone: () {
       print('done');
     });
