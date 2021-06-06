@@ -1253,7 +1253,7 @@ class _RecordAppState extends State<RecordApp>
     print("calling stop");
     await Record.stop();
     // String _path = await recorder.stopRecorder();
-    if (widget.prefs.getInt('lastAudio') == curSec) {
+    if ((widget.prefs.getInt('lastAudio') == curSec) && _timeRemaining <= 59) {
       print("sending");
       widget.prefs.setInt('lastAudio', curSec + 1);
       widget.sendAudio(path);
@@ -1295,6 +1295,8 @@ class _RecordAppState extends State<RecordApp>
                 child: TextField(
                   focusNode: widget.focusNode,
                   controller: _chatController,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
                   decoration: InputDecoration.collapsed(
                       hintText: "Send a message",
                       hintStyle: TextStyle(
