@@ -172,7 +172,7 @@ class _MediaCloudState extends State<MediaCloud> {
   processHerImage() async {
     var ext = widget.msgObj.filePath.split('.').last;
     String mediaName =
-        '/storage/emulated/0/foo/images/${widget.msgObj.time.toString()}.$ext';
+        '/storage/emulated/0/foo/images/${widget.msgObj.time.millisecondsSinceEpoch.toString()}.$ext';
     if (await Permission.storage.request().isGranted) {
       if (widget.msgObj.hasSeen != true) {
         var url = 'http://$localhost${widget.msgObj.filePath}';
@@ -201,6 +201,8 @@ class _MediaCloudState extends State<MediaCloud> {
           });
         }
       } else {
+        print(mediaName);
+        print("hello");
         if (await _isExistsInStorage(mediaName)) {
           File file2 = File(mediaName);
           setState(() {

@@ -84,6 +84,9 @@ class _ChatScreenState extends State<ChatScreen>
 
   //
   int refreshId = 0;
+  int chatCount;
+
+  bool hasSentSeenStatus = false;
 
   @override
   void initState() {
@@ -102,8 +105,8 @@ class _ChatScreenState extends State<ChatScreen>
     curUser = widget.thread.first.name;
     threadName = widget.thread.first.name + "_" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
-    thread = Hive.box('threads').get(threadName);
-
+    thread = Hive.box('Threads').get(threadName);
+    chatCount = thread.chatList.length;
     sendSeenTickerIfNeeded();
 
     setPreferences();
@@ -119,50 +122,53 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   void listenToHive() {
-    test = Hive.box('threads').watch(key: threadName).listen((BoxEvent event) {
+    test = Hive.box('Threads').watch(key: threadName).listen((BoxEvent event) {
       print("hive listen");
 
-      Thread existingThread = Hive.box('threads').get(threadName);
-      if (mounted) {
-        if (!lastSeenHidden) {
-          if (existingThread.isOnline ?? false) {
-            print("hes online");
-
-            setState(() {
-              userStatus = "Online";
-            });
-          } else {
-            if ((existingThread.lastSeen ?? null) != null) {
-              setState(() {
-                userStatus = timeago.format(existingThread.lastSeen);
-              });
-            }
-          }
-        }
-      }
-      if (!lastSeenHidden) {
-        if (existingThread.isTyping ?? false == true) {
-          print("typing");
-          if (mounted) {
-            setState(() {
-              userStatus = "typing..";
-            });
-          }
-        } else if (existingThread.isTyping == false) {
-          print("stopped");
-          if (mounted) {
+      Thread existingThread = Hive.box('Threads').get(threadName);
+      if (chatCount == existingThread.chatList.length) {
+        if (mounted) {
+          if (!lastSeenHidden) {
             if (existingThread.isOnline ?? false) {
+              print("hes online");
+
               setState(() {
                 userStatus = "Online";
               });
-            } else if (existingThread.lastSeen != null) {
+            } else {
+              if ((existingThread.lastSeen ?? null) != null) {
+                setState(() {
+                  userStatus = timeago.format(existingThread.lastSeen);
+                });
+              }
+            }
+          }
+        }
+        if (!lastSeenHidden) {
+          if (existingThread.isTyping ?? false == true) {
+            print("typing");
+            if (mounted) {
               setState(() {
-                userStatus = timeago.format(existingThread.lastSeen);
+                userStatus = "typing..";
               });
+            }
+          } else if (existingThread.isTyping == false) {
+            print("stopped");
+            if (mounted) {
+              if (existingThread.isOnline ?? false) {
+                setState(() {
+                  userStatus = "Online";
+                });
+              } else if (existingThread.lastSeen != null) {
+                setState(() {
+                  userStatus = timeago.format(existingThread.lastSeen);
+                });
+              }
             }
           }
         }
       }
+      chatCount = existingThread.chatList.length;
     }, onDone: () {
       print('done');
     });
@@ -181,9 +187,11 @@ class _ChatScreenState extends State<ChatScreen>
         "to": otherUser,
         "id": thread.chatList.last.id,
       };
-
-      SocketChannel.sendToChannel(jsonEncode(seenTicker));
-      _prefs.setInt("lastSeenId", thread.chatList.last.id);
+      if (SocketChannel.isConnected) {
+        SocketChannel.sendToChannel(jsonEncode(seenTicker));
+        _prefs.setInt("lastSeenId", thread.chatList.last.id);
+        hasSentSeenStatus = true;
+      }
     }
   }
 
@@ -242,7 +250,11 @@ class _ChatScreenState extends State<ChatScreen>
 
   void _checkConnectionStatus() async {
     bool result = await DataConnectionChecker().hasConnection;
-
+    if ((result == true) &&
+        (hasSentSeenStatus == false) &&
+        SocketChannel.isConnected) {
+      sendSeenTickerIfNeeded();
+    }
     if ((result == true) && (userStatus == "") && (lastSeenHidden != true)) {
       obtainStatus();
     } else if ((result == false) && (userStatus != "")) {
@@ -1014,7 +1026,7 @@ class _ChatScreenState extends State<ChatScreen>
                   try {
                     if ((_itemPositionsListener
                                 ?.itemPositions?.value?.last?.index >
-                            4) ??
+                            15) ??
                         -1) {
                       showOverlay();
                     } else {

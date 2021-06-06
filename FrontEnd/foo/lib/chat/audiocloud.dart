@@ -84,7 +84,8 @@ class _AudioCloudState extends State<AudioCloud> {
     var ext = widget.msgObj.filePath.split('.').last;
 
     String mediaName =
-        '/storage/emulated/0/foo/audio/${widget.msgObj.time.microsecondsSinceEpoch}.$ext';
+        '/storage/emulated/0/foo/audio/${widget.msgObj.time.millisecondsSinceEpoch.toString()}.$ext';
+    print(mediaName);
     setState(() {
       isUploading = true;
     });
@@ -117,6 +118,8 @@ class _AudioCloudState extends State<AudioCloud> {
           });
         }
       } else {
+        print("already exists");
+        print(mediaName);
         if (await File(mediaName).exists()) {
           setState(() {
             fileExists = true;

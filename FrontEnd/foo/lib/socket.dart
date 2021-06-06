@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:foo/notification_handler.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:soundpool/soundpool.dart';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 
 class SocketChannel {
   static final SocketChannel socket = SocketChannel._internal();
@@ -19,19 +21,33 @@ class SocketChannel {
   Timer _timer;
   SharedPreferences _prefs;
   Timer _localTimer;
-  AudioCache cache = AudioCache(respectSilence: true);
+  // AudioCache cache = AudioCache(respectSilence: true);
   static bool isConnected = false;
+  Soundpool _pool = Soundpool.fromOptions(
+      options: SoundpoolOptions(streamType: StreamType.notification));
+  int soundId;
 
   factory SocketChannel() {
     return socket;
   }
 
-  playAudio() async {
-    await cache.play('sounds/notification.wav',
-        isNotification: true, mode: PlayerMode.LOW_LATENCY, duckAudio: true);
+  // playAudio() async {
+  //   await cache.play('sounds/notification.wav',
+  //       isNotification: true, mode: PlayerMode.LOW_LATENCY, duckAudio: true);
+  // }
+
+  soundPoolinit() async {
+    soundId = await rootBundle
+        .load("assets/sounds/notification.wav")
+        .then((ByteData soundData) {
+      return _pool.load(soundData);
+    });
+    print("soundpool initialized");
+    print(soundId);
   }
 
   SocketChannel._internal() {
+    soundPoolinit();
     setPrefs();
     _localTimer = Timer.periodic(Duration(seconds: 5), (timer) => localCheck());
   }
@@ -257,7 +273,8 @@ class SocketChannel {
         sendToChannel(jsonEncode(seenTicker));
         _prefs.setInt("lastSeenId", data['message']['id']);
         _prefs.setBool("${data['message']['from']}_hasNew", true);
-        playAudio();
+        // playAudio();
+        await _pool.play(soundId);
       }
     }
     ChatMessage obj;
@@ -558,7 +575,8 @@ class SocketChannel {
         sendToChannel(jsonEncode(seenTicker));
         _prefs.setInt("lastSeenId", data['message']['id']);
         _prefs.setBool("${data['message']['from']}_hasNew", true);
-        playAudio();
+        print(soundId);
+        await _pool.play(soundId);
       }
 
       // else{
