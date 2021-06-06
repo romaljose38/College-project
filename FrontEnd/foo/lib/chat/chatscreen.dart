@@ -88,6 +88,8 @@ class _ChatScreenState extends State<ChatScreen>
 
   bool hasSentSeenStatus = false;
 
+  int chatCount;
+
   @override
   void initState() {
     super.initState();
@@ -624,8 +626,8 @@ class _ChatScreenState extends State<ChatScreen>
                         }
                       } else {
                         deleteforMe();
+                        Navigator.pop(context);
                       }
-                      Navigator.pop(context);
                     },
                     child: Text("Yes")),
                 TextButton(

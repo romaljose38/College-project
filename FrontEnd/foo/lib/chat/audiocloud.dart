@@ -257,7 +257,7 @@ class _AudioCloudState extends State<AudioCloud> {
                     : Icon(
                         Ionicons.cloud_download,
                         size: 26,
-                        color: Colors.black,
+                        color: Colors.purple,
                       ),
                 onTap: tryDownloading),
             SliderTheme(

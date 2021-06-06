@@ -318,7 +318,7 @@ class SocketChannel {
     existingThread.save();
   }
 
-  void addNewStory(data) {
+  void addNewStory(data) async {
     var storyBox = Hive.box('MyStories');
     print(data);
 
@@ -346,7 +346,8 @@ class SocketChannel {
         notificationId: data['n_id'],
       ));
 
-      storyBox.put(data['u_id'], newUser);
+      await storyBox.put(data['u_id'], newUser);
+      newUser.save();
     }
     sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }

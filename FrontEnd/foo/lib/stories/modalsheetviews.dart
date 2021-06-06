@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
+import 'package:hive/hive.dart';
+import 'package:foo/custom_overlay.dart';
 
 import 'dart:convert';
 
@@ -20,13 +22,17 @@ class ModalSheetContent extends StatefulWidget {
   _ModalSheetContentState createState() => _ModalSheetContentState();
 }
 
-class _ModalSheetContentState extends State<ModalSheetContent> {
+class _ModalSheetContentState extends State<ModalSheetContent>
+    with SingleTickerProviderStateMixin {
   bool _seenUsers = true;
   PageController _pageController;
+  AnimationController _animationController;
 
   @override
   initState() {
     super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     _pageController = PageController();
   }
 
@@ -38,6 +44,9 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
 
   @override
   Widget build(BuildContext context) {
+    widget.story.viewedUsers.forEach((element) {
+      print(element.username);
+    });
     return Container(
       color: Colors.transparent,
       padding: EdgeInsets.symmetric(horizontal: 15.0),
@@ -151,14 +160,26 @@ class _ModalSheetContentState extends State<ModalSheetContent> {
 
     Uri url = Uri.http(localhost, 'api/story_delete', deleteReq);
 
-    var response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => LandingPage()),
-      );
-    } else {
-      print("Deletion Error!");
+    try {
+      var response = await http.get(url);
+      if (response.statusCode == 200) {
+        SharedPreferences _prefs = await SharedPreferences.getInstance();
+        int userId = _prefs.getInt('id');
+        var myBox = Hive.box('MyStories');
+        UserStoryModel myStoryUser = myBox.get(userId);
+        myStoryUser.deleteOldStory(id: widget.story.storyId, userId: userId);
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => LandingPage()),
+        );
+      } else {
+        CustomOverlay overlay = CustomOverlay(
+            context: context, animationController: _animationController);
+        overlay.show("Sorry. Something went wrong.\n Please try again later.");
+      }
+    } catch (e) {
+      CustomOverlay overlay = CustomOverlay(
+          context: context, animationController: _animationController);
+      overlay.show("Check your internet connection and try again later");
     }
   }
 }
