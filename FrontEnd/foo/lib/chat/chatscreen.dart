@@ -88,8 +88,6 @@ class _ChatScreenState extends State<ChatScreen>
 
   bool hasSentSeenStatus = false;
 
-  int chatCount;
-
   @override
   void initState() {
     super.initState();
