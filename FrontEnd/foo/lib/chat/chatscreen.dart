@@ -32,6 +32,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:foo/screens/feed_icons.dart' as icons;
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 String imageUTF = "\x69\x6d\x61\x67\x65";
 String audioUTF = "\x61\x75\x64\x69\x6f";
@@ -384,12 +385,24 @@ class _ChatScreenState extends State<ChatScreen>
   void _sendImage() async {
     var _id = DateTime.now().microsecondsSinceEpoch;
     var curTime = DateTime.now();
-    FilePickerResult result =
+    FilePickerResult fetchedResult =
         await FilePicker.platform.pickFiles(withData: true);
-
-    if (result.files.length > 0) {
+    String ext = fetchedResult.files.single.path.split('.').last;
+    String sentPath =
+        '/storage/emulated/0/foo/images/sent/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    File result;
+    if (fetchedResult.files.length > 0) {
+      try {
+        await Permission.storage.request();
+        File(sentPath).createSync(recursive: true);
+        File(fetchedResult.files.single.path).copySync(sentPath);
+        result = File(sentPath);
+      } catch (e) {
+        print("Copy failed");
+        return;
+      }
       ChatMessage obj;
-      File file = File(result.files.single.path);
+      File file = File(result.path);
       if (replyingMsgObj != null) {
         obj = ChatMessage(
             filePath: file.path,
