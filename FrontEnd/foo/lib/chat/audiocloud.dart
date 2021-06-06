@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:foo/colour_palette.dart';
 
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
@@ -257,7 +258,7 @@ class _AudioCloudState extends State<AudioCloud> {
                     : Icon(
                         Ionicons.cloud_download,
                         size: 26,
-                        color: Colors.purple,
+                        color: Colors.black,
                       ),
                 onTap: tryDownloading),
             SliderTheme(
@@ -587,7 +588,8 @@ class _PlayerState extends State<Player> {
                           ? Ionicons.pause_circle
                           : Ionicons.play_circle,
                       size: 26,
-                      color: widget.isMe ? Colors.white : Colors.black,
+                      color:
+                          widget.isMe ? Colors.white : Colors.lightBlueAccent,
                     ),
                   )
                 : ValueListenableBuilder(
@@ -617,14 +619,13 @@ class _PlayerState extends State<Player> {
                               : widget.uploadFunction);
                     }),
             SliderTheme(
-              data: SliderThemeData(
-                  trackHeight: 1.4,
-                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 7)),
-              child: Slider(
-                  value: valState,
-                  onChanged: seekAudio,
-                  activeColor: Colors.white),
-            ),
+                data: SliderThemeData(
+                    trackHeight: 1.4,
+                    thumbShape: RoundSliderThumbShape(enabledThumbRadius: 7)),
+                child: Slider(
+                    value: valState,
+                    onChanged: seekAudio,
+                    activeColor: Colors.white)),
           ],
         ));
   }

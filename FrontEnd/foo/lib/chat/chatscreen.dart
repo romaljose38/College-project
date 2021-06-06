@@ -124,10 +124,9 @@ class _ChatScreenState extends State<ChatScreen>
 
   void listenToHive() {
     test = Hive.box('Threads').watch(key: threadName).listen((BoxEvent event) {
-      print("hive listen");
-
       Thread existingThread = Hive.box('Threads').get(threadName);
       if (chatCount == existingThread.chatList.length) {
+        print("hive listen");
         if (mounted) {
           if (!lastSeenHidden) {
             if (existingThread.isOnline ?? false) {

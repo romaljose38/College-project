@@ -70,9 +70,8 @@ class _PasswordConfirmState extends State<PasswordConfirm>
             'id': prefs.getInt('id').toString(),
           }));
       if (response.statusCode == 200) {
-        print("password correct");
-        _pageController.animateToPage(1,
-            duration: Duration(milliseconds: 100), curve: Curves.easeIn);
+        overlay.show("Password reset successfully.");
+        Navigator.pop(context);
       } else if (response.statusCode == 417) {
         print("password incorrect");
 
