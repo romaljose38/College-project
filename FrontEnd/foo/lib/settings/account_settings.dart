@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -124,6 +125,8 @@ class _EditProfileState extends State<EditProfile>
       var response = await request.send();
 
       if (response.statusCode == 200) {
+        await CachedNetworkImage.evictFromCache(
+            'http://' + localhost + '/media/user_$userId/profile/dp.jpg');
         _prefs.setString('about', _aboutController.text);
         _prefs.setString('username_alias', _usernameController.text);
         setState(() {

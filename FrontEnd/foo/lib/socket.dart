@@ -236,8 +236,9 @@ class SocketChannel {
 
   Future<void> removeDpFromCache(data) async {
     var id = data['id'];
-    var url = 'http://' + localhost + 'user_$id/profile/dp.jpg';
+    var url = 'http://' + localhost + '/media/user_$id/profile/dp.jpg';
     await CachedNetworkImage.evictFromCache(url);
+
     sendToChannel(jsonEncode({'n_r': data['n_id']}));
   }
 

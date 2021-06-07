@@ -856,6 +856,7 @@ class _ChatScreenState extends State<ChatScreen>
     return WillPopScope(
       onWillPop: () async {
         _prefs.setString("curUser", "");
+        Navigator.pop(context);
         // Navigator.pushNamedAndRemoveUntil(
         // context, '/chatlist', (Route route) => route is ChatListScreen);
         // Navigator.push(context,);
@@ -865,7 +866,7 @@ class _ChatScreenState extends State<ChatScreen>
         //   });
         //   return false;
         // }
-        return true;
+        return false;
       },
       child: Scaffold(
         extendBodyBehindAppBar: false,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:foo/colour_palette.dart';
 import 'package:foo/custom_overlay.dart';
@@ -361,7 +362,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                       image: DecorationImage(
                                         // image:
                                         //     AssetImage(pst.stories[index - 1]),
-                                        image: NetworkImage(
+                                        image: CachedNetworkImageProvider(
                                           myStoryList[index - 1].dpUrl,
                                         ),
                                         //'https://img.republicworld.com/republic-prod/stories/promolarge/xxhdpi/32qfhrhvfuzpdiev_1597135847.jpeg?tr=w-758,h-433'),
@@ -560,10 +561,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     });
   }
 
+  // evict() async{
+  //   await CachedNetworkImage.evictFromCa
+  // }
   @override
   Widget build(BuildContext context) {
     var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
     var heightFactor = (height - 58) / height;
+    // evict();
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(

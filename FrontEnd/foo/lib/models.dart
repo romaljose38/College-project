@@ -181,11 +181,14 @@ class Thread extends HiveObject {
       if (chatList[index].msgType == "date") {
         continue;
       }
-      if (chatList[index].id <= id && chatList[index].isMe == true) {
-        if (chatList[index].hasSeen != true) {
-          chatList[index].hasSeen = true;
-        }
-      } else {
+      if (chatList[index].id <= id &&
+          chatList[index].isMe == true &&
+          chatList[index].hasSeen != true) {
+        print("ticked");
+        chatList[index].hasSeen = true;
+      } else if (chatList[index].id <= id &&
+          chatList[index].isMe == true &&
+          chatList[index].hasSeen == true) {
         return false;
       }
     }
