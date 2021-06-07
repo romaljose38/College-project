@@ -22,6 +22,8 @@ class _PasswordConfirmState extends State<PasswordConfirm>
   TextEditingController _newPasswordController = TextEditingController();
   TextEditingController _confirmPasswordController = TextEditingController();
 
+  var curPasswordErr;
+
   @override
   void initState() {
     super.initState();
@@ -48,7 +50,9 @@ class _PasswordConfirmState extends State<PasswordConfirm>
             duration: Duration(milliseconds: 100), curve: Curves.easeIn);
       } else if (response.statusCode == 417) {
         print("password incorrect");
-
+        setState(() {
+          curPasswordErr = "Incorrect";
+        });
         overlay.show("Password incorrect.\n Please enter correct password.");
       } else {
         print("error");
@@ -146,11 +150,17 @@ class _PasswordConfirmState extends State<PasswordConfirm>
                         // maxLines: 8,
                         controller: _passwordController,
                         obscureText: true,
+                        onChanged: (val) {
+                          setState(() {
+                            curPasswordErr = null;
+                          });
+                        },
                         textAlign: TextAlign.center,
                         cursorColor: Colors.black,
                         cursorWidth: .3,
                         style: GoogleFonts.lato(color: Colors.black),
                         decoration: InputDecoration(
+                          errorText: curPasswordErr,
                           hintText: "Enter your current password",
                           hintStyle: GoogleFonts.raleway(
                               fontSize: 13,

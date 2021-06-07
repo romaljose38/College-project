@@ -337,17 +337,21 @@ class SocketChannel {
 
   void changeUserStatus(data) {
     print(data);
-    String me = _prefs.getString('username');
-    String threadName = me + '-' + data['u'];
-    var threadBox = Hive.box('Threads');
-    var existingThread = threadBox.get(threadName);
-    if (data['s'] == 'online') {
-      existingThread.isOnline = true;
-    } else if (data['s'] == 'offline') {
-      existingThread.isOnline = false;
-      existingThread.lastSeen = DateTime.now();
+    try {
+      String me = _prefs.getString('username');
+      String threadName = me + '-' + data['u'];
+      var threadBox = Hive.box('Threads');
+      var existingThread = threadBox.get(threadName);
+      if (data['s'] == 'online') {
+        existingThread.isOnline = true;
+      } else if (data['s'] == 'offline') {
+        existingThread.isOnline = false;
+        existingThread.lastSeen = DateTime.now();
+      }
+      existingThread.save();
+    } catch (e) {
+      print(e);
     }
-    existingThread.save();
   }
 
   void addNewStory(data) async {
@@ -441,11 +445,12 @@ class SocketChannel {
         existingThread.isTyping = true;
       } else {
         existingThread.isTyping = false;
+        print("typing finished");
       }
 
       existingThread.save();
     } catch (e) {
-      sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+      print(e);
     }
   }
 

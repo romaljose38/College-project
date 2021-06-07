@@ -155,6 +155,8 @@ class _ChatScreenState extends State<ChatScreen>
           } else if (existingThread.isTyping == false) {
             print("stopped");
             if (mounted) {
+              print(existingThread.isOnline);
+              print(existingThread.lastSeen);
               if (existingThread.isOnline ?? false) {
                 setState(() {
                   userStatus = "Online";
@@ -222,11 +224,14 @@ class _ChatScreenState extends State<ChatScreen>
 
   Future<void> obtainStatus() async {
     var id = _prefs.getInt("id");
+    Thread existingThread = Hive.box('Threads').get(threadName);
     var resp = await http.get(Uri.http(localhost, '/api/get_status',
         {"username": otherUser, "id": id.toString()}));
     if (resp.statusCode == 200) {
       Map body = jsonDecode(resp.body);
       if (body['status'] == "online") {
+        existingThread.isOnline = true;
+        existingThread.save();
         if (userStatus != "Online") {
           setState(() {
             userStatus = "Online";
@@ -239,6 +244,8 @@ class _ChatScreenState extends State<ChatScreen>
         });
       } else {
         DateTime time = DateTime.parse(body['status']);
+        existingThread.lastSeen = time;
+        existingThread.save();
         if (mounted) {
           setState(() {
             userStatus = timeago.format(time);
