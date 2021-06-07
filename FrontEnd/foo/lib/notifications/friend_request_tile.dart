@@ -88,7 +88,7 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
             child = static();
           });
         } else {
-          currentNotification.delete();
+          currentNotification.hasAccepted = false;
           setState(() {
             child = Container();
           });
