@@ -21,6 +21,7 @@ import 'package:foo/upload_screens/video_upload_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class LandingPageProxy extends StatelessWidget {
   // NotificationController controller = NotificationController();
@@ -139,7 +140,25 @@ class LandingPageState extends State<LandingPage>
       type: FileType.image,
     );
     if (result != null) {
-      File _image = File(result.files.single.path);
+      //File _pickedImage = File(result.files.single.path);
+
+      File _image = await ImageCropper.cropImage(
+        sourcePath: result.files.single.path,
+        aspectRatioPresets: [
+          CropAspectRatioPreset.square,
+          CropAspectRatioPreset.ratio3x2,
+          CropAspectRatioPreset.original,
+          CropAspectRatioPreset.ratio4x3,
+          CropAspectRatioPreset.ratio16x9,
+        ],
+        androidUiSettings: AndroidUiSettings(
+          toolbarTitle: 'Crop',
+          toolbarColor: Colors.black,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+      );
 
       // await animationController.reverse().whenComplete(() {
       //   overlayVisible = false;
@@ -208,13 +227,31 @@ class LandingPageState extends State<LandingPage>
     File _image;
 
     final pickedFile = await _picker.getImage(source: ImageSource.camera);
-    _image = File(pickedFile.path);
+    //_image = File(pickedFile.path);
 
-    if (_image != null) {
+    if (pickedFile != null) {
       // animationController.reverse().whenComplete(() {
       //   overlayVisible = false;
       //   overlayEntry.remove();
       // });
+
+      _image = await ImageCropper.cropImage(
+        sourcePath: pickedFile.path,
+        aspectRatioPresets: [
+          CropAspectRatioPreset.square,
+          CropAspectRatioPreset.ratio3x2,
+          CropAspectRatioPreset.original,
+          CropAspectRatioPreset.ratio4x3,
+          CropAspectRatioPreset.ratio16x9,
+        ],
+        androidUiSettings: AndroidUiSettings(
+          toolbarTitle: 'Crop',
+          toolbarColor: Colors.black,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+      );
 
       Navigator.push(
           context,
