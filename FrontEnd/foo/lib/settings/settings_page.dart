@@ -183,7 +183,9 @@ class Settings extends StatelessWidget {
               fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black),
         ),
         leading: GestureDetector(
-          onTap: () => showAboutDialog(context: context),
+          onTap: () => showAboutDialog(
+              context: context,
+              applicationLegalese: "Hi hi hi. Chammi poyee.."),
           child: Container(
               height: 50,
               width: 50,
