@@ -398,7 +398,7 @@ class LandingPageState extends State<LandingPage>
     ];
     return Scaffold(
       backgroundColor: Colors.white,
-      // extendBody: true,
+      extendBody: true,
       body: WillPopScope(
         onWillPop: onBackPress,
         child: pages[_page],

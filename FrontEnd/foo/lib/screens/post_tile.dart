@@ -546,17 +546,18 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                       ),
                     ]),
                     Container(
+                      width: MediaQuery.of(context).size.width - 30,
                       // decoration: BoxDecoration(
                       //   color: Colors.black.withOpacity(.3),
                       //   borderRadius: BorderRadius.circular(15),
                       // ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 15),
-                        child: ExpandableText(
-                          // "It is good to love god for hope of reward in this or the next world, but it is better to love god for love's sake",
-                          widget.post.caption ?? "",
-                        ),
+                      // child: Padding(
+                      // padding: const EdgeInsets.only(right: 15),
+                      child: ExpandableText(
+                        // "It is good to love god for hope of reward in this or the next world, but it is better to love god for love's sake",
+                        widget.post.caption ?? "",
                       ),
+                      // ),
                     ),
                   ],
                 ),
@@ -754,6 +755,7 @@ class _ExpandableTextState extends State<ExpandableText>
           child: GestureDetector(
             onTap: () => setState(() => widget.isExpanded = !widget.isExpanded),
             child: new Container(
+                width: MediaQuery.of(context).size.width - 30,
                 constraints: widget.isExpanded
                     ? new BoxConstraints()
                     : new BoxConstraints(maxHeight: 20.0),

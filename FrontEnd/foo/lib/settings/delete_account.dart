@@ -23,11 +23,21 @@ class _DeleteConfirmState extends State<DeleteConfirm>
   AnimationController _controller;
   SharedPreferences prefs;
 
+  bool requesting = false;
+
+  var _errorText;
+
   @override
   void initState() {
     super.initState();
     _controller =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
   }
 
   wipeEveryThing() async {
@@ -71,7 +81,9 @@ class _DeleteConfirmState extends State<DeleteConfirm>
           );
         });
     //
-
+    setState(() {
+      requesting = true;
+    });
     if (shouldDelete) {
       prefs = await SharedPreferences.getInstance();
       try {
@@ -85,6 +97,9 @@ class _DeleteConfirmState extends State<DeleteConfirm>
             }));
         _focusNode.unfocus();
         if (response.statusCode == 200) {
+          setState(() {
+            requesting = false;
+          });
           await wipeEveryThing();
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -92,13 +107,25 @@ class _DeleteConfirmState extends State<DeleteConfirm>
           );
         } else if (response.statusCode == 417) {
           print("password incorrect");
-
-          overlay.show("Password incorrect.\n Please enter correct password.");
+          setState(() {
+            requesting = false;
+            _errorText = "Password incorrect";
+          });
+          _focusNode.requestFocus();
           print("not showing");
         } else {
+          setState(() {
+            requesting = false;
+          });
+          overlay.show("Something went wrong try again later");
           print("error");
         }
-      } catch (e) {}
+      } catch (e) {
+        setState(() {
+          requesting = false;
+        });
+        overlay.show("Something went wrong try again later");
+      }
     }
   }
 
@@ -170,11 +197,21 @@ class _DeleteConfirmState extends State<DeleteConfirm>
                   focusNode: _focusNode,
                   controller: _passwordController,
                   obscureText: true,
+                  onChanged: (val) {
+                    setState(() {
+                      _errorText = null;
+                    });
+                  },
                   textAlign: TextAlign.center,
                   cursorColor: Colors.black,
                   cursorWidth: .3,
                   style: GoogleFonts.lato(color: Colors.black),
                   decoration: InputDecoration(
+                    errorText: _errorText,
+                    errorStyle: GoogleFonts.raleway(
+                        fontSize: 13,
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500),
                     hintText: "Enter your current password",
                     hintStyle: GoogleFonts.raleway(
                         fontSize: 13,
@@ -197,22 +234,30 @@ class _DeleteConfirmState extends State<DeleteConfirm>
                 ),
               ),
               SizedBox(height: 20),
-              TextButton(
-                onPressed: deleteAccount,
-                child: Container(
-                    width: 100,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.greenAccent,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: Center(
-                        child: Text("Confirm",
-                            style: GoogleFonts.raleway(
-                                letterSpacing: 1.04,
-                                fontSize: 13,
-                                color: Colors.white)))),
-              )
+              requesting
+                  ? SizedBox(
+                      height: 40,
+                      width: 40,
+                      child: CircularProgressIndicator(
+                        backgroundColor: Colors.black,
+                        strokeWidth: 2,
+                      ))
+                  : TextButton(
+                      onPressed: deleteAccount,
+                      child: Container(
+                          width: 100,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.greenAccent,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Center(
+                              child: Text("Confirm",
+                                  style: GoogleFonts.raleway(
+                                      letterSpacing: 1.04,
+                                      fontSize: 13,
+                                      color: Colors.white)))),
+                    )
             ])
           ],
         ),

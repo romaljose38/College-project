@@ -92,38 +92,41 @@ class Profile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: FutureBuilder(
-          future: getData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              List posts = snapshot.data;
-              if (snapshot.data != null) {
-                return ProfileTest(
-                    key: ValueKey(this.notifId),
-                    posts: posts,
-                    userName: this.profUserName,
-                    userId: this.userId,
-                    fName: this.fName,
-                    lName: this.lName,
-                    userDpUrl: this.userDpUrl,
-                    requestStatus: this.requestStatus,
-                    curUser: this.curUser,
-                    about: this.about,
-                    profileId: this.profileUserId,
-                    friendsCount: this.friendsCount,
-                    postsCount: this.postsCount,
-                    myProfile: this.myProfile,
-                    notifId: this.notifId,
-                    isMe: this.isMe);
+      body: Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: FutureBuilder(
+            future: getData(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                List posts = snapshot.data;
+                if (snapshot.data != null) {
+                  return ProfileTest(
+                      key: ValueKey(this.notifId),
+                      posts: posts,
+                      userName: this.profUserName,
+                      userId: this.userId,
+                      fName: this.fName,
+                      lName: this.lName,
+                      userDpUrl: this.userDpUrl,
+                      requestStatus: this.requestStatus,
+                      curUser: this.curUser,
+                      about: this.about,
+                      profileId: this.profileUserId,
+                      friendsCount: this.friendsCount,
+                      postsCount: this.postsCount,
+                      myProfile: this.myProfile,
+                      notifId: this.notifId,
+                      isMe: this.isMe);
+                }
+                return Center(
+                    child: CircularProgressIndicator(
+                        strokeWidth: 1, backgroundColor: Colors.purple));
               }
               return Center(
                   child: CircularProgressIndicator(
                       strokeWidth: 1, backgroundColor: Colors.purple));
-            }
-            return Center(
-                child: CircularProgressIndicator(
-                    strokeWidth: 1, backgroundColor: Colors.purple));
-          }),
+            }),
+      ),
     );
   }
 }
