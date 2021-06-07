@@ -138,7 +138,7 @@ class _RegisterFormState extends State<RegisterForm> {
       });
       // prefs.setBool('loggedIn', true);
       // Navigator.pushNamed(context, '/landingPage');
-      Navigator.of(context).push(
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => CalendarBackground()),
       );
     }
@@ -558,7 +558,11 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
         });
   }
 
-  TextField nameField(String labeltext, TextEditingController controller) =>
+  bool _fnameValidate = false;
+  bool _lnameValidate = false;
+
+  TextField nameField(
+          String labeltext, TextEditingController controller, bool _validate) =>
       TextField(
         style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
         controller: controller,
@@ -587,6 +591,7 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
             borderSide:
                 BorderSide(width: 1, color: Color.fromRGBO(250, 87, 142, .7)),
           ),
+          errorText: _validate ? "Field cannot be empty" : null,
         ),
       );
 
@@ -763,11 +768,13 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                   children: [
                     Padding(
                       padding: EdgeInsets.all(10.0),
-                      child: nameField("First Name", _fNameController),
+                      child: nameField(
+                          "First Name", _fNameController, _fnameValidate),
                     ),
                     Padding(
                       padding: EdgeInsets.all(10.0),
-                      child: nameField("Last Name", _lNameController),
+                      child: nameField(
+                          "Last Name", _lNameController, _lnameValidate),
                     ),
                   ],
                 ),
@@ -784,7 +791,28 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton(
-              onPressed: _submitHandler,
+              onPressed: () {
+                if (_fNameController.text == '')
+                  setState(() {
+                    _fnameValidate = true;
+                  });
+                else {
+                  setState(() {
+                    _fnameValidate = false;
+                  });
+                }
+                if (_lNameController.text == '')
+                  setState(() {
+                    _lnameValidate = true;
+                  });
+                else {
+                  setState(() {
+                    _lnameValidate = false;
+                  });
+                }
+                if (_fnameValidate == false && _lnameValidate == false)
+                  _submitHandler();
+              },
               child: Text(
                 "Next",
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500),

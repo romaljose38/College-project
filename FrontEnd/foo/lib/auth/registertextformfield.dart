@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'registerinputdecoration.dart';
+import 'dart:core';
 
 //ignore: must_be_immutable
 class FormTextField extends StatelessWidget {
@@ -21,8 +22,18 @@ class FormTextField extends StatelessWidget {
       this.isToggledView});
 
   String validate(value, fieldName, labelText) {
+    RegExp myExp = RegExp(r"^[a-zA-Z0-9_@]*$");
+    if (value.indexOf(' ') >= 0) return "Spaces are now allowed";
     if (value == null || value.isEmpty) return "Enter your $labelText";
     switch (fieldName) {
+      case 'username':
+        {
+          if (!myExp.hasMatch(value)) {
+            return "Only _ @ and alphanumerics are allowed";
+          }
+          return null;
+        }
+        break;
       case 'uprn':
         {
           if (num.tryParse(value) == null)
