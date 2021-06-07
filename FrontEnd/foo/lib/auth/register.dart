@@ -625,6 +625,7 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                         Container(
                           width: 100,
                           height: 100,
+                          margin: EdgeInsets.all(20),
                           decoration: imageFile == null
                               ? BoxDecoration(
                                   borderRadius: BorderRadius.circular(30),
@@ -660,17 +661,41 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
                         //     child: Icon(Icons.add),
                         //   ),
                         // )
-                        Container(
-                          height: 100,
-                          width: 100,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            // color: Colors.black.withOpacity(.3),
+                        Positioned(
+                          right: 13,
+                          bottom: 13,
+                          child: Container(
+                            padding: EdgeInsets.all(2.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Container(
+                                  height: 30,
+                                  width: 30,
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  // )
+                                  child: Center(
+                                      child: Icon(Icons.add,
+                                          color: Colors.white, size: 18))),
+                            ),
                           ),
-                          child: Center(
-                              // child: Text("Change photo"),
-                              ),
-                        )
+                        ),
+                        // Container(
+                        //   height: 100,
+                        //   width: 100,
+                        //   decoration: BoxDecoration(
+                        //     borderRadius: BorderRadius.circular(30),
+                        //     // color: Colors.black.withOpacity(.3),
+                        //   ),
+                        //   child: Center(
+                        //       // child: Text("Change photo"),
+                        //       ),
+                        // )
                       ],
                     ),
                   )
