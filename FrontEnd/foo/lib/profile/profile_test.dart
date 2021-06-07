@@ -356,7 +356,8 @@ class _ProfileTestState extends State<ProfileTest>
           requestStatus = "open";
           isAbsorbing = false;
         });
-        currentNotification.delete();
+        currentNotification.hasAccepted = false;
+        currentNotification.save();
         _progressAnimationController
             .reverse()
             .whenComplete(() => progressOverlay.remove());
