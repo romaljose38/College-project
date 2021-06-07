@@ -104,7 +104,7 @@ class _ChatScreenState extends State<ChatScreen>
 
     otherUser = widget.thread.second.name;
     curUser = widget.thread.first.name;
-    threadName = widget.thread.first.name + "_" + widget.thread.second.name;
+    threadName = widget.thread.first.name + "-" + widget.thread.second.name;
     //Initializing the _chatList as the chatList of the current thread
     thread = Hive.box('Threads').get(threadName);
     chatCount = thread.chatList.length;
@@ -200,7 +200,7 @@ class _ChatScreenState extends State<ChatScreen>
       if (thread.chatList.length > 0) {
         if (thread.chatList.last.isMe != true) {
           var threadBox = Hive.box("Threads");
-          var thread = threadBox.get(curUser + '_' + otherUser);
+          var thread = threadBox.get(curUser + '-' + otherUser);
           if ((thread.hasUnseen ?? -1) > 0) {
             thread.hasUnseen = 0;
             thread.save();

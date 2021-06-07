@@ -235,7 +235,7 @@ class _ProfileBodyState extends State<ProfileBody>
   }
 
   Future<void> handleChat() async {
-    String threadName = "${widget.curUser}_${widget.userName}";
+    String threadName = "${widget.curUser}-${widget.userName}";
     var threadBox = Hive.box("Threads");
     Thread thread;
     if (threadBox.containsKey('threadName')) {

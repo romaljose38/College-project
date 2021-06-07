@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/chat/chatscreen.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:foo/media_players.dart';
 import 'package:foo/screens/comment_screen.dart';
 import 'package:foo/settings/settings_page.dart';
@@ -171,6 +172,7 @@ class _ProfileTestState extends State<ProfileTest>
     with TickerProviderStateMixin {
   AnimationController animationController;
   AnimationController _progressAnimationController;
+  AnimationController _customOverlayController;
   Animation _progress;
   Animation animation;
   OverlayEntry overlayEntry;
@@ -184,6 +186,8 @@ class _ProfileTestState extends State<ProfileTest>
     super.initState();
     // getData();
     requestStatus = widget.requestStatus;
+    _customOverlayController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     _progressAnimationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     _progress =
@@ -252,55 +256,85 @@ class _ProfileTestState extends State<ProfileTest>
   }
 
   Future<void> sendFriendRequest() async {
+    CustomOverlay overlay = CustomOverlay(
+        context: context, animationController: _customOverlayController);
     showProgressOverlay();
     setState(() {
       isAbsorbing = true;
     });
-    var resp = await http.get(Uri.http(localhost, '/api/add_friend',
-        {'username': widget.curUser, 'id': widget.userId.toString()}));
+    try {
+      var resp = await http.get(Uri.http(localhost, '/api/add_friend',
+          {'username': widget.curUser, 'id': widget.userId.toString()}));
 
-    if (resp.statusCode == 200) {
+      if (resp.statusCode == 200) {
+        setState(() {
+          requestStatus = "pending";
+          isAbsorbing = false;
+        });
+        _progressAnimationController
+            .reverse()
+            .whenComplete(() => progressOverlay.remove());
+      } else {
+        setState(() {
+          isAbsorbing = false;
+        });
+        _progressAnimationController
+            .reverse()
+            .whenComplete(() => progressOverlay.remove());
+      }
+    } catch (e) {
       setState(() {
-        requestStatus = "pending";
         isAbsorbing = false;
       });
-      progressOverlay.remove();
-    } else {
-      setState(() {
-        isAbsorbing = false;
-      });
-      progressOverlay.remove();
+      overlay.show('Something went wrong please try again later');
+      _progressAnimationController
+          .reverse()
+          .whenComplete(() => progressOverlay.remove());
     }
   }
 
   acceptRequest() async {
+    CustomOverlay overlay = CustomOverlay(
+        context: context, animationController: _customOverlayController);
     showProgressOverlay();
     setState(() {
       isAbsorbing = true;
     });
-    var resp = await http.get(Uri.http(localhost, '/api/handle_request',
-        {'id': widget.notifId.toString(), 'action': "accept"}));
-    if (resp.statusCode == 200) {
-      Box notifsBox = Hive.box("Notifications");
-      Notifications currentNotification = notifsBox.get(widget.notifId);
-      currentNotification.hasAccepted = true;
-      currentNotification.save();
-      widget.requestStatus = "accepted";
-      setState(() {
-        requestStatus = "accepted";
-        isAbsorbing = false;
-      });
+    try {
+      var resp = await http.get(Uri.http(localhost, '/api/handle_request',
+          {'id': widget.notifId.toString(), 'action': "accept"}));
+      if (resp.statusCode == 200) {
+        Box notifsBox = Hive.box("Notifications");
+        Notifications currentNotification = notifsBox.get(widget.notifId);
+        currentNotification.hasAccepted = true;
+        currentNotification.save();
+        widget.requestStatus = "accepted";
+        setState(() {
+          requestStatus = "accepted";
+          isAbsorbing = false;
+        });
 
-      _progressAnimationController
-          .reverse()
-          .whenComplete(() => progressOverlay.remove());
-    } else {
+        _progressAnimationController
+            .reverse()
+            .whenComplete(() => progressOverlay.remove());
+        overlay.show("You are now friends with ${widget.userName}");
+      } else {
+        setState(() {
+          isAbsorbing = false;
+        });
+        _progressAnimationController
+            .reverse()
+            .whenComplete(() => progressOverlay.remove());
+        overlay.show("Something went wrong please try again later.");
+      }
+    } catch (e) {
       setState(() {
         isAbsorbing = false;
       });
       _progressAnimationController
           .reverse()
           .whenComplete(() => progressOverlay.remove());
+      overlay.show("Something went wrong please try again later.");
     }
   }
 
@@ -309,27 +343,40 @@ class _ProfileTestState extends State<ProfileTest>
     setState(() {
       isAbsorbing = true;
     });
-    var resp = await http.get(Uri.http(localhost, '/api/handle_request',
-        {'id': widget.notifId.toString(), 'action': "reject"}));
-    if (resp.statusCode == 200) {
-      Box notifsBox = Hive.box("Notifications");
-      Notifications currentNotification = notifsBox.get(widget.notifId);
-      widget.requestStatus = "rejected";
+    CustomOverlay overlay = CustomOverlay(
+        context: context, animationController: _customOverlayController);
+    try {
+      var resp = await http.get(Uri.http(localhost, '/api/handle_request',
+          {'id': widget.notifId.toString(), 'action': "reject"}));
+      if (resp.statusCode == 200) {
+        Box notifsBox = Hive.box("Notifications");
+        Notifications currentNotification = notifsBox.get(widget.notifId);
+        widget.requestStatus = "rejected";
+        setState(() {
+          requestStatus = "open";
+          isAbsorbing = false;
+        });
+        currentNotification.delete();
+        _progressAnimationController
+            .reverse()
+            .whenComplete(() => progressOverlay.remove());
+      } else {
+        setState(() {
+          isAbsorbing = false;
+        });
+        _progressAnimationController
+            .reverse()
+            .whenComplete(() => progressOverlay.remove());
+        overlay.show("Something went wrong please try again later.");
+      }
+    } catch (e) {
       setState(() {
-        requestStatus = "open";
         isAbsorbing = false;
       });
-      currentNotification.delete();
       _progressAnimationController
           .reverse()
           .whenComplete(() => progressOverlay.remove());
-    } else {
-      setState(() {
-        isAbsorbing = false;
-      });
-      _progressAnimationController
-          .reverse()
-          .whenComplete(() => progressOverlay.remove());
+      overlay.show("Something went wrong please try again later.");
     }
   }
 

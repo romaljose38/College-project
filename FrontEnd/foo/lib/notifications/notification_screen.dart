@@ -1,12 +1,17 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/models.dart';
 import 'package:foo/notifications/friend_request_tile.dart';
 import 'package:foo/notifications/mention_tile.dart';
+import 'package:foo/profile/profile_test.dart';
+import 'package:foo/test_cred.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class NotificationScreen extends StatefulWidget {
   @override
@@ -14,6 +19,17 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
+  void initState() {
+    super.initState();
+    removePrefs();
+  }
+
+  Future<void> removePrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool("hasNotif", false);
+    Hive.box('Notifications').values.first.save();
+  }
+
   Future<String> getDp() async {
     var dir = await getApplicationDocumentsDirectory();
     return dir.path + "/images/dp/dp.jpg";
@@ -140,6 +156,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 return MentionTile(
                                   notification: notifications[index],
                                 );
+                              } else if (notifications[index].type ==
+                                  NotificationType.postLike) {
+                                return PostLikeTile(
+                                  notification: notifications[index],
+                                );
                               }
                               return Container();
                             },
@@ -176,5 +197,83 @@ class _NotificationScreenState extends State<NotificationScreen> {
         //       );
         //     }),
         );
+  }
+}
+
+class PostLikeTile extends StatelessWidget {
+  final Notifications notification;
+  PostLikeTile({this.notification});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            PageRouteBuilder(pageBuilder: (context, animation, secAnimation) {
+              return Profile(userId: notification.userId);
+            }, transitionsBuilder: (context, animation, secAnimation, child) {
+              return SlideTransition(
+                child: child,
+                position: Tween<Offset>(
+                  begin: Offset(1, 0),
+                  end: Offset(0, 0),
+                ).animate(animation),
+              );
+            }));
+      },
+      child: Container(
+          margin: EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            children: [
+              // Spacer(flex: 1),
+              Container(
+                height: 50,
+                width: 50,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(27),
+                  child: CachedNetworkImage(
+                      imageUrl: 'http://' + localhost + notification.userDpUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, a, s) =>
+                          Image.asset('assets/images/dp/dp.jpg')),
+                ),
+              ),
+              SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      text: this.notification.userName,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: " has liked your post.",
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    timeago.format(this.notification.timeCreated),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+              // Spacer(flex: 2),
+            ],
+          )),
+    );
   }
 }

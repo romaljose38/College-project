@@ -193,9 +193,45 @@ class SocketChannel {
       deleteChat(data);
     } else if (data['type'] == 'mention_notif') {
       addMentionNotification(data);
+    } else if (data['type'] == 'frnd_req_acpt') {
+      addFrndReqAcceptNotification(data);
     } else if (data['type'] == 'dp_update') {
       removeDpFromCache(data);
+    } else if (data['type'] == 'like_notif') {
+      addLikeNotification(data);
     }
+  }
+
+  Future<void> addLikeNotification(data) async {
+    _prefs.setBool("hasNotif", true);
+    var notif = Notifications(
+        type: NotificationType.postLike,
+        userId: data['id'],
+        userDpUrl: data['dp'],
+        userName: data['u'],
+        timeCreated: DateTime.parse(data['time']));
+    var notifBox = await Hive.openBox('Notifications');
+    await notifBox.put(data['notif_id'], notif);
+    notif.save();
+    sendToChannel(jsonEncode({'m_r': data['notif_id']}));
+    _prefs.setBool("hasNotif", true);
+  }
+
+  Future<void> addFrndReqAcceptNotification(data) async {
+    _prefs.setBool("hasNotif", true);
+    var user_id = data['id'];
+    var notif = Notifications(
+      type: NotificationType.friendRequest,
+      userId: user_id,
+      userName: data['u'],
+      userDpUrl: data['dp'],
+      timeCreated: DateTime.parse(data['time']),
+    );
+    notif.hasAccepted = true;
+    var notifBox = await Hive.openBox('Notifications');
+    await notifBox.put(data['notif_id'], notif);
+    notif.save();
+    sendToChannel(jsonEncode({'a_r': data['notif_id']}));
   }
 
   Future<void> removeDpFromCache(data) async {
@@ -206,27 +242,23 @@ class SocketChannel {
   }
 
   Future<void> addMentionNotification(data) async {
-    if ((_prefs.containsKey('lastNotifId') &&
-            (_prefs.getInt('lastNotifId') != data['n_id'])) ||
-        !_prefs.containsKey('lastNotifId')) {
-      _prefs.setInt("lastNotifId", data['n_id']);
-      DateTime time = DateTime.parse(data['time']);
-      _handler.mentionNotif(data['username']);
-      var notif = Notifications(
-          type: NotificationType.mention,
-          userName: data['u'],
-          timeCreated: time,
-          userDpUrl: data['dp'],
-          postId: data['id']);
-      sendToChannel(jsonEncode({'m_r': data['n_id']}));
-      var notifBox = await Hive.openBox('Notifications');
-      await notifBox.put(time.toString(), notif);
-    }
+    _prefs.setBool("hasNotif", true);
+    DateTime time = DateTime.parse(data['time']);
+    _handler.mentionNotif(data['username']);
+    var notif = Notifications(
+        type: NotificationType.mention,
+        userName: data['u'],
+        timeCreated: time,
+        userDpUrl: data['dp'],
+        postId: data['id']);
+    sendToChannel(jsonEncode({'m_r': data['n_id']}));
+    var notifBox = await Hive.openBox('Notifications');
+    await notifBox.put(time.toString(), notif);
   }
 
   void deleteChat(data) async {
     var me = _prefs.getString('username');
-    String threadName = me + '_' + data['from'];
+    String threadName = me + '-' + data['from'];
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     existingThread.deleteChat(data['id']);
@@ -242,7 +274,7 @@ class SocketChannel {
     Thread thread;
 
     //Thread is named in the format "self_sender" eg:anna_deepika
-    var threadName = me + '_' + data['message']['from'];
+    var threadName = me + '-' + data['message']['from'];
 
     //Checking if thread already exists in box, if exists, the new chat messaeg if added else new thread is created and saved to box.
 
@@ -306,7 +338,7 @@ class SocketChannel {
   void changeUserStatus(data) {
     print(data);
     String me = _prefs.getString('username');
-    String threadName = me + '_' + data['u'];
+    String threadName = me + '-' + data['u'];
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     if (data['s'] == 'online') {
@@ -401,7 +433,7 @@ class SocketChannel {
 
   void updateTypingStatus(data) {
     String me = _prefs.getString('username');
-    String threadName = me + '_' + data['from'];
+    String threadName = me + '-' + data['from'];
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     if (data['status'] == "typing") {
@@ -415,7 +447,7 @@ class SocketChannel {
 
   void updateMsgSeenStatus(data) {
     String me = _prefs.getString('username');
-    String threadName = me + '_' + data['from'];
+    String threadName = me + '-' + data['from'];
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     existingThread.chatList.forEach((e) {
@@ -433,6 +465,7 @@ class SocketChannel {
             (_prefs.getInt('lastNotifId') != data['id'])) ||
         !_prefs.containsKey('lastNotifId')) {
       _prefs.setInt("lastNotifId", data['id']);
+      _prefs.setBool("hasNotif", true);
       DateTime curTime = DateTime.parse(data['time']);
       _handler.friendRequestNotif(data['username']);
       var notif = Notifications(
@@ -455,7 +488,7 @@ class SocketChannel {
     var name = data['r_s']['to'];
 
     String me = _prefs.getString('username');
-    String threadName = me + '_' + name;
+    String threadName = me + '-' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
 
@@ -468,7 +501,7 @@ class SocketChannel {
     int id = data['received'];
     String name = data['from'];
     String me = _prefs.getString('username');
-    String threadName = me + '_' + name;
+    String threadName = me + '-' + name;
     var threadBox = Hive.box('Threads');
     var existingThread = threadBox.get(threadName);
     existingThread.updateChatStatus(id);
@@ -545,7 +578,7 @@ class SocketChannel {
         first: User(name: me), second: User(name: data['message']['from']));
 
     //Thread is named in the format "self_sender" eg:anna_deepika
-    var threadName = me + '_' + data['message']['from'];
+    var threadName = me + '-' + data['message']['from'];
 
     //Checking if thread already exists in box, if exists, the new chat messaeg if added else new thread is created and saved to box.
     if (!threadBox.containsKey(threadName)) {

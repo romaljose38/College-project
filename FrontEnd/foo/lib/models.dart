@@ -368,7 +368,10 @@ enum NotificationType {
   mention,
 
   @HiveField(1)
-  friendRequest
+  friendRequest,
+
+  @HiveField(2)
+  postLike,
 }
 
 @HiveType(typeId: 6)

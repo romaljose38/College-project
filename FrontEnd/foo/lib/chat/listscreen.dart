@@ -296,7 +296,7 @@ class SearchTile extends StatelessWidget {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var threadBox = Hive.box("Threads");
     var curUser = prefs.getString('username');
-    String threadName = "${prefs.getString('username')}_${user.name}";
+    String threadName = "${prefs.getString('username')}-${user.name}";
 
     Thread thread;
     if (threadBox.containsKey(threadName)) {

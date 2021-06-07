@@ -17,6 +17,8 @@ class NotificationTypeAdapter extends TypeAdapter<NotificationType> {
         return NotificationType.mention;
       case 1:
         return NotificationType.friendRequest;
+      case 2:
+        return NotificationType.postLike;
       default:
         return NotificationType.mention;
     }
@@ -30,6 +32,9 @@ class NotificationTypeAdapter extends TypeAdapter<NotificationType> {
         break;
       case NotificationType.friendRequest:
         writer.writeByte(1);
+        break;
+      case NotificationType.postLike:
+        writer.writeByte(2);
         break;
     }
   }

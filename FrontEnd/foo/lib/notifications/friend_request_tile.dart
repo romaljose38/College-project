@@ -70,30 +70,37 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
   }
 
   Future<bool> handleRequest(String action) async {
-    var resp = await http.get(Uri.http(localhost, '/api/handle_request',
-        {'id': widget.notification.notifId.toString(), 'action': action}));
-    if (resp.statusCode == 200) {
-      Box notifsBox = Hive.box("Notifications");
-      Notifications currentNotification =
-          notifsBox.get(widget.notification.notifId);
-      if (action == "accept") {
-        currentNotification.hasAccepted = true;
-        currentNotification.save();
-        setState(() {
-          child = static();
-        });
-      } else {
-        currentNotification.delete();
-        setState(() {
-          child = Container();
-        });
-      }
+    try {
+      var resp = await http.get(Uri.http(localhost, '/api/handle_request',
+          {'id': widget.notification.notifId.toString(), 'action': action}));
+      if (resp.statusCode == 200) {
+        Box notifsBox = Hive.box("Notifications");
+        Notifications currentNotification =
+            notifsBox.get(widget.notification.notifId);
+        if (action == "accept") {
+          currentNotification.hasAccepted = true;
+          currentNotification.save();
+          setState(() {
+            child = static();
+          });
+        } else {
+          currentNotification.delete();
+          setState(() {
+            child = Container();
+          });
+        }
 
+        _animationController
+            .reverse()
+            .whenComplete(() => overlayEntry.remove());
+        return true;
+      }
       _animationController.reverse().whenComplete(() => overlayEntry.remove());
-      return true;
+      return false;
+    } catch (e) {
+      _animationController.reverse().whenComplete(() => overlayEntry.remove());
+      return false;
     }
-    _animationController.reverse().whenComplete(() => overlayEntry.remove());
-    return false;
   }
 
   AlertDialog acceptDialog(context) => AlertDialog(
@@ -116,6 +123,7 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
                 }),
           ]);
 
+  //
   AlertDialog rejectDialog(context) => AlertDialog(
           title: Text("Please confirm"),
           shape:
@@ -135,6 +143,8 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
                   Navigator.pop(context);
                 }),
           ]);
+
+  //
   dismissible() => Dismissible(
         background: Container(
             margin: EdgeInsets.symmetric(vertical: 5),
@@ -149,9 +159,13 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
                     margin: EdgeInsets.only(right: 15))
               ],
             )),
+
+        //
         onDismissed: (DismissDirection direction) {
           print(direction.index);
         },
+
+        //
         confirmDismiss: hasAccepted ?? false
             ? (_) => Future.value(false)
             : (DismissDirection direction) async {
@@ -167,7 +181,9 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
                 CustomOverlay customOverlay = CustomOverlay(
                     context: context,
                     animationController: _animationController);
+
                 bool status;
+
                 if (hasAccepted == true) {
                   showOverlay();
                   status = await handleRequest("accept");

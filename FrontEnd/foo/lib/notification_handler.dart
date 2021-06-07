@@ -81,7 +81,7 @@ class LocalNotificationHandler {
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(index,
         'You have a new message from $user', content, platformChannelSpecifics,
-        payload: 'item x');
+        payload: 'chat');
     this._incrementIndex(index);
   }
 
@@ -91,7 +91,7 @@ class LocalNotificationHandler {
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(index,
         'You have a friend request from $user', "", platformChannelSpecifics,
-        payload: 'item x');
+        payload: 'notif');
     this._incrementIndex(index);
   }
 
@@ -101,7 +101,7 @@ class LocalNotificationHandler {
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(index,
         '$user mentioned you in a comment.', "", platformChannelSpecifics,
-        payload: 'item x');
+        payload: 'notif');
     this._incrementIndex(index);
   }
 }

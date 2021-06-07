@@ -42,6 +42,7 @@ Future<void> main() async {
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   prefs.setString("curUser", "");
+  prefs.setBool("hasNotif", false);
   // SocketChannel socket;
   // if (prefs.containsKey('username')) {
   //   print("in main");

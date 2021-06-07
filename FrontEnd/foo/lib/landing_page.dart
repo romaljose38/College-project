@@ -15,10 +15,12 @@ import 'package:foo/socket.dart';
 import 'package:foo/upload_screens/audio_upload_screen.dart';
 import 'package:foo/upload_screens/image_upload_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive/hive.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:foo/upload_screens/video_upload_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class LandingPageProxy extends StatelessWidget {
   // NotificationController controller = NotificationController();
@@ -31,8 +33,9 @@ class LandingPageProxy extends StatelessWidget {
 
 class LandingPage extends StatefulWidget {
   int index;
+  int navBarIndex;
 
-  LandingPage({this.index = 0});
+  LandingPage({this.index = 0, this.navBarIndex = 0});
 
   @override
   LandingPageState createState() => LandingPageState();
@@ -50,13 +53,17 @@ class LandingPageState extends State<LandingPage>
   Timer timer;
   static bool isConnected = false;
   SocketChannel socket;
-
+  ValueNotifier pgVal = ValueNotifier(0);
   // NotificationController controller;
+  int _page = 0;
+  bool hasNewNotifications;
 
   @override
   void initState() {
     notifInit();
     setPrefs();
+    _page = widget.navBarIndex;
+    pgVal.value = widget.navBarIndex;
     super.initState();
     checkSocket();
 
@@ -80,6 +87,7 @@ class LandingPageState extends State<LandingPage>
 
   Future<int> setPrefs() async {
     _prefs = await SharedPreferences.getInstance();
+
     return _prefs.getInt('id');
   }
 
@@ -111,11 +119,18 @@ class LandingPageState extends State<LandingPage>
   }
 
   Future<dynamic> handleEntry(String payload) async {
-    setState(() {
-      curpgviewIndex = 1;
-    });
-    await Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (_) => LandingPage(index: 1)));
+    if (payload == "chat") {
+      await Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => LandingPage(index: 1)));
+    } else if (payload == "notif") {
+      await Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (_) => LandingPage(
+                    index: 0,
+                    navBarIndex: 3,
+                  )));
+    }
   }
 
   // function that picks an image from the gallery
@@ -240,8 +255,6 @@ class LandingPageState extends State<LandingPage>
   }
 
   //
-
-  int _page = 0;
 
   GestureDetector bottomSheetTile(
           String type, Color color, IconData icon, Function onTap) =>
@@ -452,16 +465,49 @@ class LandingPageState extends State<LandingPage>
                       ),
                       child: Icon(Ionicons.add, size: 20, color: Colors.black)),
                 ),
-                IconButton(
-                    icon: Icon(Ionicons.notifications_outline,
-                        size: 22, color: Colors.black),
-                    disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 3)),
+                ValueListenableBuilder(
+                  valueListenable: Hive.box("Notifications").listenable(),
+                  builder: (context, box, snapshot) => ValueListenableBuilder(
+                    valueListenable: pgVal,
+                    builder: (context, box, snapshot) {
+                      var value = _prefs?.getBool("hasNotif") ?? false;
+                      print(value);
+                      return Stack(
+                        children: [
+                          IconButton(
+                              icon: Icon(Ionicons.notifications_outline,
+                                  size: 22, color: Colors.black),
+                              disabledColor: Colors.green,
+                              onPressed: () => setState(() {
+                                    _page = 3;
+                                    pgVal.value = 3;
+                                  })),
+                          Positioned(
+                            child: Container(
+                              height: 4,
+                              width: 4,
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: value
+                                      ? Colors.black
+                                      : Colors.transparent),
+                            ),
+                            top: 8,
+                            right: MediaQuery.of(context).size.width * .06,
+                          )
+                        ],
+                      );
+                    },
+                  ),
+                ),
                 IconButton(
                     icon: Icon(Ionicons.person_outline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 2)),
+                    onPressed: () => setState(() {
+                          _page = 2;
+                          pgVal.value = 2;
+                        })),
               ],
             ),
           ),
