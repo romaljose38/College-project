@@ -228,6 +228,7 @@ class _ReplyModalSheetState extends State<ReplyModalSheet> {
           children: [
             Expanded(
                 child: TextField(
+              controller: _textController,
               autofocus: true,
               decoration: InputDecoration(
                 hintStyle: GoogleFonts.sourceSansPro(),

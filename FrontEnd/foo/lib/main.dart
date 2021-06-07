@@ -60,7 +60,7 @@ Future<void> main() async {
   //   print(message.messageType);
   //   showNotification(message.data['message'], message.data['username']);
   // });
-  print(await FirebaseMessaging.instance.getToken());
+  //print(await FirebaseMessaging.instance.getToken());
   runApp(MyApp(prefs: prefs));
 }
 
