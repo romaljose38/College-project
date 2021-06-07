@@ -27,7 +27,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Future<void> removePrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool("hasNotif", false);
-    Hive.box('Notifications').values.first.save();
   }
 
   Future<String> getDp() async {
@@ -37,6 +36,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
     return Scaffold(
         backgroundColor: Colors.white.withOpacity(.6),
         body: Padding(
@@ -151,16 +151,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               if (notifications[index].type ==
                                   NotificationType.friendRequest) {
                                 return Tile(
+                                  size: size,
                                   notification: notifications[index],
                                 );
                               } else if (notifications[index].type ==
                                   NotificationType.mention) {
                                 return MentionTile(
+                                  size: size,
                                   notification: notifications[index],
                                 );
                               } else if (notifications[index].type ==
                                   NotificationType.postLike) {
                                 return PostLikeTile(
+                                  size: size,
                                   notification: notifications[index],
                                 );
                               }
@@ -204,7 +207,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
 class PostLikeTile extends StatelessWidget {
   final Notifications notification;
-  PostLikeTile({this.notification});
+  final Size size;
+  PostLikeTile({this.notification, this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -247,23 +251,26 @@ class PostLikeTile extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RichText(
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      text: this.notification.userName,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: " has liked your post.",
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w300,
-                          ),
+                  Container(
+                    width: size.width - 110,
+                    child: RichText(
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        text: this.notification.userName,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
+                        children: [
+                          TextSpan(
+                            text: " has liked your post.",
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(height: 5),

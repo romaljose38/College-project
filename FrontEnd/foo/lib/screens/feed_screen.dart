@@ -569,6 +569,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
     var heightFactor = (height - 58) / height;
     // evict();
+    Essentials.width = MediaQuery.of(context).size.width;
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(
@@ -682,4 +683,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       ),
     );
   }
+}
+
+class Essentials {
+  static var width;
 }

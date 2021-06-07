@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/profile/profile_test.dart';
+import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/test_cred.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
@@ -10,8 +11,8 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class Tile extends StatefulWidget {
   final Notifications notification;
-
-  Tile({this.notification});
+  final Size size;
+  Tile({this.notification, this.size});
 
   @override
   _TileState createState() => _TileState();
@@ -36,7 +37,7 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
         child = Container();
       }
     } else {
-      child = dismissible();
+      child = dismissible(context);
     }
     _animationController = AnimationController(
       vsync: this,
@@ -149,7 +150,7 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
           ]);
 
   //
-  dismissible() => Dismissible(
+  dismissible(context) => Dismissible(
         background: Container(
             margin: EdgeInsets.symmetric(vertical: 5),
             child: Row(
@@ -235,27 +236,31 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
                 ),
                 SizedBox(width: 10),
                 Column(
+                  // direction: Axis.vertical,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    RichText(
-                      overflow: TextOverflow.ellipsis,
-                      text: TextSpan(
-                        text: hasAccepted ?? false
-                            ? "You are now friends with "
-                            : "You have a friend request from ",
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w300,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: this.widget.notification.userName,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    Container(
+                      width: widget.size.width - 110,
+                      child: RichText(
+                        overflow: TextOverflow.ellipsis,
+                        text: TextSpan(
+                          text: hasAccepted ?? false
+                              ? "You are now friends with "
+                              : "You have a friend request from ",
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w300,
                           ),
-                        ],
+                          children: [
+                            TextSpan(
+                              text: this.widget.notification.userName,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     SizedBox(height: 5),
@@ -292,37 +297,42 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
             ),
           ),
           SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                overflow: TextOverflow.ellipsis,
-                text: TextSpan(
-                  text: "You are now friends with ",
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w300,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: this.widget.notification.userName,
+          Container(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: widget.size.width - 110,
+                  child: RichText(
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      text: "You are now friends with ",
                       style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w300,
                       ),
+                      children: [
+                        TextSpan(
+                          text: this.widget.notification.userName,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              SizedBox(height: 5),
-              Text(
-                timeago.format(this.widget.notification.timeCreated),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey,
+                SizedBox(height: 5),
+                Text(
+                  timeago.format(this.widget.notification.timeCreated),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           // Spacer(flex: 2),
         ],

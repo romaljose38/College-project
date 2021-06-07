@@ -7,7 +7,8 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class MentionTile extends StatelessWidget {
   final Notifications notification;
-  MentionTile({this.notification});
+  final Size size;
+  MentionTile({this.notification, this.size});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -51,23 +52,26 @@ class MentionTile extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RichText(
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      text: this.notification.userName,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: " mentioned you in a comment.",
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w300,
-                          ),
+                  Container(
+                    width: size.width - 110,
+                    child: RichText(
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        text: this.notification.userName,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
+                        children: [
+                          TextSpan(
+                            text: " mentioned you in a comment.",
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(height: 5),
