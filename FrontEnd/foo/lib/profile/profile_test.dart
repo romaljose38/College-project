@@ -51,7 +51,7 @@ class Profile extends StatelessWidget {
       response = await http.get(Uri.http(localhost, '/api/$userId/profile',
           {'curUserId': _prefs.getInt('id').toString()}));
     }
-    var respJson = jsonDecode(response.body);
+    var respJson = jsonDecode(utf8.decode(response.body));
     requestStatus = respJson['requestStatus'];
     notifId = respJson['requestStatus'] == 'pending_acceptance'
         ? respJson['notif_id']

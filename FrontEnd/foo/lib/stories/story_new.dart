@@ -802,7 +802,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
               Align(
                 alignment: Alignment.bottomCenter,
                 child: IconButton(
-                  icon: Icon(Icons.android, color: Colors.white),
+                  icon: Icon(Icons.expand_less, color: Colors.white),
                   onPressed: () {
                     _animController.stop();
                     if (mediaType == 'video') videoController?.pause();
