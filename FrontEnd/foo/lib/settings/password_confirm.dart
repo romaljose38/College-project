@@ -48,6 +48,7 @@ class _PasswordConfirmState extends State<PasswordConfirm>
     _curPasswordFocus?.dispose();
     _newPasswordFocus?.dispose();
     _confirmPasswordFocus?.dispose();
+    super.dispose();
   }
 
   check_password() async {

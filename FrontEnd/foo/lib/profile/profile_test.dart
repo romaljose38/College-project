@@ -92,8 +92,8 @@ class Profile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.only(top: 20),
+      body: DecoratedBox(
+        decoration: BoxDecoration(color: Colors.white),
         child: FutureBuilder(
             future: getData(),
             builder: (context, snapshot) {
@@ -649,122 +649,125 @@ class _ProfileTestState extends State<ProfileTest>
   }
 
   topPortion() {
-    return Column(children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: Icon(Icons.arrow_back,
-                color: widget.myProfile ? Colors.white : Colors.black,
-                size: 20),
-            onPressed: widget.myProfile
-                ? null
-                : () {
-                    Navigator.pop(context, requestStatus);
-                  },
-          ),
-          Text(
-            "Profile",
-            style:
-                GoogleFonts.raleway(fontWeight: FontWeight.w700, fontSize: 18),
-          ),
-          IconButton(
-            icon: Icon(icons.Feed.colon, color: Colors.black, size: 20),
-            onPressed: () {
-              Navigator.push(
-                context,
-                PageRouteBuilder(
-                    pageBuilder: (contxt, animation, secAnimation) {
-                  return Settings();
-                }, transitionsBuilder: (ctx, animation, secAnimation, child) {
-                  return SlideTransition(
-                    position:
-                        Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
-                            .animate(animation),
-                    child: child,
-                  );
-                }),
-              );
-            },
-          ),
-        ],
-      ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(widget.friendsCount.toString(),
-                  style: GoogleFonts.lato(
-                      fontSize: 16, fontWeight: FontWeight.w500)),
-              Text("Friends",
-                  style: GoogleFonts.raleway(
-                    fontSize: 14,
-                    letterSpacing: 1.2,
-                    color: Colors.grey.shade600,
-                  )),
-            ],
-          ),
-          Container(
-            margin: EdgeInsets.all(10.0),
-            width: 70.0,
-            height: 70.0,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.pink.shade400, width: 1),
-              // boxShadow: [
-              //   BoxShadow(
-              //     color: Colors.black45.withOpacity(.2),
-              //     offset: Offset(0, 2),
-              //     spreadRadius: 1,
-              //     blurRadius: 6.0,
-              //   ),
-              // ],
+    return Padding(
+      padding: const EdgeInsets.all(25.0),
+      child: Column(children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: Icon(Icons.arrow_back,
+                  color: widget.myProfile ? Colors.white : Colors.black,
+                  size: 20),
+              onPressed: widget.myProfile
+                  ? null
+                  : () {
+                      Navigator.pop(context, requestStatus);
+                    },
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(3.0),
-              child: Container(
-                width: 75,
-                height: 70,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    // shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image:
-                          CachedNetworkImageProvider(getUrl(widget.userDpUrl)),
-                      fit: BoxFit.cover,
+            Text(
+              "Profile",
+              style: GoogleFonts.raleway(
+                  fontWeight: FontWeight.w700, fontSize: 18),
+            ),
+            IconButton(
+              icon: Icon(icons.Feed.colon, color: Colors.black, size: 20),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                      pageBuilder: (contxt, animation, secAnimation) {
+                    return Settings();
+                  }, transitionsBuilder: (ctx, animation, secAnimation, child) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
+                              .animate(animation),
+                      child: child,
+                    );
+                  }),
+                );
+              },
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(widget.friendsCount.toString(),
+                    style: GoogleFonts.lato(
+                        fontSize: 16, fontWeight: FontWeight.w500)),
+                Text("Friends",
+                    style: GoogleFonts.raleway(
+                      fontSize: 14,
+                      letterSpacing: 1.2,
+                      color: Colors.grey.shade600,
                     )),
+              ],
+            ),
+            Container(
+              margin: EdgeInsets.all(10.0),
+              width: 70.0,
+              height: 70.0,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: Colors.pink.shade400, width: 1),
+                // boxShadow: [
+                //   BoxShadow(
+                //     color: Colors.black45.withOpacity(.2),
+                //     offset: Offset(0, 2),
+                //     spreadRadius: 1,
+                //     blurRadius: 6.0,
+                //   ),
+                // ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(3.0),
+                child: Container(
+                  width: 75,
+                  height: 70,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      // shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image: CachedNetworkImageProvider(
+                            getUrl(widget.userDpUrl)),
+                        fit: BoxFit.cover,
+                      )),
+                ),
               ),
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.postsCount.toString(),
-                  style: GoogleFonts.lato(
-                      fontSize: 16, fontWeight: FontWeight.w500)),
-              Text("Posts",
-                  style: GoogleFonts.raleway(
-                    fontSize: 14,
-                    letterSpacing: 1.2,
-                    color: Colors.grey.shade600,
-                  )),
-            ],
-          ),
-        ],
-      ),
-      properRow(),
-      SizedBox(height: 8),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: Text(widget.about,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.raleway(
-                fontSize: 13, color: Colors.black.withOpacity(.7))),
-      ),
-      SizedBox(height: 20),
-    ]);
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.postsCount.toString(),
+                    style: GoogleFonts.lato(
+                        fontSize: 16, fontWeight: FontWeight.w500)),
+                Text("Posts",
+                    style: GoogleFonts.raleway(
+                      fontSize: 14,
+                      letterSpacing: 1.2,
+                      color: Colors.grey.shade600,
+                    )),
+              ],
+            ),
+          ],
+        ),
+        properRow(),
+        SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Text(widget.about,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.raleway(
+                  fontSize: 13, color: Colors.black.withOpacity(.7))),
+        ),
+        SizedBox(height: 20),
+      ]),
+    );
   }
 
   settingsWidget() =>
