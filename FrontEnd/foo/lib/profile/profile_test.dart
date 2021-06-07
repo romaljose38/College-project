@@ -454,7 +454,7 @@ class _ProfileTestState extends State<ProfileTest>
   }
 
   Future<void> handleChat() async {
-    String threadName = "${widget.curUser}_${widget.userName}";
+    String threadName = "${widget.curUser}-${widget.userName}";
     var threadBox = Hive.box("Threads");
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Thread thread;

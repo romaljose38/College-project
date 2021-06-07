@@ -72,7 +72,7 @@ class SocketChannel {
         if (!isConnected) {
           await setPrefs();
           String wsUrl = 'ws://$localhost:8000/ws/chat_room/' +
-              _prefs.getString("username") +
+              _prefs.getInt("uprn").toString() +
               "/";
           // ignore: unused_local_variable
           channel = await WebSocket.connect(wsUrl);

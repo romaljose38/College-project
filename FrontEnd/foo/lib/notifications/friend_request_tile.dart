@@ -30,7 +30,11 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
     super.initState();
     if (widget.notification.hasAccepted != null) {
       hasAccepted = widget.notification.hasAccepted;
-      child = static();
+      if (widget.notification.hasAccepted) {
+        child = static();
+      } else {
+        child = Container();
+      }
     } else {
       child = dismissible();
     }
@@ -152,11 +156,11 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
+                    child: Icon(Icons.check, color: Colors.green),
+                    margin: EdgeInsets.only(right: 15)),
+                Container(
                     child: Icon(Icons.clear, color: Colors.red),
                     margin: EdgeInsets.only(left: 15)),
-                Container(
-                    child: Icon(Icons.check, color: Colors.green),
-                    margin: EdgeInsets.only(right: 15))
               ],
             )),
 
