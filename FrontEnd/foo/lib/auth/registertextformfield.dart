@@ -23,7 +23,7 @@ class FormTextField extends StatelessWidget {
 
   String validate(value, fieldName, labelText) {
     RegExp myExp = RegExp(r"^[a-zA-Z0-9_@]*$");
-    if (value.indexOf(' ') >= 0) return "Spaces are now allowed";
+    if (value.indexOf(' ') >= 0) return "Spaces are not allowed";
     if (value == null || value.isEmpty) return "Enter your $labelText";
     switch (fieldName) {
       case 'username':
