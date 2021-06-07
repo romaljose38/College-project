@@ -69,7 +69,13 @@ class LandingPageState extends State<LandingPage>
     checkSocket();
 
     curpgviewIndex = widget.index;
-    _pageController = PageController(initialPage: widget.index);
+    _pageController = PageController(initialPage: 0);
+    if (widget.index == 1) {
+      Timer(Duration(milliseconds: 100), () {
+        _pageController.animateToPage(1,
+            duration: Duration(milliseconds: 100), curve: Curves.easeIn);
+      });
+    }
     animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 400),
