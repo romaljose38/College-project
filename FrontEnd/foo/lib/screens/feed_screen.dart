@@ -639,6 +639,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             },
             child: CustomScrollView(
               controller: _scrollController,
+              physics: BouncingScrollPhysics(),
               slivers: [
                 //SliverToBoxAdapter(child: _horiz()),
                 SliverToBoxAdapter(child: _newHoriz()),

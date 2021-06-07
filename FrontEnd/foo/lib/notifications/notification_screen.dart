@@ -146,6 +146,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 b.timeCreated.compareTo(a.timeCreated));
                           }
                           return ListView.builder(
+                            physics: BouncingScrollPhysics(),
                             itemCount: notifications.length ?? 0,
                             itemBuilder: (context, index) {
                               if (notifications[index].type ==

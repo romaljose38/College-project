@@ -39,53 +39,61 @@ class Profile extends StatelessWidget {
   Profile({this.userId, this.myProfile = false});
 
   //Gets the data corresponding to the profile
-  Future<List> getData() async {
+  Future<List> getData(context) async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
     curUser = _prefs.getString("username");
     var response;
-    if (myProfile) {
-      int myId = _prefs.getInt('id');
-      response = await http.get(Uri.http(localhost, '/api/$myId/profile',
-          {'curUserId': _prefs.getInt('id').toString()}));
-    } else {
-      response = await http.get(Uri.http(localhost, '/api/$userId/profile',
-          {'curUserId': _prefs.getInt('id').toString()}));
+    try {
+      print("hello inside getData");
+      if (myProfile) {
+        int myId = _prefs.getInt('id');
+        response = await http.get(Uri.http(localhost, '/api/$myId/profile',
+            {'curUserId': _prefs.getInt('id').toString()}));
+      } else {
+        response = await http.get(Uri.http(localhost, '/api/$userId/profile',
+            {'curUserId': _prefs.getInt('id').toString()}));
+      }
+      var respJson = jsonDecode(utf8.decode(response.bodyBytes));
+      print(respJson);
+      requestStatus = respJson['requestStatus'];
+      notifId = respJson['requestStatus'] == 'pending_acceptance'
+          ? respJson['notif_id']
+          : -2;
+      profUserName = respJson['username'];
+      isMe = respJson['isMe'];
+      friendsCount = respJson['friends_count'];
+      postsCount = respJson['post_count'];
+      about = respJson['about'];
+      profileUserId = respJson['id'];
+
+      userDpUrl = respJson['dp'];
+      print(userId);
+      print(respJson);
+      print(respJson.runtimeType);
+      fName = respJson['f_name'];
+      lName = respJson['l_name'];
+      var posts = respJson['posts'];
+      List<Post> postList = [];
+      print(posts.runtimeType);
+      posts.forEach((e) {
+        postList.insert(
+            0,
+            Post(
+                type: e['type'],
+                username: respJson['username'],
+                postUrl: 'http://' + localhost + e['url'],
+                commentCount: e['comments'],
+                likeCount: e['likes'],
+                thumbNailPath: 'http://' + localhost + e['thumbnail'],
+                postId: e['id']));
+      });
+      return postList;
+    } catch (e) {
+      print(e);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Something went wrong.")));
+      Navigator.pop(context);
     }
-    var respJson = jsonDecode(utf8.decode(response.body));
-    requestStatus = respJson['requestStatus'];
-    notifId = respJson['requestStatus'] == 'pending_acceptance'
-        ? respJson['notif_id']
-        : -2;
-    profUserName = respJson['username'];
-    isMe = respJson['isMe'];
-    friendsCount = respJson['friends_count'];
-    postsCount = respJson['post_count'];
-    about = respJson['about'];
-    profileUserId = respJson['id'];
-
-    userDpUrl = respJson['dp'];
-    print(userId);
-    print(respJson);
-    print(respJson.runtimeType);
-    fName = respJson['f_name'];
-    lName = respJson['l_name'];
-    var posts = respJson['posts'];
-    List<Post> postList = [];
-    print(posts.runtimeType);
-    posts.forEach((e) {
-      postList.insert(
-          0,
-          Post(
-              type: e['type'],
-              username: respJson['username'],
-              postUrl: 'http://' + localhost + e['url'],
-              commentCount: e['comments'],
-              likeCount: e['likes'],
-              thumbNailPath: 'http://' + localhost + e['thumbnail'],
-              postId: e['id']));
-    });
-
-    return postList;
   }
 
   @override
@@ -93,7 +101,7 @@ class Profile extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: FutureBuilder(
-          future: getData(),
+          future: getData(context),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               List posts = snapshot.data;
