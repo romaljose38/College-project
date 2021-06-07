@@ -962,7 +962,9 @@ class _ChatScreenState extends State<ChatScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  otherUser,
+                                  widget.thread.second.f_name +
+                                      " " +
+                                      widget.thread.second.l_name,
                                   textAlign: TextAlign.left,
                                   textDirection: TextDirection.ltr,
                                   style: GoogleFonts.lato(
