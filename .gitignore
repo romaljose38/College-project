@@ -1,5 +1,4 @@
 FrontEnd/foo/build/
-FrontEnd/foo/android/
 Django/env/
 db.sqlite3
 *.pyc
