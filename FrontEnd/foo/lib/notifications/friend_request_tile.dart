@@ -238,6 +238,7 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     RichText(
+                      overflow: TextOverflow.ellipsis,
                       text: TextSpan(
                         text: hasAccepted ?? false
                             ? "You are now friends with "
@@ -295,6 +296,7 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               RichText(
+                overflow: TextOverflow.ellipsis,
                 text: TextSpan(
                   text: "You are now friends with ",
                   style: TextStyle(
@@ -328,39 +330,43 @@ class _TileState extends State<Tile> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () async {
-          var val = await Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => Profile(userId: widget.notification.userId)));
-          print(val);
-          if (val == "accepted") {
-            setState(() {
-              hasAccepted = true;
-              child = static();
-            });
-          } else if (val == "rejected") {
-            setState(() {
-              child = Container();
-            });
-          }
-          // Navigator.restorablePushReplacement(
-          //     context, te(context, widget.notification));
-          // MaterialPageRoute(
-          //     builder: (_) => Profile(userId: widget.notification.userId)),
-          // );
+    return Container(
+      constraints:
+          BoxConstraints(maxWidth: MediaQuery.of(context).size.width - 40),
+      child: GestureDetector(
+          onTap: () async {
+            var val = await Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => Profile(userId: widget.notification.userId)));
+            print(val);
+            if (val == "accepted") {
+              setState(() {
+                hasAccepted = true;
+                child = static();
+              });
+            } else if (val == "rejected") {
+              setState(() {
+                child = Container();
+              });
+            }
+            // Navigator.restorablePushReplacement(
+            //     context, te(context, widget.notification));
+            // MaterialPageRoute(
+            //     builder: (_) => Profile(userId: widget.notification.userId)),
+            // );
 
-          // ()=>PageRouteBuilder(pageBuilder: (context, animation, secAnimation) {
-          //   return Profile(
-          //     userId: widget.notification.userId,
-          //   );
-          // }, transitionsBuilder: (context, animation, secAnimation, child) {
-          //   return SlideTransition(
-          //       position:
-          //           Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
-          //               .animate(animation),
-          //       child: child);
-          // }));
-        },
-        child: child ?? Container());
+            // ()=>PageRouteBuilder(pageBuilder: (context, animation, secAnimation) {
+            //   return Profile(
+            //     userId: widget.notification.userId,
+            //   );
+            // }, transitionsBuilder: (context, animation, secAnimation, child) {
+            //   return SlideTransition(
+            //       position:
+            //           Tween<Offset>(begin: Offset(1, 0), end: Offset(0, 0))
+            //               .animate(animation),
+            //       child: child);
+            // }));
+          },
+          child: child ?? Container()),
+    );
   }
 }

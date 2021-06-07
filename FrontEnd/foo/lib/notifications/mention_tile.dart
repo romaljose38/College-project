@@ -30,6 +30,8 @@ class MentionTile extends StatelessWidget {
             }));
       },
       child: Container(
+          constraints:
+              BoxConstraints(maxWidth: MediaQuery.of(context).size.width - 40),
           margin: EdgeInsets.symmetric(vertical: 6),
           child: Row(
             children: [
@@ -50,6 +52,7 @@ class MentionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   RichText(
+                    overflow: TextOverflow.ellipsis,
                     text: TextSpan(
                       text: this.notification.userName,
                       style: TextStyle(

@@ -188,17 +188,27 @@ class SearchTile extends StatelessWidget {
                 SizedBox(
                   width: 15,
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(this.user.name ?? "",
+                Container(
+                  constraints: BoxConstraints(
+                      maxWidth:
+                          (MediaQuery.of(context).size.width * .95) - 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        this.user.name ?? "",
                         style: GoogleFonts.raleway(
-                            fontWeight: FontWeight.w600, fontSize: 17)),
-                    SizedBox(height: 6),
-                    Text(
-                        (this.user.fname ?? "") + " " + (this.user.lname ?? ""),
-                        style: TextStyle(fontSize: 13)),
-                  ],
+                            fontWeight: FontWeight.w600, fontSize: 17),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                          (this.user.fname ?? "") +
+                              " " +
+                              (this.user.lname ?? ""),
+                          style: TextStyle(fontSize: 13)),
+                    ],
+                  ),
                 ),
               ],
             ),

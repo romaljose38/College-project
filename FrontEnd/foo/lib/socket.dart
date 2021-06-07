@@ -432,32 +432,40 @@ class SocketChannel {
   }
 
   void updateTypingStatus(data) {
-    String me = _prefs.getString('username');
-    String threadName = me + '-' + data['from'];
-    var threadBox = Hive.box('Threads');
-    var existingThread = threadBox.get(threadName);
-    if (data['status'] == "typing") {
-      existingThread.isTyping = true;
-    } else {
-      existingThread.isTyping = false;
-    }
+    try {
+      String me = _prefs.getString('username');
+      String threadName = me + '-' + data['from'];
+      var threadBox = Hive.box('Threads');
+      var existingThread = threadBox.get(threadName);
+      if (data['status'] == "typing") {
+        existingThread.isTyping = true;
+      } else {
+        existingThread.isTyping = false;
+      }
 
-    existingThread.save();
+      existingThread.save();
+    } catch (e) {
+      sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+    }
   }
 
   void updateMsgSeenStatus(data) {
-    String me = _prefs.getString('username');
-    String threadName = me + '-' + data['from'];
-    var threadBox = Hive.box('Threads');
-    var existingThread = threadBox.get(threadName);
-    existingThread.chatList.forEach((e) {
-      print(e.msgType);
-      print(e.id);
-      print(e.id.runtimeType);
-    });
-    existingThread.updateChatSeenStatus(data['id']);
-    existingThread.save();
-    sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+    try {
+      String me = _prefs.getString('username');
+      String threadName = me + '-' + data['from'];
+      var threadBox = Hive.box('Threads');
+      var existingThread = threadBox.get(threadName);
+      existingThread.chatList.forEach((e) {
+        print(e.msgType);
+        print(e.id);
+        print(e.id.runtimeType);
+      });
+      existingThread.updateChatSeenStatus(data['id']);
+      existingThread.save();
+      sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+    } catch (e) {
+      sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+    }
   }
 
   void addNotification(data) async {
@@ -483,30 +491,38 @@ class SocketChannel {
   }
 
   void _updateReachedServerStatus(data) {
-    var id = data['r_s']['id'];
-    var newId = data['r_s']['n_id'];
-    var name = data['r_s']['to'];
+    try {
+      var id = data['r_s']['id'];
+      var newId = data['r_s']['n_id'];
+      var name = data['r_s']['to'];
 
-    String me = _prefs.getString('username');
-    String threadName = me + '-' + name;
-    var threadBox = Hive.box('Threads');
-    var existingThread = threadBox.get(threadName);
+      String me = _prefs.getString('username');
+      String threadName = me + '-' + name;
+      var threadBox = Hive.box('Threads');
+      var existingThread = threadBox.get(threadName);
 
-    existingThread.updateChatId(id: id, newId: newId);
-    existingThread.save();
-    sendToChannel(jsonEncode({'n_r': data['r_s']['notif_id']}));
+      existingThread.updateChatId(id: id, newId: newId);
+      existingThread.save();
+      sendToChannel(jsonEncode({'n_r': data['r_s']['notif_id']}));
+    } catch (e) {
+      sendToChannel(jsonEncode({'n_r': data['r_s']['notif_id']}));
+    }
   }
 
   void _updateChatStatus(data) {
-    int id = data['received'];
-    String name = data['from'];
-    String me = _prefs.getString('username');
-    String threadName = me + '-' + name;
-    var threadBox = Hive.box('Threads');
-    var existingThread = threadBox.get(threadName);
-    existingThread.updateChatStatus(id);
-    existingThread.save();
-    sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+    try {
+      int id = data['received'];
+      String name = data['from'];
+      String me = _prefs.getString('username');
+      String threadName = me + '-' + name;
+      var threadBox = Hive.box('Threads');
+      var existingThread = threadBox.get(threadName);
+      existingThread.updateChatStatus(id);
+      existingThread.save();
+      sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+    } catch (e) {
+      sendToChannel(jsonEncode({'n_r': data['notif_id']}));
+    }
   }
 
   getAndSetDetails(thread) async {

@@ -61,16 +61,29 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
-                              return CircleAvatar(
-                                child: ClipOval(
-                                  child: Image(
-                                    height: 60.0,
-                                    width: 60.0,
-                                    image: FileImage(File(snapshot.data)),
+                              return Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  image: DecorationImage(
                                     fit: BoxFit.cover,
+                                    image: FileImage(
+                                      File(snapshot.data),
+                                    ),
                                   ),
                                 ),
                               );
+                              // return CircleAvatar(
+                              //   child: ClipOval(
+                              //     child: Image(
+                              //       height: 60.0,
+                              //       width: 60.0,
+                              //       image: FileImage(File(snapshot.data)),
+                              //       fit: BoxFit.cover,
+                              //     ),
+                              //   ),
+                              // );
                             }
                             return SizedBox(
                               height: 50,
@@ -80,17 +93,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               ),
                             );
                           }),
-                      Positioned(
-                        right: 19,
-                        top: 5,
-                        child: Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                              color: Colors.purpleAccent,
-                              borderRadius: BorderRadius.circular(50)),
-                        ),
-                      ),
                     ]),
                   ),
                   SizedBox(width: 20)
@@ -223,6 +225,8 @@ class PostLikeTile extends StatelessWidget {
             }));
       },
       child: Container(
+          constraints:
+              BoxConstraints(maxWidth: MediaQuery.of(context).size.width - 40),
           margin: EdgeInsets.symmetric(vertical: 5),
           child: Row(
             children: [
@@ -244,6 +248,7 @@ class PostLikeTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   RichText(
+                    overflow: TextOverflow.ellipsis,
                     text: TextSpan(
                       text: this.notification.userName,
                       style: TextStyle(
