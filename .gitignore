@@ -1,4 +1,6 @@
 FrontEnd/foo/build/
+FrontEnd/foo/pubspec.yaml
+FrontEnd/foo/pubspec.lock
 Django/env/
 db.sqlite3
 *.pyc

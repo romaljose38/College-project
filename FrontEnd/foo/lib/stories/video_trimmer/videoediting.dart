@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:foo/landing_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // //-------------------//
 // //PICKUP VIDEO SCREEN//
@@ -69,11 +70,13 @@ class _VideoEditorState extends State<VideoEditor> {
   bool _isUploading = false;
   String _exportText = "";
   VideoEditorController _controller;
+  TextEditingController _captionController;
 
   @override
   void initState() {
     _controller = VideoEditorController.file(widget.file)
       ..initialize().then((_) => setState(() {}));
+    _captionController = TextEditingController();
     super.initState();
   }
 
@@ -124,13 +127,14 @@ class _VideoEditorState extends State<VideoEditor> {
     File file = File(uploadStoryPath);
 
     if (file != null) {
-      _exportText = "Video success export!";
+      _exportText = "Video export Success!";
       print(
           "File Path = ${file.path}"); //This is the path that has to posted via http post
       setState(() {
         _isUploading = true;
       });
-      widget.uploadFunc(context, File(file.path));
+      widget.uploadFunc(
+          context, File(file.path), _captionController.text ?? '');
     } else
       _exportText = "Error on export video :(";
 
@@ -148,62 +152,103 @@ class _VideoEditorState extends State<VideoEditor> {
       child: Scaffold(
         backgroundColor: Colors.black,
         body: _controller.initialized
-            ? Stack(children: [
-                Column(children: [
-                  _topNavBar(),
+            ? Column(
+                children: [
                   Expanded(
-                    child: CropGridViewer(
-                      controller: _controller,
-                      showGrid: false,
-                    ),
-                  ),
-                  ..._trimSlider(),
-                ]),
-                Center(
-                  child: AnimatedBuilder(
-                    animation: _controller.video,
-                    builder: (_, __) => OpacityTransition(
-                      visible: !_controller.isPlaying,
-                      child: GestureDetector(
-                        onTap: _controller.video.play,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
+                    child: Stack(children: [
+                      Column(children: [
+                        _topNavBar(),
+                        Expanded(
+                          child: CropGridViewer(
+                            controller: _controller,
+                            showGrid: false,
                           ),
-                          child: Icon(Icons.play_arrow),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-                _customSnackBar(),
-                ValueListenableBuilder(
-                  valueListenable: _isExporting,
-                  builder: (_, bool export, __) => OpacityTransition(
-                    visible: export,
-                    child: AlertDialog(
-                      title: ValueListenableBuilder(
-                        valueListenable: _exportingProgress,
-                        // builder: (_, double value, __) => TextDesigned(
-                        //   "Exporting video ${(value * 100).ceil()}%",
-                        // color: Colors.black,
-                        //   bold: true,
-                        builder: (_, double value, __) => UnconstrainedBox(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1,
-                            backgroundColor: Colors.purple,
-                            value: value,
-                            //),
+                        ..._trimSlider(),
+                      ]),
+                      Center(
+                        child: AnimatedBuilder(
+                          animation: _controller.video,
+                          builder: (_, __) => OpacityTransition(
+                            visible: !_controller.isPlaying,
+                            child: GestureDetector(
+                              onTap: _controller.video.play,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.play_arrow),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      _customSnackBar(),
+                      ValueListenableBuilder(
+                        valueListenable: _isExporting,
+                        builder: (_, bool export, __) => OpacityTransition(
+                          visible: export,
+                          child: AlertDialog(
+                            title: ValueListenableBuilder(
+                              valueListenable: _exportingProgress,
+                              // builder: (_, double value, __) => TextDesigned(
+                              //   "Exporting video ${(value * 100).ceil()}%",
+                              // color: Colors.black,
+                              //   bold: true,
+                              builder: (_, double value, __) =>
+                                  UnconstrainedBox(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1,
+                                  backgroundColor: Colors.purple,
+                                  value: value,
+                                  //),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    ]),
                   ),
-                )
-              ])
+                  SizedBox(height: 15),
+                  Container(
+                    height: 50,
+                    width: double.infinity,
+                    // child: Expanded(
+                    child: TextField(
+                      cursorColor: Colors.white,
+                      cursorWidth: .8,
+                      style: GoogleFonts.lato(color: Colors.white),
+                      controller: _captionController,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintStyle:
+                            GoogleFonts.sourceSansPro(color: Colors.grey),
+                        hintText: "Add a caption",
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.grey.withOpacity(.4), width: .6),
+                        ),
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.grey.withOpacity(.4), width: .6),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.grey.withOpacity(.4), width: .8),
+                        ),
+                        isCollapsed: true,
+                        contentPadding: EdgeInsets.only(
+                            left: 20, right: 8.0, top: 5.0, bottom: 8.0),
+                      ),
+                    ),
+                    // ),
+                  ),
+                ],
+              )
             : Center(child: CircularProgressIndicator()),
       ),
     );
@@ -237,10 +282,24 @@ class _VideoEditorState extends State<VideoEditor> {
               child: GestureDetector(
                 onTap: () {
                   _controller.video.pause();
-                  setState(() {
-                    _isAbsorbing = true;
-                  });
-                  _exportVideo();
+                  try {
+                    setState(() {
+                      _isAbsorbing = true;
+                    });
+                    _exportVideo();
+                  } catch (e) {
+                    print(e);
+                    if (_isAbsorbing == true) {
+                      setState(() {
+                        _isAbsorbing = false;
+                      });
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text(
+                              "Something went wrong while exporting this video")),
+                    );
+                  }
                 },
                 child: _isUploading
                     ? UnconstrainedBox(

@@ -8,14 +8,17 @@ import 'package:video_trimmer/video_trimmer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:hive/hive.dart';
 import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
+import 'package:foo/models.dart';
 
 import 'package:video_player/video_player.dart';
 import 'package:foo/stories/video_trimmer/videoediting.dart';
 
 import 'package:foo/stories/story_new.dart';
+
+import 'dart:convert';
 
 class StoryUploadPick extends StatefulWidget {
   final String myProfPic;
@@ -35,6 +38,7 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
       BuildContext context, File mediaFile, String caption) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String username = prefs.getString('username');
+    int userId = prefs.getInt('id');
     var uri = Uri.http(localhost, '/api/story_upload');
     var request = http.MultipartRequest('POST', uri)
       ..fields['username'] = username
@@ -43,14 +47,45 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
         'file',
         mediaFile.path,
       ));
-    var response = await request.send();
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    var decodedResponse = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
+      var myBox = await Hive.box('MyStories');
+
+      if (myBox.containsKey(userId)) {
+        var userStory = myBox.get(userId);
+        userStory.addStory(Story(
+          file: decodedResponse['url'],
+          time: DateTime.now(),
+          storyId: decodedResponse['s_id'],
+          caption: caption,
+        ));
+        userStory.save();
+      } else {
+        UserStoryModel newUser = UserStoryModel()
+          ..username = username
+          ..userId = userId
+          ..stories = <Story>[];
+        newUser.addStory(Story(
+          file: decodedResponse['url'],
+          time: DateTime.now(),
+          storyId: decodedResponse['s_id'],
+          caption: caption,
+        ));
+
+        await myBox.put(userId, newUser);
+        newUser.save();
+      }
+
       print("Uploaded");
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => LandingPage()));
     } else {
-      print("Upload failed");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload failed")),
+      );
     }
   }
 
@@ -58,6 +93,37 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
   void initState() {
     super.initState();
     myProfPic = widget.myProfPic;
+  }
+
+  _pickStoryToUpload() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mkv'],
+    );
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+      String mediaExt = file.extension;
+      File media = File(file.path);
+
+      print(mediaExt);
+
+      if (['jpg', 'jpeg', 'png', 'gif'].contains(mediaExt)) {
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+          return CropMyImage(file: media, uploadFunc: _uploadStory);
+        }));
+      } else {
+        await _trimmer.loadVideo(videoFile: media);
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+          // return TrimmerView(_trimmer,
+          //     uploadFunc: _uploadStory);
+          return VideoEditor(
+            file: media,
+            uploadFunc: _uploadStory,
+          ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
+        }));
+      }
+    }
   }
 
   @override
@@ -74,33 +140,13 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
         }
       },
       onLongPress: () async {
-        FilePickerResult result = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mkv'],
-        );
-
-        if (result != null) {
-          PlatformFile file = result.files.first;
-          String mediaExt = file.extension;
-          File media = File(file.path);
-
-          print(mediaExt);
-
-          if (['jpg', 'jpeg', 'png', 'gif'].contains(mediaExt)) {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return CropMyImage(file: media, uploadFunc: _uploadStory);
-            }));
-          } else {
-            await _trimmer.loadVideo(videoFile: media);
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              // return TrimmerView(_trimmer,
-              //     uploadFunc: _uploadStory);
-              return VideoEditor(
-                file: media,
-                uploadFunc: _uploadStory,
-              ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
-            }));
-          }
+        try {
+          await _pickStoryToUpload();
+        } catch (e) {
+          print(e);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Something went wrong. Try again later")),
+          );
         }
       },
       child: Stack(
