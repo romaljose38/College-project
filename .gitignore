@@ -6,3 +6,6 @@ db.sqlite3
 migrations/
 media/
 migrations/
+Frontend/foo/pubspec.yaml
+Frontend/foo/pubspec.lock
+FrontEnd/foo/android/

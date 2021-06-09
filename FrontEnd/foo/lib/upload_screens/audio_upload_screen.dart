@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
@@ -23,23 +25,35 @@ class AudioUploadScreen extends StatefulWidget {
 }
 
 class _AudioUploadScreenState extends State<AudioUploadScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   TextEditingController captionController;
   AnimationController _animationController;
-  Animation _animation;
+
   bool hasImage = false;
   bool _isBlurred = false;
   File imageFile;
   bool uploading = false;
+
+  //
+  OverlayEntry _overlayEntry;
+  AnimationController _overlayAnimationController;
+  Animation _overlayAnimation;
+
+  var percent;
 
   @override
   void initState() {
     super.initState();
     _animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
-    _animation =
-        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+
     captionController = TextEditingController();
+
+    //
+    _overlayAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _overlayAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(_overlayAnimationController);
   }
 
   @override
@@ -49,49 +63,138 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
     super.dispose();
   }
 
+  showProgressOverlay() {
+    OverlayState _state = Overlay.of(context);
+    _overlayEntry = OverlayEntry(builder: (context) {
+      return FadeTransition(
+        opacity: _overlayAnimation,
+        child: Scaffold(
+          backgroundColor: Colors.black.withOpacity(.4),
+          body: Center(
+            child: Container(
+              width: 100,
+              height: 150,
+              child: Column(
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: Center(
+                          child: Text((percent ?? 0).toString(),
+                              style: GoogleFonts.raleway(
+                                  color: Colors.white, fontSize: 16)),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          backgroundColor: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    ],
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 15),
+                    child: Text("Uploading..",
+                        style: GoogleFonts.raleway(
+                            color: Colors.white, fontSize: 16)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+    _overlayAnimationController
+        .forward()
+        .whenComplete(() => _state.insert(_overlayEntry));
+  }
+
   Future<void> _upload(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int userId = prefs.getInt('id');
-    var uri = Uri.http(
-        localhost, '/api/post_upload'); //This web address has to be changed
-    var request = http.MultipartRequest('POST', uri)
-      ..fields['user_id'] = userId.toString()
-      ..fields['type'] = _isBlurred ? 'aud_blurred' : 'aud'
-      ..fields['caption'] = captionController.text
-      ..fields['hasThumbnail'] = (imageFile == null) ? '0' : '1'
-      ..files.add(await http.MultipartFile.fromPath(
-        'file',
-        widget.audio.path,
-      ));
 
-    if (imageFile != null) {
-      request.files
-          .add(await http.MultipartFile.fromPath('thumbnail', imageFile.path));
-    }
+    var dio = Dio(BaseOptions(baseUrl: 'http://' + localhost));
+    var formData = FormData.fromMap({
+      'user_id': userId.toString(),
+      'type': _isBlurred ? 'aud_blurred' : 'aud',
+      'caption': captionController.text,
+      'hasThumbnail': (imageFile == null) ? '0' : '1',
+      'file': await MultipartFile.fromFile(widget.audio.path),
+      'thumbnail':
+          imageFile != null ? await MultipartFile.fromFile(imageFile.path) : "",
+    });
 
+    // var uri = Uri.http(
+    //     localhost, '/api/post_upload'); //This web address has to be changed
+    // var request = http.MultipartRequest('POST', uri)
+    //   ..fields['user_id'] = userId.toString()
+    //   ..fields['type'] = _isBlurred ? 'aud_blurred' : 'aud'
+    //   ..fields['caption'] = captionController.text
+    //   ..fields['hasThumbnail'] = (imageFile == null) ? '0' : '1'
+    //   ..files.add(await http.MultipartFile.fromPath(
+    //     'file',
+    //     widget.audio.path,
+    //   ));
+
+    // if (imageFile != null) {
+    //   formData.fields
+    //       .add(MapEntry('thumbnail', await MultipartFile.fromFile(imageFile.path)));
+    //   // request.files
+    //   //     .add(await http.MultipartFile.fromPath('thumbnail', imageFile.path));
+    // }
+    CustomOverlay overlay = CustomOverlay(
+        context: context, animationController: _animationController);
+    showProgressOverlay();
     try {
-      var response = await request.send();
-
-      setState(() {
-        uploading = true;
+      var response = await dio.post('/api/post_upload', data: formData,
+          onSendProgress: (int sent, int total) {
+        setState(() {
+          percent = sent / total;
+        });
       });
+
+      // setState(() {
+      //   uploading = true;
+      // });
 
       if (response.statusCode == 200) {
-        print('Uploaded');
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => LandingPage()));
+        overlay.show("Upload successful");
+        _overlayAnimationController
+            .reverse()
+            .whenComplete(() => _overlayEntry.remove());
+        Timer(
+            Duration(seconds: 1),
+            () => Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (_) => LandingPage())));
+      } else {
+        overlay.show("Sorry. Upload Failed. \n Please try again later");
+        _overlayAnimationController
+            .reverse()
+            .whenComplete(() => _overlayEntry.remove());
+
+        Timer(
+            Duration(seconds: 700),
+            () => Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (_) => LandingPage())));
       }
-      setState(() {
-        uploading = false;
-      });
     } catch (e) {
-      setState(() {
-        uploading = false;
-      });
-      print(e);
-      CustomOverlay overlay = CustomOverlay(
-          context: context, animationController: _animationController);
       overlay.show("Sorry. Upload Failed.\n Please try again later.");
+      _overlayAnimationController
+          .reverse()
+          .whenComplete(() => _overlayEntry.remove());
+
+      Timer(
+          Duration(seconds: 700),
+          () => Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => LandingPage())));
     }
   }
 
