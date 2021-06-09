@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_editor/video_editor.dart';
+//import 'package:video_editor/video_editor.dart';
+import 'package:foo/stories/video_trimmer/video_editor_api/domain/bloc/controller.dart';
+import 'package:foo/stories/video_trimmer/video_editor_api/ui/trim/trim_slider.dart';
+import 'package:foo/stories/video_trimmer/video_editor_api/ui/crop/crop_grid.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:foo/landing_page.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -98,7 +101,7 @@ class _VideoEditorState extends State<VideoEditor> {
     super.deactivate();
   }
 
-  void _openCropScreen() => context.to(CropScreen(controller: _controller));
+  //void _openCropScreen() => context.to(CropScreen(controller: _controller));
 
   void _exportVideo() async {
     Misc.delayed(1000, () => _isExporting.value = true);
@@ -113,36 +116,41 @@ class _VideoEditorState extends State<VideoEditor> {
       },
     );
     _isExporting.value = false;
+    if (exportedFile != null) {
+      await Permission.storage.request();
+      String directoryPath = '/storage/emulated/0/foo/stories/upload';
+      Directory directory =
+          await Directory(directoryPath).create(recursive: true);
+      String uploadStoryPath =
+          '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.mp4';
 
-    await Permission.storage.request();
-    String directoryPath = '/storage/emulated/0/foo/stories/upload';
-    Directory directory =
-        await Directory(directoryPath).create(recursive: true);
-    String uploadStoryPath =
-        '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.mp4';
+      exportedFile.copySync(uploadStoryPath);
+      await exportedFile.delete();
 
-    exportedFile.copySync(uploadStoryPath);
-    await exportedFile.delete();
+      File file = File(uploadStoryPath);
 
-    File file = File(uploadStoryPath);
+      if (file != null) {
+        _exportText = "Video export Success!";
+        print(
+            "File Path = ${file.path}"); //This is the path that has to posted via http post
+        setState(() {
+          _isUploading = true;
+        });
+        widget.uploadFunc(
+            context, File(file.path), _captionController.text ?? '');
+      } else
+        _exportText = "Error on export video :(";
 
-    if (file != null) {
-      _exportText = "Video export Success!";
-      print(
-          "File Path = ${file.path}"); //This is the path that has to posted via http post
-      setState(() {
-        _isUploading = true;
-      });
-      widget.uploadFunc(
-          context, File(file.path), _captionController.text ?? '');
-    } else
-      _exportText = "Error on export video :(";
+      setState(() => _exported = true);
+      Misc.delayed(2000, () => setState(() => _exported = false));
 
-    setState(() => _exported = true);
-    Misc.delayed(2000, () => setState(() => _exported = false));
-
-    // Navigator.pushReplacement(
-    //     context, MaterialPageRoute(builder: (context) => LandingPage()));
+      // Navigator.pushReplacement(
+      //     context, MaterialPageRoute(builder: (context) => LandingPage()));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Oops... Unable to process this video")),
+      );
+    }
   }
 
   @override
@@ -259,58 +267,57 @@ class _VideoEditorState extends State<VideoEditor> {
       child: Container(
         height: height,
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => _controller.rotate90Degrees(RotateDirection.left),
-                child: Icon(Icons.rotate_left, color: Colors.white),
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => _controller.rotate90Degrees(RotateDirection.right),
-                child: Icon(Icons.rotate_right, color: Colors.white),
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: _openCropScreen,
-                child: Icon(Icons.crop, color: Colors.white),
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  _controller.video.pause();
-                  try {
+            // Expanded(
+            //   child: GestureDetector(
+            //     onTap: () => _controller.rotate90Degrees(RotateDirection.left),
+            //     child: Icon(Icons.rotate_left, color: Colors.white),
+            //   ),
+            // ),
+            // Expanded(
+            //   child: GestureDetector(
+            //     onTap: () => _controller.rotate90Degrees(RotateDirection.right),
+            //     child: Icon(Icons.rotate_right, color: Colors.white),
+            //   ),
+            // ),
+            // Expanded(
+            //   child: GestureDetector(
+            //     onTap: _openCropScreen,
+            //     child: Icon(Icons.crop, color: Colors.white),
+            //   ),
+            // ),
+            GestureDetector(
+              onTap: () {
+                _controller.video.pause();
+                try {
+                  setState(() {
+                    _isAbsorbing = true;
+                  });
+                  _exportVideo();
+                } catch (e) {
+                  print(e);
+                  if (_isAbsorbing == true) {
                     setState(() {
-                      _isAbsorbing = true;
+                      _isAbsorbing = false;
                     });
-                    _exportVideo();
-                  } catch (e) {
-                    print(e);
-                    if (_isAbsorbing == true) {
-                      setState(() {
-                        _isAbsorbing = false;
-                      });
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              "Something went wrong while exporting this video")),
-                    );
                   }
-                },
-                child: _isUploading
-                    ? UnconstrainedBox(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: UnconstrainedBox(
-                              child: CircularProgressIndicator()),
-                        ),
-                      )
-                    : Icon(Icons.save, color: Colors.white),
-              ),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            "Something went wrong while exporting this video")),
+                  );
+                }
+              },
+              child: _isUploading
+                  ? UnconstrainedBox(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: UnconstrainedBox(
+                            child: CircularProgressIndicator()),
+                      ),
+                    )
+                  : Icon(Icons.save, color: Colors.white),
             ),
           ],
         ),
@@ -402,84 +409,84 @@ class _VideoEditorState extends State<VideoEditor> {
 //-----------------//
 //CROP VIDEO SCREEN//
 //-----------------//
-class CropScreen extends StatelessWidget {
-  CropScreen({Key key, @required this.controller}) : super(key: key);
+// class CropScreen extends StatelessWidget {
+//   CropScreen({Key key, @required this.controller}) : super(key: key);
 
-  final VideoEditorController controller;
+//   final VideoEditorController controller;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Padding(
-          padding: Margin.all(30),
-          child: Column(children: [
-            Expanded(
-              child: AnimatedInteractiveViewer(
-                maxScale: 2.4,
-                child: CropGridViewer(controller: controller),
-              ),
-            ),
-            SizedBox(height: 15),
-            Row(children: [
-              Expanded(
-                child: SplashTap(
-                  onTap: context.goBack,
-                  child: Center(
-                    child: TextDesigned(
-                      "CANCELAR",
-                      color: Colors.white,
-                      bold: true,
-                    ),
-                  ),
-                ),
-              ),
-              buildSplashTap("16:9", 16 / 9, padding: Margin.horizontal(10)),
-              buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("4:5", 4 / 5, padding: Margin.horizontal(10)),
-              buildSplashTap("NO", null, padding: Margin.right(10)),
-              Expanded(
-                child: SplashTap(
-                  onTap: () {
-                    //2 WAYS TO UPDATE CROP
-                    //WAY 1:
-                    controller.updateCrop();
-                    /*WAY 2:
-                    controller.minCrop = controller.cacheMinCrop;
-                    controller.maxCrop = controller.cacheMaxCrop;
-                    */
-                    context.goBack();
-                  },
-                  child: Center(
-                    child: TextDesigned("OK", color: Colors.white, bold: true),
-                  ),
-                ),
-              ),
-            ]),
-          ]),
-        ),
-      ),
-    );
-  }
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Colors.black,
+//       body: SafeArea(
+//         child: Padding(
+//           padding: Margin.all(30),
+//           child: Column(children: [
+//             Expanded(
+//               child: AnimatedInteractiveViewer(
+//                 maxScale: 2.4,
+//                 child: CropGridViewer(controller: controller),
+//               ),
+//             ),
+//             SizedBox(height: 15),
+//             Row(children: [
+//               Expanded(
+//                 child: SplashTap(
+//                   onTap: context.goBack,
+//                   child: Center(
+//                     child: TextDesigned(
+//                       "CANCELAR",
+//                       color: Colors.white,
+//                       bold: true,
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//               buildSplashTap("16:9", 16 / 9, padding: Margin.horizontal(10)),
+//               buildSplashTap("1:1", 1 / 1),
+//               buildSplashTap("4:5", 4 / 5, padding: Margin.horizontal(10)),
+//               buildSplashTap("NO", null, padding: Margin.right(10)),
+//               Expanded(
+//                 child: SplashTap(
+//                   onTap: () {
+//                     //2 WAYS TO UPDATE CROP
+//                     //WAY 1:
+//                     controller.updateCrop();
+//                     /*WAY 2:
+//                     controller.minCrop = controller.cacheMinCrop;
+//                     controller.maxCrop = controller.cacheMaxCrop;
+//                     */
+//                     context.goBack();
+//                   },
+//                   child: Center(
+//                     child: TextDesigned("OK", color: Colors.white, bold: true),
+//                   ),
+//                 ),
+//               ),
+//             ]),
+//           ]),
+//         ),
+//       ),
+//     );
+//   }
 
-  Widget buildSplashTap(
-    String title,
-    double aspectRatio, {
-    EdgeInsetsGeometry padding,
-  }) {
-    return SplashTap(
-      onTap: () => controller.preferredCropAspectRatio = aspectRatio,
-      child: Padding(
-        padding: padding ?? Margin.zero,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.aspect_ratio, color: Colors.white),
-            TextDesigned(title, color: Colors.white, bold: true),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//   Widget buildSplashTap(
+//     String title,
+//     double aspectRatio, {
+//     EdgeInsetsGeometry padding,
+//   }) {
+//     return SplashTap(
+//       onTap: () => controller.preferredCropAspectRatio = aspectRatio,
+//       child: Padding(
+//         padding: padding ?? Margin.zero,
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Icon(Icons.aspect_ratio, color: Colors.white),
+//             TextDesigned(title, color: Colors.white, bold: true),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
