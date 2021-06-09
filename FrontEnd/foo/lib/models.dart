@@ -145,8 +145,13 @@ class Thread extends HiveObject {
       if (chatList[index].msgType == "date") {
         continue;
       }
-      if (chatList[index].id == id) {
+      if (chatList[index].id <= id &&
+          chatList[index].haveReceived != true &&
+          chatList[index].isMe == true) {
         chatList[index].haveReceived = true;
+      } else if (chatList[index].id <= id &&
+          chatList[index].haveReceived == true &&
+          chatList[index].isMe == true) {
         return true;
       }
     }

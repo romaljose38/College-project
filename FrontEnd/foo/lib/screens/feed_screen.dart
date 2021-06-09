@@ -5,10 +5,14 @@ import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:foo/colour_palette.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
+import 'package:foo/notifications/notification_screen.dart';
+import 'package:foo/profile/profile_test.dart';
 import 'package:foo/screens/post_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -375,11 +379,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                         ),
                         SizedBox(
                           width: 75,
-                          child: Text(
-                            myStoryList[index - 1].username,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
+                          child: Text(myStoryList[index - 1].username,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.lato()),
                         ),
                       ],
                     ));
@@ -568,6 +571,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   // evict() async{
   //   await CachedNetworkImage.evictFromCa
   // }
+
   @override
   Widget build(BuildContext context) {
     var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
@@ -580,10 +584,65 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         appBar: PreferredSize(
           preferredSize: Size(double.infinity, 60),
           child: Container(
-            width: double.infinity,
-            height: 60,
-            color: Colors.white,
-          ),
+              width: double.infinity,
+              height: 60,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => NotificationScreen())),
+                    child: Container(
+                      margin: EdgeInsets.only(left: 15),
+                      child: Icon(
+                        Ionicons.notifications_outline,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    "Picza",
+                    style: GoogleFonts.dancingScript(
+                      color: Colors.purple,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => Profile(
+                              myProfile: true,
+                            ))),
+                    child: Container(
+                      margin: EdgeInsets.only(right: 15),
+                      child: FutureBuilder(
+                          future: _getMyProfPic(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return Container(
+                                height: 40,
+                                width: 40,
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    image: DecorationImage(
+                                        image: FileImage(File(snapshot.data)))),
+                              );
+                            } else {
+                              return SizedBox(
+                                  height: 30,
+                                  width: 30,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    valueColor:
+                                        AlwaysStoppedAnimation(Colors.green),
+                                  ));
+                            }
+                          }),
+                    ),
+                  ),
+                ],
+              )),
         ),
         // extendBodyBehindAppBar: true,
         // extendBody: true,
@@ -648,6 +707,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 //SliverToBoxAdapter(child: _horiz()),
                 SliverToBoxAdapter(child: _newHoriz()),
                 SliverToBoxAdapter(child: SizedBox(height: 10)),
+
                 SliverAnimatedList(
                   initialItemCount: itemCount,
                   key: listKey,

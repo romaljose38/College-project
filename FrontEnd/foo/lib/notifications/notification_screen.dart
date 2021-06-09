@@ -38,7 +38,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return Scaffold(
-        backgroundColor: Colors.white.withOpacity(.6),
+        backgroundColor: Colors.white,
         body: Padding(
           padding: const EdgeInsets.only(top: 30),
           child: Column(
@@ -52,9 +52,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   //       // return _showModal(context);
                   //     }),
                   // Spacer(),
-                  SizedBox(
-                    width: 60,
-                    height: 60,
+                  Container(
+                    margin: EdgeInsets.only(right: 5),
+                    width: 50,
+                    height: 50,
                     child: Stack(children: [
                       FutureBuilder(
                           future: getDp(),
@@ -62,8 +63,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
                               return Container(
-                                width: 60,
-                                height: 60,
+                                width: 50,
+                                height: 50,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   image: DecorationImage(
