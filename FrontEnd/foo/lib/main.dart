@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/notification_handler.dart';
@@ -17,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:foo/auth/register.dart';
 
+List<CameraDescription> deviceCameras;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -61,6 +63,9 @@ Future<void> main() async {
   //   showNotification(message.data['message'], message.data['username']);
   // });
   //print(await FirebaseMessaging.instance.getToken());
+
+  deviceCameras = await availableCameras();
+
   runApp(MyApp(prefs: prefs));
 }
 

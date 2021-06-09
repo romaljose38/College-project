@@ -12,11 +12,14 @@ import 'package:hive/hive.dart';
 import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
 import 'package:foo/models.dart';
+import 'package:image_picker/image_picker.dart';
 
+import 'package:camera/camera.dart';
 import 'package:video_player/video_player.dart';
 import 'package:foo/stories/video_trimmer/videoediting.dart';
 
 import 'package:foo/stories/story_new.dart';
+import 'package:foo/main.dart' show deviceCameras;
 
 import 'dart:convert';
 
@@ -32,6 +35,7 @@ class StoryUploadPick extends StatefulWidget {
 
 class _StoryUploadPickState extends State<StoryUploadPick> {
   final Trimmer _trimmer = Trimmer();
+  ImagePicker _picker = ImagePicker();
   String myProfPic;
 
   Future<void> _uploadStory(
@@ -95,35 +99,182 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
     myProfPic = widget.myProfPic;
   }
 
-  _pickStoryToUpload() async {
-    FilePickerResult result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mkv'],
-    );
+  _pickStoryToUpload({bool isCamera = false}) async {
+    File media;
+    String mediaExt;
+    if (isCamera == true) {
+      final pickedFile = await _picker.getImage(source: ImageSource.camera);
 
-    if (result != null) {
-      PlatformFile file = result.files.first;
-      String mediaExt = file.extension;
-      File media = File(file.path);
+      if (pickedFile != null) {
+        mediaExt = pickedFile.path.split('.').last;
+        media = File(pickedFile.path);
+      }
+    } else {
+      FilePickerResult result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mkv'],
+      );
 
-      print(mediaExt);
-
-      if (['jpg', 'jpeg', 'png', 'gif'].contains(mediaExt)) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-          return CropMyImage(file: media, uploadFunc: _uploadStory);
-        }));
-      } else {
-        await _trimmer.loadVideo(videoFile: media);
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-          // return TrimmerView(_trimmer,
-          //     uploadFunc: _uploadStory);
-          return VideoEditor(
-            file: media,
-            uploadFunc: _uploadStory,
-          ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
-        }));
+      if (result != null) {
+        PlatformFile file = result.files.first;
+        mediaExt = file.extension;
+        media = File(file.path);
       }
     }
+
+    print(mediaExt);
+
+    if (['jpg', 'jpeg', 'png', 'gif'].contains(mediaExt)) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+        return CropMyImage(file: media, uploadFunc: _uploadStory);
+      }));
+    } else {
+      await _trimmer.loadVideo(videoFile: media);
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+        // return TrimmerView(_trimmer,
+        //     uploadFunc: _uploadStory);
+        return VideoEditor(
+          file: media,
+          uploadFunc: _uploadStory,
+        ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
+      }));
+    }
+  }
+
+  GestureDetector bottomSheetTile(
+          String type, Color color, IconData icon, Function onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              height: 100,
+              width: 100,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey.shade600,
+                size: 30,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              type,
+              style: GoogleFonts.raleway(
+                color: Color.fromRGBO(176, 183, 194, 1),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  GestureDetector bottomSheetCamera(
+          String type, Color color, IconData icon, Function onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  clipBehavior: Clip.antiAlias,
+                  height: 100,
+                  width: 100,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child:
+                      AspectRatio(aspectRatio: 1, child: BottomSheetCamera()),
+                ),
+                Positioned(
+                  right: 35,
+                  top: 35,
+                  child: Icon(
+                    Ionicons.camera,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              type,
+              style: GoogleFonts.raleway(
+                color: Color.fromRGBO(176, 183, 194, 1),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  showOverlay() {
+    showModalBottomSheet(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
+        context: context,
+        builder: (context) {
+          return Container(
+            height: 250,
+            margin: EdgeInsets.fromLTRB(10, 20, 10, 0),
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Set Your Moments",
+                        style: GoogleFonts.lato(
+                            fontSize: 20, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                SizedBox(height: 30),
+                Expanded(
+                  child: Container(
+                    child: Center(
+                      child: Row(
+                        children: [
+                          Spacer(),
+                          bottomSheetCamera(
+                              "Camera",
+                              Color.fromRGBO(232, 252, 246, 1),
+                              Ionicons.trash_outline, () async {
+                            await _pickStoryToUpload(isCamera: true);
+                          }),
+                          Spacer(),
+                          bottomSheetTile(
+                              "Upload status",
+                              Color.fromRGBO(235, 221, 217, 1),
+                              Ionicons.images_outline, () async {
+                            await _pickStoryToUpload();
+                          }),
+                          Spacer(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   @override
@@ -139,9 +290,10 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
               SnackBar(content: Text("Long press to add a new moment")));
         }
       },
-      onLongPress: () async {
+      onLongPress: () {
         try {
-          await _pickStoryToUpload();
+          showOverlay();
+          //await _pickStoryToUpload();
         } catch (e) {
           print(e);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -749,5 +901,42 @@ class _PreviewState extends State<Preview> {
         ),
       ),
     );
+  }
+}
+
+class BottomSheetCamera extends StatefulWidget {
+  const BottomSheetCamera({Key key}) : super(key: key);
+
+  @override
+  _BottomSheetCameraState createState() => _BottomSheetCameraState();
+}
+
+class _BottomSheetCameraState extends State<BottomSheetCamera> {
+  CameraController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = CameraController(deviceCameras[0], ResolutionPreset.max);
+    controller.initialize().then((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!controller.value.isInitialized) {
+      return Container();
+    }
+    return CameraPreview(controller);
   }
 }
