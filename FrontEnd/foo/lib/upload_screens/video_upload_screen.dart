@@ -17,6 +17,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:better_player/better_player.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:ionicons/ionicons.dart';
@@ -187,14 +188,32 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
   Future<void> _uploadThumbnail() async {
     if (await Permission.storage.request().isGranted) {
       FilePickerResult result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png'],
       );
 
+      File compressedFile = await testCompressAndGetFile(
+          File(result.files.single.path), result.files.single.extension);
+
       setState(() {
-        imageFile = File(result.files.single.path);
+        imageFile = compressedFile;
       });
       Navigator.pop(context);
     }
+  }
+
+  Future<File> testCompressAndGetFile(File file, String extension) async {
+    String targetPath = (await getTemporaryDirectory()).path +
+        '/upload/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    File(targetPath).createSync(recursive: true);
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      quality: 80,
+      format: (extension == 'png') ? CompressFormat.png : CompressFormat.jpeg,
+    );
+
+    return result;
   }
 
   void _revertToGeneratedThumbnail() {
@@ -301,6 +320,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
 
       if (response.statusCode == 200) {
         print('Uploaded');
+        if (imageFile.existsSync()) {
+          imageFile.deleteSync();
+        }
         overlay.show("Upload successful");
         await _overlayAnimationController
             .reverse()
@@ -311,6 +333,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       } else {
+        if (imageFile.existsSync()) {
+          imageFile.deleteSync();
+        }
         overlay.show("Sorry. Upload failed. \n Please try again later.");
         await _overlayAnimationController
             .reverse()
@@ -323,6 +348,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
       }
     } catch (e) {
       print('catch = $e');
+      if (imageFile.existsSync()) {
+        imageFile.deleteSync();
+      }
       overlay.show("Sorry. Upload Failed.\n Please try again later.");
       await _overlayAnimationController
           .reverse()

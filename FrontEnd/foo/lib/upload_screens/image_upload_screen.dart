@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:foo/landing_page.dart';
 import 'package:foo/screens/feed_icons.dart';
 import 'package:foo/screens/models/post_model.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo/custom_overlay.dart';
@@ -43,9 +45,26 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
     super.dispose();
   }
 
+  Future<File> testCompressAndGetFile(File file, String extension) async {
+    String targetPath = (await getTemporaryDirectory()).path +
+        '/upload/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    File(targetPath).createSync(recursive: true);
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      format: (extension == 'png') ? CompressFormat.png : CompressFormat.jpeg,
+      quality: 80,
+    );
+
+    return result;
+  }
+
   Future<void> _upload(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int userId = prefs.getInt('id');
+    String extension = widget.mediaInserted.path.split('.').last;
+    File compressedImage =
+        await testCompressAndGetFile(widget.mediaInserted, extension);
     var uri = Uri.http(
         localhost, '/api/post_upload'); //This web address has to be changed
     var request = http.MultipartRequest('POST', uri)
@@ -54,7 +73,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
       ..fields['caption'] = captionController.text
       ..files.add(await http.MultipartFile.fromPath(
         'file',
-        widget.mediaInserted.path,
+        compressedImage.path,
       ));
     try {
       setState(() {
@@ -64,6 +83,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
 
       if (response.statusCode == 200) {
         print('Uploaded');
+        if (compressedImage.existsSync()) {
+          compressedImage.deleteSync();
+        }
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (_) => LandingPage()));
       }

@@ -356,84 +356,104 @@ class SocketChannel {
   }
 
   void addNewStory(data) async {
-    var storyBox = Hive.box('MyStories');
-    print(data);
+    try {
+      var storyBox = Hive.box('MyStories');
+      print(data);
 
-    if (storyBox.containsKey(data['u_id'])) {
-      var userStory = storyBox.get(data['u_id']);
-      userStory.addStory(Story(
-        file: data['url'],
-        time: DateTime.parse(data['time']),
-        storyId: data['s_id'],
-        caption: data['caption'],
-        notificationId: data['n_id'],
-      ));
-      userStory.save();
-    } else {
-      UserStoryModel newUser = UserStoryModel()
-        ..username = data['u']
-        ..dpUrl = 'http://$localhost' + data['dp']
-        ..userId = data['u_id']
-        ..stories = <Story>[];
-      newUser.addStory(Story(
-        file: data['url'],
-        time: DateTime.parse(data['time']),
-        storyId: data['s_id'],
-        caption: data['caption'],
-        notificationId: data['n_id'],
-      ));
+      if (storyBox.containsKey(data['u_id'])) {
+        var userStory = storyBox.get(data['u_id']);
+        userStory.addStory(Story(
+          file: data['url'],
+          time: DateTime.parse(data['time']),
+          storyId: data['s_id'],
+          caption: data['caption'],
+          notificationId: data['n_id'],
+        ));
+        userStory.save();
+      } else {
+        UserStoryModel newUser = UserStoryModel()
+          ..username = data['u']
+          ..dpUrl = 'http://$localhost' + data['dp']
+          ..userId = data['u_id']
+          ..stories = <Story>[];
+        newUser.addStory(Story(
+          file: data['url'],
+          time: DateTime.parse(data['time']),
+          storyId: data['s_id'],
+          caption: data['caption'],
+          notificationId: data['n_id'],
+        ));
 
-      await storyBox.put(data['u_id'], newUser);
-      newUser.save();
+        await storyBox.put(data['u_id'], newUser);
+        newUser.save();
+      }
+      sendToChannel(jsonEncode({'s_r': data['n_id']}));
+    } catch (e) {
+      print(e);
+      sendToChannel(jsonEncode({'s_r': data['n_id']}));
     }
-    sendToChannel(jsonEncode({'s_r': data['n_id']}));
   }
 
   void addStoryView(data) {
-    int me = _prefs.getInt('id');
-    var storyBox = Hive.box('MyStories');
-    print(data);
+    try {
+      int me = _prefs.getInt('id');
+      var storyBox = Hive.box('MyStories');
+      print(data);
 
-    var userStory = storyBox.get(me);
-    userStory.addView(
-        StoryUser(
-          username: data['u'],
-          profilePicture: 'http://$localhost' + data['dp'],
-          viewedTime: DateTime.parse(data['time']),
-        ),
-        data['id'].toInt());
-    userStory.save();
-    sendToChannel(jsonEncode({'s_r': data['n_id']}));
+      var userStory = storyBox.get(me);
+      userStory.addView(
+          StoryUser(
+            username: data['u'],
+            profilePicture: 'http://$localhost' + data['dp'],
+            viewedTime: DateTime.parse(data['time']),
+          ),
+          data['id'].toInt());
+      userStory.save();
+      sendToChannel(jsonEncode({'s_r': data['n_id']}));
+    } catch (e) {
+      print(e);
+      sendToChannel(jsonEncode({'s_r': data['n_id']}));
+    }
   }
 
   void addStoryComment(data) {
-    int me = _prefs.getInt('id');
-    var storyBox = Hive.box('MyStories');
-    print(data);
+    try {
+      int me = _prefs.getInt('id');
+      var storyBox = Hive.box('MyStories');
+      print(data);
 
-    var userStory = storyBox.get(me);
-    userStory.addComment(
-        StoryComment(
-          username: data['u'],
-          profilePicture: 'http://$localhost' + data['dp'],
-          viewedTime: DateTime.parse(data['time']),
-          commentId: data['c_id'],
-          comment: data['comment'],
-        ),
-        data['s_id'].toInt());
-    userStory.save();
-    sendToChannel(jsonEncode({'s_n_r': data['c_id']}));
+      var userStory = storyBox.get(me);
+      userStory.addComment(
+          StoryComment(
+            username: data['u'],
+            profilePicture: 'http://$localhost' + data['dp'],
+            viewedTime: DateTime.parse(data['time']),
+            commentId: data['c_id'],
+            comment: data['comment'],
+          ),
+          data['s_id'].toInt());
+      userStory.save();
+      sendToChannel(jsonEncode({'s_n_r': data['c_id']}));
+    } catch (e) {
+      print(e);
+      sendToChannel(jsonEncode({'s_n_r': data['c_id']}));
+    }
   }
 
   void deleteOldStory(data) {
-    var storyBox = Hive.box('MyStories');
-    print(data);
+    try {
+      var storyBox = Hive.box('MyStories');
+      print(data);
 
-    var userStory = storyBox.get(data['u_id']);
-    userStory.deleteOldStory(
-        id: data['s_id'].toInt(), userId: data['u_id'].toInt());
-    userStory.save();
-    sendToChannel(jsonEncode({'s_r': data['n_id']}));
+      var userStory = storyBox.get(data['u_id']);
+      userStory.deleteOldStory(
+          id: data['s_id'].toInt(), userId: data['u_id'].toInt());
+      userStory.save();
+      sendToChannel(jsonEncode({'s_r': data['n_id']}));
+    } catch (e) {
+      print(e);
+      sendToChannel(jsonEncode({'s_r': data['n_id']}));
+    }
   }
 
   void updateTypingStatus(data) {
