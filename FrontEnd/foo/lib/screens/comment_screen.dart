@@ -126,7 +126,9 @@ class _CommentScreenState extends State<CommentScreen>
           hasLiked = respJson['hasLiked'];
           postType = respJson['post_type'];
           thumbnailPath = (respJson['post_type'] != 'img')
-              ? 'http://' + localhost + respJson['thumbnail']
+              ? (respJson['thumbnail'] == ""
+                  ? ""
+                  : 'http://' + localhost + respJson['thumbnail'])
               : '';
           postUrl = 'http://' + localhost + respJson['file'];
           recentLikes = respJson['recent_likes'];

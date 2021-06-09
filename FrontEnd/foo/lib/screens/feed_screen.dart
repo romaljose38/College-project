@@ -101,13 +101,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           caption: e['caption'],
           likeCount: e['likeCount'],
           haveLiked: e['hasLiked'],
-          thumbNailPath: 'http://' +
-              localhost +
-              ((e['post_type'] == "aud" ||
-                      e['post_type'] == "aud_blurred" ||
-                      e['post_type'] == "vid")
-                  ? e['thumbnail']
-                  : ""),
+          thumbNailPath: ((e['post_type'] == "aud" ||
+                  e['post_type'] == "aud_blurred" ||
+                  e['post_type'] == "vid")
+              ? (e['thumbnail'] == ''
+                  ? ""
+                  : 'http://' + localhost + e['thumbnail'])
+              : ""),
           type: e['post_type']);
       int index = postsList.length - 1;
       listKey.currentState.insertItem(index);
@@ -190,13 +190,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               userId: e['user']['id'],
               likeCount: e['likeCount'],
               haveLiked: e['hasLiked'],
-              thumbNailPath: 'http://' +
-                  localhost +
-                  ((e['post_type'] == "aud" ||
-                          e['post_type'] == "aud_blurred" ||
-                          e['post_type'] == "vid")
-                      ? e['thumbnail']
-                      : ""),
+              thumbNailPath: ((e['post_type'] == "aud" ||
+                      e['post_type'] == "aud_blurred" ||
+                      e['post_type'] == "vid")
+                  ? (e['thumbnail'] == ''
+                      ? ""
+                      : 'http://' + localhost + e['thumbnail'])
+                  : ""),
               type: e['post_type']);
 
           if (feed.isNew(e['id'])) {
@@ -308,9 +308,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             }
                           }),
                       //StoryUploadPick(myStory: myStory, myProfPic: myProfPic),
-                      Text(
-                        "Momentos",
-                        overflow: TextOverflow.ellipsis,
+                      SizedBox(
+                        width: 80,
+                        child: Text(
+                          "Momentos",
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   );
@@ -543,13 +547,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           caption: e['caption'],
           likeCount: e['likeCount'],
           haveLiked: e['hasLiked'],
-          thumbNailPath: 'http://' +
-              localhost +
-              ((e['post_type'] == "aud" ||
-                      e['post_type'] == "aud_blurred" ||
-                      e['post_type'] == "vid")
-                  ? e['thumbnail']
-                  : ""),
+          thumbNailPath: ((e['post_type'] == "aud" ||
+                  e['post_type'] == "aud_blurred" ||
+                  e['post_type'] == "vid")
+              ? (e['thumbnail'] == ''
+                  ? ""
+                  : 'http://' + localhost + e['thumbnail'])
+              : ""),
           type: e['post_type']);
 
       if (feed.isNew(e['id'])) {

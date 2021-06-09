@@ -168,7 +168,8 @@ class ChatTile extends StatelessWidget {
               SizedBox(
                 height: 8,
               ),
-              recentChat(),
+              thread.chatList.length > 0 ? recentChat() : Text(""),
+              //recentChat(),
             ])));
   }
 
