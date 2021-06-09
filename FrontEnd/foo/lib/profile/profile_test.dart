@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/media_players.dart';
+import 'package:foo/profile/friends_list.dart';
 import 'package:foo/screens/comment_screen.dart';
 import 'package:foo/settings/settings_page.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,39 +19,68 @@ import '../models.dart';
 import '../test_cred.dart';
 import 'dart:math' as math;
 
-class Profile extends StatelessWidget {
+class Profile extends StatefulWidget {
   final int userId;
   final bool myProfile;
-  List<Post> posts = [];
-  String profUserName;
-  String curUser;
-  String requestStatus;
-  bool isMe;
-  String userDpUrl;
-  String fullName;
-  int friendsCount;
-  int postsCount;
-  String about;
-  String fName;
-  String lName;
-  int profileUserId;
-  int notifId;
 
   Profile({this.userId, this.myProfile = false});
 
-  //Gets the data corresponding to the profile
-  Future<List> getData(context) async {
+  @override
+  _ProfileState createState() => _ProfileState();
+}
+
+class _ProfileState extends State<Profile> {
+  List<Post> posts = [];
+
+  String profUserName;
+
+  String curUser;
+
+  String requestStatus;
+
+  bool isMe;
+
+  String userDpUrl;
+
+  String fullName;
+
+  int friendsCount;
+
+  int postsCount;
+
+  String about;
+
+  String fName;
+
+  String lName;
+
+  int profileUserId;
+
+  int notifId;
+
+//
+  bool hasFetched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
+
+  Future<List> getData() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
     curUser = _prefs.getString("username");
     var response;
     try {
       print("hello inside getData");
-      if (myProfile) {
+      if (widget.myProfile) {
         int myId = _prefs.getInt('id');
         response = await http.get(Uri.http(localhost, '/api/$myId/profile',
             {'curUserId': _prefs.getInt('id').toString()}));
       } else {
-        response = await http.get(Uri.http(localhost, '/api/$userId/profile',
+        response = await http.get(Uri.http(
+            localhost,
+            '/api/${widget.userId}/profile',
             {'curUserId': _prefs.getInt('id').toString()}));
       }
       var respJson = jsonDecode(utf8.decode(response.bodyBytes));
@@ -67,16 +97,15 @@ class Profile extends StatelessWidget {
       profileUserId = respJson['id'];
 
       userDpUrl = respJson['dp'];
-      print(userId);
+      print(widget.userId);
       print(respJson);
       print(respJson.runtimeType);
       fName = respJson['f_name'];
       lName = respJson['l_name'];
-      var posts = respJson['posts'];
-      List<Post> postList = [];
-      print(posts.runtimeType);
-      posts.forEach((e) {
-        postList.insert(
+      var _posts = respJson['posts'];
+
+      _posts.forEach((e) {
+        posts.insert(
             0,
             Post(
                 type: e['type'],
@@ -84,55 +113,47 @@ class Profile extends StatelessWidget {
                 postUrl: 'http://' + localhost + e['url'],
                 commentCount: e['comments'],
                 likeCount: e['likes'],
-                thumbNailPath: 'http://' + localhost + e['thumbnail'],
+                thumbNailPath: e['thumbnail'] != ""
+                    ? 'http://' + localhost + e['thumbnail']
+                    : "",
                 postId: e['id']));
       });
-      return postList;
+
+      setState(() {
+        hasFetched = true;
+      });
     } catch (e) {
       print(e);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Something went wrong.")));
-      Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: FutureBuilder(
-          future: getData(context),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              List posts = snapshot.data;
-              if (snapshot.data != null) {
-                return ProfileTest(
-                    key: ValueKey(this.notifId),
-                    posts: posts,
-                    userName: this.profUserName,
-                    userId: this.userId,
-                    fName: this.fName,
-                    lName: this.lName,
-                    userDpUrl: this.userDpUrl,
-                    requestStatus: this.requestStatus,
-                    curUser: this.curUser,
-                    about: this.about,
-                    profileId: this.profileUserId,
-                    friendsCount: this.friendsCount,
-                    postsCount: this.postsCount,
-                    myProfile: this.myProfile,
-                    notifId: this.notifId,
-                    isMe: this.isMe);
-              }
-              return Center(
-                  child: CircularProgressIndicator(
-                      strokeWidth: 1, backgroundColor: Colors.purple));
-            }
-            return Center(
+        backgroundColor: Colors.white,
+        body: hasFetched
+            ? ProfileTest(
+                key: ValueKey(this.notifId),
+                posts: posts,
+                userName: this.profUserName,
+                userId: this.widget.userId,
+                fName: this.fName,
+                lName: this.lName,
+                userDpUrl: this.userDpUrl,
+                requestStatus: this.requestStatus,
+                curUser: this.curUser,
+                about: this.about,
+                profileId: this.profileUserId,
+                friendsCount: this.friendsCount,
+                postsCount: this.postsCount,
+                myProfile: this.widget.myProfile,
+                notifId: this.notifId,
+                isMe: this.isMe)
+            : Center(
                 child: CircularProgressIndicator(
-                    strokeWidth: 1, backgroundColor: Colors.purple));
-          }),
-    );
+                    strokeWidth: 1, backgroundColor: Colors.purple)));
   }
 }
 
@@ -635,15 +656,17 @@ class _ProfileTestState extends State<ProfileTest>
                               .whenComplete(() => overlayEntry.remove());
                         }
                       : null,
-                  child: SizedBox(
-                      height: 100,
-                      child: post2.type == "img"
-                          ? postImg(post2, isMinor: true)
-                          : (post2.type == "aud")
-                              ? postAudio(post2, isMinor: true)
-                              : (post2.type == "aud_blurred")
-                                  ? postAudioBlurred(post2, isMinor: true)
-                                  : postVideo(post2, isMinor: true)),
+                  child: Container(
+                    child: SizedBox(
+                        height: 100,
+                        child: post2.type == "img"
+                            ? postImg(post2, isMinor: true)
+                            : (post2.type == "aud")
+                                ? postAudio(post2, isMinor: true)
+                                : (post2.type == "aud_blurred")
+                                    ? postAudioBlurred(post2, isMinor: true)
+                                    : postVideo(post2, isMinor: true)),
+                  ),
                 )
               ],
             ),
@@ -699,19 +722,28 @@ class _ProfileTestState extends State<ProfileTest>
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(widget.friendsCount.toString(),
-                    style: GoogleFonts.lato(
-                        fontSize: 16, fontWeight: FontWeight.w500)),
-                Text("Friends",
-                    style: GoogleFonts.raleway(
-                      fontSize: 14,
-                      letterSpacing: 1.2,
-                      color: Colors.grey.shade600,
-                    )),
-              ],
+            GestureDetector(
+              onTap: () {
+                print(widget.profileId);
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => FriendsListScreen(
+                          userId: widget.profileId,
+                        )));
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(widget.friendsCount.toString(),
+                      style: GoogleFonts.lato(
+                          fontSize: 16, fontWeight: FontWeight.w500)),
+                  Text("Friends",
+                      style: GoogleFonts.raleway(
+                        fontSize: 14,
+                        letterSpacing: 1.2,
+                        color: Colors.grey.shade600,
+                      )),
+                ],
+              ),
             ),
             Container(
               margin: EdgeInsets.all(10.0),
@@ -896,15 +928,20 @@ class _ProfileTestState extends State<ProfileTest>
             : isMinor
                 ? EdgeInsets.fromLTRB(3, 0, 8, 5)
                 : EdgeInsets.zero,
-        decoration: BoxDecoration(
-          // boxShadow: [BoxShadow()],
-          borderRadius: BorderRadius.circular(15),
-          image: DecorationImage(
-            image: CachedNetworkImageProvider(post.thumbNailPath),
-            // image: CachedNetworkImageProvider(widget.post.postUrl),
-            fit: BoxFit.cover,
-          ),
-        ),
+        decoration: (post.thumbNailPath != "")
+            ? BoxDecoration(
+                // boxShadow: [BoxShadow()],
+                borderRadius: BorderRadius.circular(15),
+                image: DecorationImage(
+                  image: CachedNetworkImageProvider(post.thumbNailPath),
+                  // image: CachedNetworkImageProvider(widget.post.postUrl),
+                  fit: BoxFit.cover,
+                ),
+              )
+            : BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(15),
+              ),
         child: child);
 
     if (isFirst) {

@@ -22,8 +22,9 @@ class PostTile extends StatefulWidget {
   final Post post;
   final int index;
   final bool isLast;
+  List postsList;
 
-  PostTile({this.post, this.index, this.isLast});
+  PostTile({this.post, this.index, this.isLast, this.postsList});
 
   @override
   _PostTileState createState() => _PostTileState();
@@ -121,7 +122,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
     var feedBox = Hive.box("Feed");
     Feed feed = feedBox.get('feed');
     if ((id <= feed.posts.first.postId) & (id >= feed.posts.last.postId)) {
-      feed.updatePostStatus(id, status, commentCount);
+      feed.updatePostStatus(id, status, commentCount, likeCount);
       feed.save();
     }
   }
@@ -292,444 +293,336 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
     );
   }
 
+  bool postDeleted = false;
   @override
   Widget build(BuildContext context) {
     var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
     // var height = 440.0;
     print(widget.post.postId);
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: 3, vertical: 4),
-      height: height,
+    return Offstage(
+      offstage: postDeleted,
+      child: Container(
+        width: double.infinity,
+        margin: EdgeInsets.symmetric(horizontal: 3, vertical: 4),
+        height: height,
+        decoration:
+            widget.index == 0 ? cardDecoration() : cardDecorationWithShadow(),
+        child: GestureDetector(
+          onTap: () async {
+            var result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => CommentScreen(
+                          heroIndex: widget.index,
+                          postId: widget.post.postId,
 
-      decoration:
-          widget.index == 0 ? cardDecoration() : cardDecorationWithShadow(),
-      child: GestureDetector(
-        onTap: () async {
-          var result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => CommentScreen(
-                        heroIndex: widget.index,
-                        postId: widget.post.postId,
+                          // ViewPostScreen(post: widget.post, index: widget.index),
+                        )));
+            print(result);
+            if (result['postExists']) {
+              if (likeCount != result['likeCount']) {
+                print('likeCount updated');
+                widget.post.likeCount = result['likeCount'];
+                setState(() {
+                  likeCount = result['likeCount'];
+                });
+              }
+              if (commentCount != result['commentCount']) {
+                widget.post.commentCount = result['commentCount'];
 
-                        // ViewPostScreen(post: widget.post, index: widget.index),
-                      )));
-          print("got back something");
-          if (likeCount != result['likeCount']) {
-            setState(() {
-              likeCount = result['likeCount'];
-            });
-          }
-          if (commentCount != result['commentCount']) {
-            setState(() {
-              commentCount = result['commentCount'];
-            });
-          }
-          if (hasLiked != result['hasLiked']) {
-            setState(() {
-              hasLiked = result['hasLiked'];
-            });
-          }
-        },
-        onDoubleTap: likePost,
-        onLongPressStart: (widget.post.type == "img")
-            ? (details) {
-                showOverlay(context, url: widget.post.postUrl);
+                setState(() {
+                  commentCount = result['commentCount'];
+                });
               }
-            : null,
-        onLongPressEnd: (widget.post.type == "img")
-            ? (details) {
-                _overlayanimController
-                    .reverse()
-                    .whenComplete(() => overlayEntry.remove());
+              if (hasLiked != result['hasLiked']) {
+                widget.post.haveLiked = result['hasLiked'];
+                setState(() {
+                  hasLiked = result['hasLiked'];
+                });
               }
-            : null,
-        child: Stack(
-          children: [
-            Hero(
-              tag: 'profile_${widget.index}',
-              transitionOnUserGestures: true,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: widget.post.type == "img"
-                    ? postImage(height)
-                    : (widget.post.type == "aud")
-                        ? postAudio(height)
-                        : (widget.post.type == "vid")
-                            ? postVideo()
-                            : postAudioBlurred(height),
-              ),
-            ),
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => Profile(userId: widget.post.userId),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        image: DecorationImage(
-                          image:
-                              CachedNetworkImageProvider(widget.post.userDpUrl),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 6),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-                    // color: Colors.black.withOpacity(.3),
-                    decoration: BoxDecoration(
-                        // color: Colors.black.withOpacity(.3),
-                        // borderRadius: BorderRadius.circular(20),
-                        ),
-                    child: Text(
-                      widget.post.username,
-                      style: GoogleFonts.raleway(
-                        fontSize: 15,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              bottom: 8,
-              left: 0,
-              child: Container(
-                width: MediaQuery.of(context).size.width - 20,
-                padding: EdgeInsets.fromLTRB(20, 0, 0, 25),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
-                    bottomLeft: Radius.circular(25),
-                    bottomRight: Radius.circular(25),
-                  ),
-                  // color: Colors.black.withOpacity(.2),
+              var feedBox = Hive.box("Feed");
+              Feed feed = feedBox.get('feed');
+              feed.updatePostStatus(
+                  widget.post.postId, hasLiked, commentCount, likeCount);
+              feed.save();
+            } else {
+              setState(() {
+                postDeleted = true;
+              });
+              var feedBox = Hive.box("Feed");
+              Feed feed = feedBox.get('feed');
+              feed.deletePost(widget.post.postId);
+              feed.save();
+              widget.postsList.removeAt(widget.index);
+              print("post deleted");
+            }
+          },
+          onDoubleTap: likePost,
+          onLongPressStart: (widget.post.type == "img")
+              ? (details) {
+                  showOverlay(context, url: widget.post.postUrl);
+                }
+              : null,
+          onLongPressEnd: (widget.post.type == "img")
+              ? (details) {
+                  _overlayanimController
+                      .reverse()
+                      .whenComplete(() => overlayEntry.remove());
+                }
+              : null,
+          child: Stack(
+            children: [
+              Hero(
+                tag: 'profile_${widget.index}',
+                transitionOnUserGestures: true,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: widget.post.type == "img"
+                      ? postImage(height)
+                      : (widget.post.type == "aud")
+                          ? postAudio(height)
+                          : (widget.post.type == "vid")
+                              ? postVideo()
+                              : postAudioBlurred(height),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Row(
                   children: [
-                    SizedBox(
-                      height: 15,
-                    ),
-                    Row(children: [
-                      // ClipRRect(
-                      //   borderRadius: BorderRadius.circular(20),
-                      //   child: Container(
-                      //       // width: 60,
-                      //       height: 40,
-                      //       decoration: BoxDecoration(
-                      //         // color: Colors.black,
-                      //         borderRadius: BorderRadius.circular(20),
-                      //       ),
-                      //       child: BackdropFilter(
-                      //         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      //         child: Row(
-                      //           mainAxisAlignment: MainAxisAlignment.start,
-                      //           crossAxisAlignment: CrossAxisAlignment.center,
-                      //           children: [
-                      //             IconButton(
-                      //               icon: Icon(
-                      //                   hasLiked
-                      //                       ? Ionicons.heart
-                      //                       : Ionicons.heart_outline,
-                      //                   color: Colors.white),
-                      //               iconSize: 22.0,
-                      //               onPressed: likePost,
-                      //             ),
-                      //             Text(
-                      //               likeCount.toString(),
-                      //               style: TextStyle(
-                      //                 fontSize: 12.0,
-                      //                 color: Colors.white,
-                      //                 fontWeight: FontWeight.w600,
-                      //               ),
-                      //             ),
-                      //             SizedBox(width: 10),
-                      //           ],
-                      //         ),
-                      //       )),
-                      // ),
-                      GestureDetector(
-                        onTap: likePost,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            constraints: BoxConstraints(maxWidth: 69),
-                            color: hasLiked
-                                ? Colors.red.shade700
-                                : Colors.transparent,
-                            height: 37,
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                  sigmaX: hasLiked ? 0 : 25,
-                                  sigmaY: hasLiked ? 0 : 25),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Ionicons.heart,
-                                      color: Colors.white, size: 22),
-                                  SizedBox(width: 5),
-                                  // SizedBox(width: 25),
-                                  Text(
-                                    (widget.post.likeCount ?? 0) == 0
-                                        ? ""
-                                        : (widget.post.likeCount ?? 0)
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 11.0,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => Profile(userId: widget.post.userId),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          image: DecorationImage(
+                            image: CachedNetworkImageProvider(
+                                widget.post.userDpUrl),
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      Container(
-                        width: 75,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          // color: Colors.black,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: Icon(Ionicons.chatbox, color: Colors.white),
-                              iconSize: 25.0,
-                              onPressed: () {
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (_) => ViewPostScreen(
-                                //       post: widget.post,
-                                //     ),
-                                //   ),
-                                // );
-                              },
-                            ),
-                            Text(
-                              (widget.post.commentCount ?? 0) == 0
-                                  ? ""
-                                  : (widget.post.commentCount ?? 0).toString(),
-                              style: TextStyle(
-                                fontSize: 13.0,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ]),
+                    ),
+                    SizedBox(width: 6),
                     Container(
-                      width: MediaQuery.of(context).size.width - 30,
-                      // decoration: BoxDecoration(
-                      //   color: Colors.black.withOpacity(.3),
-                      //   borderRadius: BorderRadius.circular(15),
-                      // ),
-                      // child: Padding(
-                      // padding: const EdgeInsets.only(right: 15),
-                      child: ExpandableText(
-                        // "It is good to love god for hope of reward in this or the next world, but it is better to love god for love's sake",
-                        widget.post.caption ?? "",
+                      padding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                      // color: Colors.black.withOpacity(.3),
+                      decoration: BoxDecoration(
+                          // color: Colors.black.withOpacity(.3),
+                          // borderRadius: BorderRadius.circular(20),
+                          ),
+                      child: Text(
+                        widget.post.username,
+                        style: GoogleFonts.raleway(
+                          fontSize: 15,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      // ),
                     ),
                   ],
                 ),
               ),
-            ),
-            hasTapped
-                ? ScaleTransition(
-                    scale: _animation,
-                    child: GestureDetector(
-                      onTap: () {
-                        _animController
-                            .reverse()
-                            .whenComplete(() => setState(() {
-                                  hasTapped = false;
-                                }));
-                      },
-                      child: Container(
-                        // height: 420,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          // color: Colors.black.withOpacity(.4),
-                          borderRadius: BorderRadius.circular(25),
+              Positioned(
+                bottom: 8,
+                left: 0,
+                child: Container(
+                  width: MediaQuery.of(context).size.width - 20,
+                  padding: EdgeInsets.fromLTRB(20, 0, 0, 25),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(25),
+                      topRight: Radius.circular(25),
+                      bottomLeft: Radius.circular(25),
+                      bottomRight: Radius.circular(25),
+                    ),
+                    // color: Colors.black.withOpacity(.2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 15,
+                      ),
+                      Row(children: [
+                        // ClipRRect(
+                        //   borderRadius: BorderRadius.circular(20),
+                        //   child: Container(
+                        //       // width: 60,
+                        //       height: 40,
+                        //       decoration: BoxDecoration(
+                        //         // color: Colors.black,
+                        //         borderRadius: BorderRadius.circular(20),
+                        //       ),
+                        //       child: BackdropFilter(
+                        //         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        //         child: Row(
+                        //           mainAxisAlignment: MainAxisAlignment.start,
+                        //           crossAxisAlignment: CrossAxisAlignment.center,
+                        //           children: [
+                        //             IconButton(
+                        //               icon: Icon(
+                        //                   hasLiked
+                        //                       ? Ionicons.heart
+                        //                       : Ionicons.heart_outline,
+                        //                   color: Colors.white),
+                        //               iconSize: 22.0,
+                        //               onPressed: likePost,
+                        //             ),
+                        //             Text(
+                        //               likeCount.toString(),
+                        //               style: TextStyle(
+                        //                 fontSize: 12.0,
+                        //                 color: Colors.white,
+                        //                 fontWeight: FontWeight.w600,
+                        //               ),
+                        //             ),
+                        //             SizedBox(width: 10),
+                        //           ],
+                        //         ),
+                        //       )),
+                        // ),
+                        GestureDetector(
+                          onTap: likePost,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              constraints: BoxConstraints(maxWidth: 69),
+                              color: hasLiked
+                                  ? Colors.red.shade700
+                                  : Colors.transparent,
+                              height: 37,
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                    sigmaX: hasLiked ? 0 : 25,
+                                    sigmaY: hasLiked ? 0 : 25),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Icon(Ionicons.heart,
+                                        color: Colors.white, size: 22),
+                                    SizedBox(width: 5),
+                                    // SizedBox(width: 25),
+                                    Text(
+                                      (likeCount ?? 0) == 0
+                                          ? ""
+                                          : (likeCount ?? 0).toString(),
+                                      style: TextStyle(
+                                        fontSize: 11.0,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                        child: Center(
-                          child: IconButton(
-                            icon: Icon(Ionicons.heart, color: Colors.white),
-                            iconSize: 60.0,
-                            onPressed: () {},
+                        Container(
+                          width: 75,
+                          height: 45,
+                          decoration: BoxDecoration(
+                            // color: Colors.black,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon:
+                                    Icon(Ionicons.chatbox, color: Colors.white),
+                                iconSize: 25.0,
+                                onPressed: () {
+                                  // Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(
+                                  //     builder: (_) => ViewPostScreen(
+                                  //       post: widget.post,
+                                  //     ),
+                                  //   ),
+                                  // );
+                                },
+                              ),
+                              Text(
+                                (commentCount ?? 0) == 0
+                                    ? ""
+                                    : (commentCount ?? 0).toString(),
+                                style: TextStyle(
+                                  fontSize: 13.0,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]),
+                      Container(
+                        width: MediaQuery.of(context).size.width - 30,
+                        // decoration: BoxDecoration(
+                        //   color: Colors.black.withOpacity(.3),
+                        //   borderRadius: BorderRadius.circular(15),
+                        // ),
+                        // child: Padding(
+                        // padding: const EdgeInsets.only(right: 15),
+                        child: ExpandableText(
+                          // "It is good to love god for hope of reward in this or the next world, but it is better to love god for love's sake",
+                          widget.post.caption ?? "",
+                        ),
+                        // ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              hasTapped
+                  ? ScaleTransition(
+                      scale: _animation,
+                      child: GestureDetector(
+                        onTap: () {
+                          _animController
+                              .reverse()
+                              .whenComplete(() => setState(() {
+                                    hasTapped = false;
+                                  }));
+                        },
+                        child: Container(
+                          // height: 420,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            // color: Colors.black.withOpacity(.4),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Center(
+                            child: IconButton(
+                              icon: Icon(Ionicons.heart, color: Colors.white),
+                              iconSize: 60.0,
+                              onPressed: () {},
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  )
-                : Container(),
-          ],
+                    )
+                  : Container(),
+            ],
+          ),
         ),
       ),
-      // child: Column(
-      //   children: <Widget>[
-      //     Padding(
-      //       padding: EdgeInsets.symmetric(vertical: 10.0),
-      //       child: Column(
-      //         children: <Widget>[
-      //           ListTile(
-      //             leading: Container(
-      //               width: 50.0,
-      //               height: 50.0,
-      //               decoration: BoxDecoration(
-      //                 borderRadius: BorderRadius.circular(30),
-      //                 boxShadow: [
-      //                   BoxShadow(
-      //                     color: Colors.black45,
-      //                     offset: Offset(0, 2),
-      //                     blurRadius: 6.0,
-      //                   ),
-      //                 ],
-      //               ),
-      //               child: InkWell(
-      //                 onTap: () {
-      //                   Navigator.push(
-      //                     context,
-      //                     MaterialPageRoute(
-      //                       builder: (_) => Profile(post: this.widget.post),
-      //                     ),
-      //                   );
-      //                 },
-      //                 child: CircleAvatar(
-      //                   child: ClipOval(
-      //                     child: Image(
-      //                       height: 50.0,
-      //                       width: 50.0,
-      //                       image: AssetImage(widget.post.userDpUrl),
-      //                       fit: BoxFit.cover,
-      //                     ),
-      //                   ),
-      //                 ),
-      //               ),
-      //             ),
-      //             title: Text(
-      //               this.widget.post.username,
-      //               style: TextStyle(
-      //                 fontWeight: FontWeight.bold,
-      //               ),
-      //             ),
-      //             trailing: IconButton(
-      //               icon: Icon(icons.Feed.colon),
-      //               color: Colors.black,
-      //               onPressed: () => print('More'),
-      //             ),
-      //           ),
-      //           Container(
-      //             height: 300,
-      //             child: _img(context),
-      //             // child: CarouselSlider(
-      //             //   items: [_img(0), _img(1), _img(2)],
-      //             //   options: CarouselOptions(
-      //             //     height: 300,
-      //             //     autoPlay: false,
-      //             //     enlargeCenterPage: true,
-      //             //     viewportFraction: 0.9,
-      //             //     aspectRatio: 5 / 4,
-      //             //     initialPage: 2,
-      //             //   ),
-      //             // ),
-      //           ),
-      //           Padding(
-      //             padding: EdgeInsets.symmetric(horizontal: 20.0),
-      //             child: Row(
-      //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //               children: <Widget>[
-      //                 Row(
-      //                   children: <Widget>[
-      //                     Row(
-      //                       children: <Widget>[
-      //                         IconButton(
-      //                           icon: Icon(hasLiked
-      //                               ? Ionicons.heart
-      //                               : Ionicons.heart_outline),
-      //                           iconSize: 25.0,
-      //                           onPressed: likePost,
-      //                         ),
-      //                         Text(
-      //                           likeCount.toString(),
-      //                           style: TextStyle(
-      //                             fontSize: 12.0,
-      //                             fontWeight: FontWeight.w600,
-      //                           ),
-      //                         ),
-      //                       ],
-      //                     ),
-      //                     SizedBox(width: 20.0),
-      //                     Row(
-      //                       children: <Widget>[
-      //                         IconButton(
-      //                           icon: Icon(Ionicons.chatbox_outline),
-      //                           iconSize: 25.0,
-      //                           onPressed: () {
-      //                             Navigator.push(
-      //                               context,
-      //                               MaterialPageRoute(
-      //                                 builder: (_) => ViewPostScreen(
-      //                                   post: widget.post,
-      //                                 ),
-      //                               ),
-      //                             );
-      //                           },
-      //                         ),
-      //                         Text(
-      //                           '350',
-      //                           style: TextStyle(
-      //                             fontSize: 12.0,
-      //                             fontWeight: FontWeight.w600,
-      //                           ),
-      //                         ),
-      //                       ],
-      //                     ),
-      //                   ],
-      //                 ),
-      //                 IconButton(
-      //                   icon: Icon(Ionicons.bookmarks_outline),
-      //                   iconSize: 25.0,
-      //                   onPressed: () => print('Save post'),
-      //                 ),
-      //               ],
-      //             ),
-      //           ),
-      //         ],
-      //       ),
-      //     ),
-      //   ],
-      // ),
     );
   }
 }

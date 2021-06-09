@@ -103,6 +103,7 @@ class _PlayerState extends State<Player> {
     return Material(
       color: Colors.transparent,
       child: Stack(
+        alignment: Alignment.center,
         children: [
           Container(
             width: 100,
@@ -113,18 +114,14 @@ class _PlayerState extends State<Player> {
               backgroundColor: Colors.white,
             ),
           ),
-          Positioned(
-              top: 22,
-              left: 20,
-              child: IconButton(
-                icon: Icon(
-                    this.isPlaying
-                        ? Ionicons.pause_circle
-                        : Ionicons.play_circle,
-                    size: 45,
-                    color: Colors.white),
-                onPressed: playerStateChange,
-              )),
+          InkWell(
+            customBorder: CircleBorder(),
+            child: Icon(
+                this.isPlaying ? Ionicons.pause_circle : Ionicons.play_circle,
+                size: 45,
+                color: Colors.white),
+            onTap: playerStateChange,
+          ),
         ],
       ),
     );

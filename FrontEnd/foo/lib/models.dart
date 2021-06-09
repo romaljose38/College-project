@@ -341,7 +341,7 @@ class Feed extends HiveObject {
     posts.removeWhere((element) => (element.postId == id));
   }
 
-  updatePostStatus(int id, bool status, int commentCount) {
+  updatePostStatus(int id, bool status, int commentCount, int likeCount) {
     this.posts.forEach((element) {
       if (element.postId == id) {
         element.commentCount = commentCount;
@@ -352,15 +352,17 @@ class Feed extends HiveObject {
           return;
         }
         element.haveLiked = status;
-        if (status == true) {
-          if (element.likeCount == null) {
-            element.likeCount = 1;
-          } else {
-            element.likeCount += 1;
-          }
-        } else {
-          element.likeCount -= 1;
-        }
+        // if (status == true) {
+        //   if (element.likeCount == null) {
+        //     element.likeCount = 1;
+        //   } else {
+        //     element.likeCount += 1;
+        //   }
+        // } else {
+        //   element.likeCount -= 1;
+        // }
+        element.likeCount = likeCount;
+        element.commentCount = commentCount;
       }
     });
   }

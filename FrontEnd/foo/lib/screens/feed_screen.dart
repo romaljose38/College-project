@@ -378,11 +378,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                           ),
                         ),
                         SizedBox(
-                          width: 80,
+                          width: 75,
                           child: Text(
                             myStoryList[index - 1].username,
-                            textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ],
@@ -674,6 +674,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                 heightFactor: 1 - value,
                                 alignment: Alignment.topCenter,
                                 child: PostTile(
+                                    postsList: postsList,
                                     post: postsList[index],
                                     index: index,
                                     isLast: index == (postsList.length - 1)
