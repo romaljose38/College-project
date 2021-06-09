@@ -167,32 +167,32 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
 
       if (response.statusCode == 200) {
         overlay.show("Upload successful");
-        _overlayAnimationController
+        await _overlayAnimationController
             .reverse()
             .whenComplete(() => _overlayEntry.remove());
         Timer(
-            Duration(seconds: 1),
+            Duration(seconds: 2),
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       } else {
         overlay.show("Sorry. Upload Failed. \n Please try again later");
-        _overlayAnimationController
+        await _overlayAnimationController
             .reverse()
             .whenComplete(() => _overlayEntry.remove());
 
         Timer(
-            Duration(seconds: 700),
+            Duration(seconds: 2),
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       }
     } catch (e) {
       overlay.show("Sorry. Upload Failed.\n Please try again later.");
-      _overlayAnimationController
+      await _overlayAnimationController
           .reverse()
           .whenComplete(() => _overlayEntry.remove());
 
       Timer(
-          Duration(seconds: 700),
+          Duration(seconds: 2),
           () => Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (_) => LandingPage())));
     }

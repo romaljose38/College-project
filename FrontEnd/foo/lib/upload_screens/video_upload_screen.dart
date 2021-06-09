@@ -197,7 +197,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
     }
   }
 
-  void _revertToGeneratedThumbnail() async {
+  void _revertToGeneratedThumbnail() {
     setState(() {
       imageFile = null;
     });
@@ -262,7 +262,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int userId = prefs.getInt('id');
 
-    var dio = Dio(BaseOptions(baseUrl: localhost));
+    var dio = Dio(BaseOptions(baseUrl: 'http://' + localhost));
 
     FormData formData = FormData.fromMap({
       'user_id': userId.toString(),
@@ -302,33 +302,34 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
       if (response.statusCode == 200) {
         print('Uploaded');
         overlay.show("Upload successful");
-        _overlayAnimationController
+        await _overlayAnimationController
             .reverse()
             .whenComplete(() => _overlayEntry.remove());
 
         Timer(
-            Duration(seconds: 1),
+            Duration(seconds: 2),
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       } else {
         overlay.show("Sorry. Upload failed. \n Please try again later.");
-        _overlayAnimationController
+        await _overlayAnimationController
             .reverse()
             .whenComplete(() => _overlayEntry.remove());
 
         Timer(
-            Duration(seconds: 1),
+            Duration(seconds: 2),
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       }
     } catch (e) {
+      print('catch = $e');
       overlay.show("Sorry. Upload Failed.\n Please try again later.");
-      _overlayAnimationController
+      await _overlayAnimationController
           .reverse()
           .whenComplete(() => _overlayEntry.remove());
 
       Timer(
-          Duration(seconds: 1),
+          Duration(seconds: 2),
           () => Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (_) => LandingPage())));
     }
