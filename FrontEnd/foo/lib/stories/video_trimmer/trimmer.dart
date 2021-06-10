@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:foo/screens/feed_screen.dart';
 import 'package:image_crop/image_crop.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:video_thumbnail/video_thumbnail.dart' as vidThumbnail;
 import 'package:video_trimmer/video_trimmer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
@@ -114,7 +116,7 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
     return result;
   }
 
-  _pickStoryToUpload({bool isCamera = false}) async {
+  _pickStoryToUpload(ctx, {bool isCamera = false}) async {
     File media;
     String mediaExt;
     if (isCamera == true) {
@@ -146,13 +148,14 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
       }));
     } else {
       await _trimmer.loadVideo(videoFile: media);
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      Navigator.of(ctx).push(MaterialPageRoute(builder: (context) {
         // return TrimmerView(_trimmer,
         //     uploadFunc: _uploadStory);
-        return VideoEditor(
-          file: media,
-          uploadFunc: _uploadStory,
-        ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
+        return VideoTrimmerTest(file: media);
+        // return VideoEditor(
+        //   file: media,
+        //   uploadFunc: _uploadStory,
+        // ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
       }));
     }
   }
@@ -272,15 +275,14 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
                               "Camera",
                               Color.fromRGBO(232, 252, 246, 1),
                               Ionicons.trash_outline, () async {
-                            await _pickStoryToUpload(isCamera: true);
+                            await _pickStoryToUpload(context, isCamera: true);
                           }),
                           Spacer(),
                           bottomSheetTile(
                               "Upload status",
                               Color.fromRGBO(235, 221, 217, 1),
-                              Ionicons.images_outline, () async {
-                            await _pickStoryToUpload();
-                          }),
+                              Ionicons.images_outline,
+                              () => _pickStoryToUpload(context)),
                           Spacer(),
                         ],
                       ),
@@ -955,4 +957,484 @@ class _BottomSheetCameraState extends State<BottomSheetCamera> {
     }
     return CameraPreview(controller);
   }
+}
+
+class VideoTrimmerTest extends StatefulWidget {
+  final File file;
+  VideoTrimmerTest({this.file});
+
+  @override
+  _VideoTrimmerTestState createState() => _VideoTrimmerTestState();
+}
+
+class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
+  VideoPlayerController _videoController;
+  bool inited = false;
+
+  Duration totalDuration;
+  double value = 10;
+  double startThumbValue = 10;
+  double endThumbValue = 16;
+  int videoStart;
+  int videoEnd;
+  int maxDuration = 35;
+
+  double height = 50;
+  bool isPlaying = false;
+  Color boxColor = Colors.white;
+  TextEditingController _captionController = TextEditingController();
+
+  List<String> thumbnailList = <String>[];
+  bool gotThumbnail = false;
+  @override
+  void initState() {
+    super.initState();
+    initVideo();
+  }
+
+  initVideo() async {
+    _videoController = VideoPlayerController.file(
+      widget.file,
+    );
+    await _videoController.initialize();
+
+    setState(() {
+      totalDuration = _videoController.value.duration;
+      inited = true;
+      videoEnd = _videoController.value.duration.inMicroseconds;
+    });
+    thumbnails();
+    addlistener();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _videoController?.dispose();
+  }
+
+  _handleUpload() {
+    var duration = videoEnd - videoStart;
+    print(Duration(microseconds: duration).inSeconds);
+  }
+
+  addlistener() {
+    _videoController.addListener(() async {
+      var curDecimal = _videoController.value.position.inMilliseconds /
+          totalDuration.inMilliseconds;
+
+      setState(() {
+        value = Essentials.width * .95 * curDecimal;
+      });
+
+      if ((value >= endThumbValue) && (_videoController.value.isPlaying)) {
+        _videoController.pause();
+      }
+      // if()
+    });
+  }
+
+  _dragStart1(DragStartDetails details) {
+    double width = MediaQuery.of(context).size.width;
+    double val = details.globalPosition.dx - (width * .025);
+
+    double videoDecimal = val / (width * .95);
+    int duration = totalDuration.inMicroseconds;
+    int requiredMill = (duration * videoDecimal).toInt();
+    print(val);
+    if ((val >= endThumbValue) ||
+        (((videoEnd ?? 10000000000) - requiredMill) >=
+            (maxDuration * 1000000))) {
+      print(videoEnd - requiredMill);
+      print(maxDuration * 1000000);
+      return;
+    }
+    _videoController.seekTo(Duration(microseconds: requiredMill));
+
+    setState(() {
+      videoStart = requiredMill;
+      startThumbValue = val;
+    });
+  }
+
+  _dragUpdate1(DragUpdateDetails details) {
+    double width = MediaQuery.of(context).size.width;
+    double val = details.globalPosition.dx - (width * .025);
+
+    double videoDecimal = val / (width * .95);
+    int duration = totalDuration.inMicroseconds;
+    int requiredMill = (duration * videoDecimal).toInt();
+    if ((val > endThumbValue) ||
+        (((videoEnd ?? 10000000000) - videoStart) >= (maxDuration * 1000000))) {
+      return;
+    }
+    _videoController.seekTo(Duration(microseconds: requiredMill));
+
+    setState(() {
+      videoStart = requiredMill;
+      startThumbValue = val;
+    });
+  }
+
+  _dragStart2(DragStartDetails details) {
+    double width = MediaQuery.of(context).size.width;
+    double val = details.globalPosition.dx - (width * .025);
+    if (val <= startThumbValue) {
+      return;
+    }
+
+    double videoDecimal = val / (width * .95);
+    int duration = totalDuration.inMicroseconds;
+    int requiredMill = (duration * videoDecimal).toInt();
+    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000000))
+      return;
+    setState(() {
+      endThumbValue = val;
+    });
+    setState(() {
+      videoEnd = requiredMill;
+    });
+  }
+
+  _dragUpdate2(DragUpdateDetails details) {
+    double width = MediaQuery.of(context).size.width;
+    double val = details.globalPosition.dx - (width * .025);
+    if (val <= startThumbValue) {
+      return;
+    }
+
+    double videoDecimal = val / (width * .95);
+    int duration = totalDuration.inMicroseconds;
+    int requiredMill = (duration * videoDecimal).toInt();
+    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000000))
+      return;
+    setState(() {
+      endThumbValue = val;
+    });
+    setState(() {
+      videoEnd = requiredMill;
+    });
+  }
+
+  _play() async {
+    double width = MediaQuery.of(context).size.width;
+    if (value >= endThumbValue) {
+      double videoDecimal = startThumbValue / (width * .95);
+      int duration = totalDuration.inMicroseconds;
+      int requiredMill = (duration * videoDecimal).toInt();
+      await _videoController.seekTo(Duration(microseconds: requiredMill));
+    } else if (value <= startThumbValue) {
+      double videoDecimal = startThumbValue / (width * .95);
+      int duration = totalDuration.inMicroseconds;
+      int requiredMill = (duration * videoDecimal).toInt();
+      await _videoController.seekTo(Duration(microseconds: requiredMill));
+    }
+    _videoController.play();
+  }
+
+  _sliderAreaDragStart(DragStartDetails details) {
+    // print(details.globalPosition.)
+  }
+
+  _sliderAreaDragUpdate(DragUpdateDetails details) {
+    print(details.delta.dx);
+    var width = MediaQuery.of(context).size.width * .95;
+    if ((startThumbValue < 0)) {
+      setState(() {
+        startThumbValue += 1;
+        endThumbValue += 1;
+      });
+      return;
+    } else if (endThumbValue > (width - 3)) {
+      setState(() {
+        startThumbValue -= 1;
+        endThumbValue -= 1;
+      });
+      return;
+    }
+    setState(() {
+      startThumbValue += details.delta.dx;
+      endThumbValue += details.delta.dx;
+    });
+    double videoDecimal = startThumbValue / width;
+    int duration = totalDuration.inMicroseconds;
+    int requiredMill = (duration * videoDecimal).toInt();
+    _videoController.seekTo(Duration(microseconds: requiredMill));
+  }
+
+  //Widgets
+
+  videoProgressSlider() => Positioned(
+        left: value,
+        child: Container(
+            height: height,
+            width: 1,
+            decoration: BoxDecoration(
+              color: Colors.white,
+            )),
+      );
+
+  startThumb() => Positioned(
+        left: startThumbValue,
+        child: GestureDetector(
+          onHorizontalDragStart: _dragStart1,
+          // onHorizontalDragEnd: _dragEnd1,
+          onHorizontalDragUpdate: _dragUpdate1,
+          child: Container(
+              height: height,
+              width: 5,
+              color: boxColor,
+              child: Stack(alignment: Alignment.center, children: [
+                OverflowBox(
+                  maxWidth: 12,
+                  child: Container(
+                      height: 12,
+                      width: 12,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      )),
+                )
+              ])),
+        ),
+      );
+
+  endThumb() => Positioned(
+        left: endThumbValue,
+        child: GestureDetector(
+          onHorizontalDragStart: _dragStart2,
+          // onHorizontalDragEnd: _dragEnd1,
+          onHorizontalDragUpdate: _dragUpdate2,
+          child: Container(
+              height: height,
+              width: 5,
+              color: boxColor,
+              child: Stack(alignment: Alignment.center, children: [
+                OverflowBox(
+                  maxWidth: 12,
+                  child: Container(
+                      height: 12,
+                      width: 12,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      )),
+                )
+              ])),
+        ),
+      );
+
+  sliderArea() {
+    return Positioned(
+      left: startThumbValue,
+      child: GestureDetector(
+        onPanStart: _sliderAreaDragStart,
+        onPanUpdate: _sliderAreaDragUpdate,
+        child: Container(
+            width: endThumbValue - startThumbValue,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(.3),
+              border: Border(
+                  top: BorderSide(width: 2, color: Colors.white),
+                  bottom: BorderSide(width: 4, color: Colors.white)),
+            )),
+      ),
+    );
+  }
+
+  thumbnails() async {
+    int interval = totalDuration.inMilliseconds ~/ 9;
+    List images = [];
+    for (int i = 0; i < 10; i++) {
+      if (i == 0) {
+        images.add(interval);
+      } else {
+        images.add(images[i - 1] + interval);
+      }
+    }
+    print(images);
+
+    for (int i in images) {
+      String path = await vidThumbnail.VideoThumbnail.thumbnailFile(
+          video: widget.file.path,
+          thumbnailPath: (await getTemporaryDirectory()).path + '$i.jpg',
+          imageFormat: vidThumbnail.ImageFormat.JPEG,
+          timeMs: i,
+          quality: 10);
+      thumbnailList.add(path);
+    }
+    setState(() {
+      gotThumbnail = true;
+    });
+  }
+
+  bgTile(String path) => Container(
+      height: height + 5,
+      width: ((MediaQuery.of(context).size.width * .95) - 2) / 10,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          fit: BoxFit.cover,
+          image: FileImage(
+            File(path),
+          ),
+        ),
+      ));
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return Padding(
+      padding: const EdgeInsets.only(top: 35),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: PreferredSize(
+            preferredSize: Size(size.width, 60),
+            child: Container(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+                    onPressed: () {},
+                  )
+                ],
+              ),
+            )),
+        body: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          Container(
+              width: MediaQuery.of(context).size.width * .95,
+              height: height,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                border: Border.all(width: 1, color: Colors.white54),
+              ),
+              child: Stack(children: [
+                Container(
+                    decoration: BoxDecoration(color: Colors.black),
+                    clipBehavior: Clip.antiAlias,
+                    child: Row(
+                        children: gotThumbnail
+                            ? <Widget>[
+                                ...thumbnailList
+                                    .map((path) => bgTile(path))
+                                    .toList()
+                              ]
+                            : [])),
+                videoProgressSlider(),
+                sliderArea(),
+                startThumb(),
+                endThumb(),
+              ])),
+
+          Expanded(
+            child: Container(
+                // height: size.height * .6,
+                width: double.infinity,
+                child: inited
+                    ? Center(
+                        child: GestureDetector(
+                          onTap: playerHandler,
+                          child: Stack(
+                            children: [
+                              AspectRatio(
+                                  aspectRatio:
+                                      _videoController.value.aspectRatio,
+                                  child: VideoPlayer(_videoController)),
+                              Positioned.fill(
+                                  child: Center(
+                                      child: IconButton(
+                                icon: Icon(
+                                    isPlaying
+                                        ? Ionicons.pause_circle
+                                        : Ionicons.play_circle,
+                                    size: 35,
+                                    color: Colors.white),
+                                onPressed: playerHandler,
+                              )))
+                            ],
+                          ),
+                        ),
+                      )
+                    : Text("initing")),
+          ),
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _captionController,
+                cursorColor: Colors.black,
+                cursorWidth: .3,
+                textAlign: TextAlign.start,
+                style: GoogleFonts.lato(color: Colors.white),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: "     Add a caption...",
+                  hintStyle: GoogleFonts.openSans(
+                      fontSize: 15,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                        color: Colors.grey.withOpacity(.4), width: .6),
+                  ),
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                        color: Colors.grey.withOpacity(.4), width: .6),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                        color: Colors.grey.withOpacity(.4), width: .8),
+                  ),
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: _handleUpload,
+              child: Container(
+                margin: EdgeInsets.only(
+                  right: 10,
+                  bottom: 5,
+                ),
+                width: 35,
+                height: 35,
+                decoration:
+                    BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                child: Icon(Ionicons.send, color: Colors.black, size: 15),
+              ),
+            )
+          ])
+
+          // RangeSlider(
+          //     onChanged: sliderChange,
+          //     values: RangeValues(start, end),
+          //     activeColor: Colors.black)
+        ]),
+      ),
+    );
+  }
+
+  playerHandler() {
+    if (_videoController.value.isPlaying) {
+      _videoController.pause();
+      setState(() {
+        isPlaying = false;
+      });
+    } else {
+      _play();
+      setState(() {
+        isPlaying = true;
+      });
+    }
+  }
+  // sliderChange(RangeValues val) {
+  //   setState(() {
+  //     start = val.start;
+  //     end = val.end;
+  //   });
+  //   var duration = _videoController.value.duration;
+  //   int seek = (duration.inMilliseconds * val.start).toInt();
+  //   _videoController.seekTo(Duration(milliseconds: seek));
+  //   print(val.start);
+  //   print(val.end);
+  // }
 }

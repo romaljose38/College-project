@@ -656,85 +656,41 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           );
         });
-    // showModalBottomSheet(
-    //   context: context,
-    //   builder: (context) {
-    //     return Container(
-    //       height: 300,
-    //       child: Column(
-    //         children: [
-    //           Container(
-    //             child: Text(
-    //               "Settings",
-    //               style: GoogleFonts.lato(
-    //                 fontSize: 23,
-    //                 fontWeight: FontWeight.w600,
-    //               ),
-    //             ),
-    //             alignment: Alignment.centerLeft,
-    //             margin: EdgeInsets.fromLTRB(20, 20, 0, 8),
-    //           ),
-    //           Divider(),
-    //           Container(
-    //             // height: 70,
-    //             width: double.infinity,
-    //             child: Row(
-    //               children: [
-    //                 Spacer(),
-    //                 TextButton(
-    //                   child: Text(
-    //                     "Delete for me",
-    //                     style: GoogleFonts.openSans(
-    //                       fontSize: 16,
-    //                     ),
-    //                   ),
-    //                   onPressed: () {
-    //                     deleteforMe();
-    //                     Navigator.pop(context);
-    //                   },
-    //                 ),
-    //                 Spacer(flex: 4),
-    //               ],
-    //             ),
-    //           ),
-    //           Divider(),
-    //           Container(
-    //             // height: 70,
-    //             width: double.infinity,
-    //             child: Row(
-    //               children: [
-    //                 Spacer(),
-    //                 TextButton(
-    //                   child: Text(
-    //                     "Delete for everyone",
-    //                     style: GoogleFonts.openSans(
-    //                       fontSize: 16,
-    //                     ),
-    //                   ),
-    //                   onPressed: () {
-    //                     if (SocketChannel.isConnected) {
-    //                       deleteForEveryone();
-    //                       deleteforMe();
-    //                       Navigator.pop(context);
-    //                     } else {
-    //                       CustomOverlay overlay = CustomOverlay(
-    //                           context: context,
-    //                           animationController: _animationController);
-    //                       overlay.show(
-    //                           "Something went wrong.\n Please check your network connection and try again later");
-    //                     }
-    //                   },
-    //                 ),
-    //                 Spacer(flex: 4),
-    //               ],
-    //             ),
-    //           ),
-    //           Divider(),
-    //         ],
-    //       ),
-    //     );
-    //   },
-    // );
+  }
+
+  Future<bool> clearThisThread() async {
+    bool shouldClear;
+    await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Text("Are you sure?",
+                  style: GoogleFonts.lato(
+                      fontWeight: FontWeight.w400, fontSize: 18)),
+              content: Text("This action cannot be undone.",
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+              actions: [
+                TextButton(
+                    child: Text("Yes"),
+                    onPressed: () {
+                      shouldClear = true;
+                      Navigator.pop(context);
+                    }),
+                TextButton(
+                    child: Text("No"),
+                    onPressed: () {
+                      shouldClear = false;
+                      Navigator.pop(context);
+                    })
+              ],
+            ));
+    if (shouldClear == true) {
+      Thread thread = Hive.box('Threads').get(threadName);
+      thread.chatList = [];
+      thread.save();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   //
@@ -743,44 +699,132 @@ class _ChatScreenState extends State<ChatScreen>
   showSettings(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(15),
+        topRight: Radius.circular(15),
+      )),
       builder: (context) {
         return StatefulBuilder(builder: (context, tester) {
           return Container(
-            height: 300,
+            height: 340,
+            padding: EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
                 Container(
-                  child: Text(
-                    "Settings",
-                    style: GoogleFonts.lato(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  margin: EdgeInsets.symmetric(vertical: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(left: 7),
+                        child: Text(
+                          "Settings",
+                          style: GoogleFonts.lato(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        alignment: Alignment.centerLeft,
+                        // margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
+                      ),
+                      TextButton(
+                        child: Text(
+                          "Cancel",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        // margin: EdgeInsets.fromLTRB(0, 0, 20, 0),
+                      ),
+                    ],
                   ),
-                  alignment: Alignment.centerLeft,
-                  margin: EdgeInsets.fromLTRB(20, 20, 0, 8),
                 ),
-                Divider(),
+                Container(
+                  margin: EdgeInsets.fromLTRB(7, 0, 7, 15),
+                  alignment: Alignment.centerLeft,
+                  child: Text("General",
+                      style: GoogleFonts.lato(
+                          fontSize: 13, color: Colors.grey.shade500)),
+                ),
+                Container(
+                    // height: 70,
+                    width: double.infinity,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        TextButton(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Clear chat",
+                                    style: GoogleFonts.lato(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600,
+                                    )),
+                                SizedBox(height: 3),
+                                Text(
+                                    "Clears all messages in this chat.\nMedia files will be retained.",
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade500,
+                                    )),
+                              ],
+                            ),
+                            onPressed: () async {
+                              var didDelete = await clearThisThread();
+                              if (didDelete) {
+                                Navigator.pop(context);
+                              }
+                            }),
+                      ],
+                    )),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 7, vertical: 15),
+                  alignment: Alignment.centerLeft,
+                  child: Text("Preferences",
+                      style: GoogleFonts.lato(
+                          fontSize: 13, color: Colors.grey.shade500)),
+                ),
                 Container(
                   // height: 70,
                   width: double.infinity,
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Spacer(),
-                      Text("Hide last seen",
-                          style: GoogleFonts.openSans(
-                            fontSize: 16,
-                          )),
-                      Spacer(flex: 4),
-                      Switch(
+                      TextButton(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Hide last seen",
+                                  style: GoogleFonts.lato(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w600,
+                                  )),
+                              SizedBox(height: 3),
+                              Text(
+                                  "Hides your last seen info and \nactivity status from ${widget.thread.second.f_name} ${widget.thread.second.l_name}",
+                                  style: GoogleFonts.lato(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade500,
+                                  )),
+                            ],
+                          ),
+                          onPressed: () {}),
+                      Checkbox(
                         value: hidingLastSeen,
                         onChanged: (val) => changePreferences(val, tester),
+                        shape: CircleBorder(
+                            side: BorderSide(color: Colors.black87, width: .7)),
                       ),
-                      Spacer(),
                     ],
                   ),
                 ),
-                Divider(),
               ],
             ),
           );

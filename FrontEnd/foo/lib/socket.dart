@@ -122,6 +122,18 @@ class SocketChannel {
             });
             print(data);
             channel.add(data);
+          } else if (e.msgType == "reply_txt") {
+            var data = jsonEncode({
+              'message': e.message,
+              'id': e.id,
+              'time': e.time.toString(),
+              'to': senderName,
+              'type': 'reply_txt',
+              'reply_id': e.replyMsgId,
+              'reply_txt': e.replyMsgTxt,
+            });
+            print(data);
+            channel.add(data);
           }
         });
       });
@@ -245,7 +257,7 @@ class SocketChannel {
   Future<void> addMentionNotification(data) async {
     _prefs.setBool("hasNotif", true);
     DateTime time = DateTime.parse(data['time']);
-    _handler.mentionNotif(data['username']);
+    _handler.mentionNotif(data['u']);
     var notif = Notifications(
         type: NotificationType.mention,
         userName: data['u'],

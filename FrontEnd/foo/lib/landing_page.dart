@@ -54,7 +54,7 @@ class LandingPageState extends State<LandingPage>
   Timer timer;
   static bool isConnected = false;
   SocketChannel socket;
-  ValueNotifier pgVal = ValueNotifier(0);
+
   // NotificationController controller;
   int _page = 0;
   bool hasNewNotifications;
@@ -64,7 +64,7 @@ class LandingPageState extends State<LandingPage>
     notifInit();
     setPrefs();
     _page = widget.navBarIndex;
-    pgVal.value = widget.navBarIndex;
+
     super.initState();
     checkSocket();
 
@@ -490,12 +490,15 @@ class LandingPageState extends State<LandingPage>
                     icon: Icon(Ionicons.home_outline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 0)),
-                IconButton(
-                    icon: Icon(Ionicons.search_outline,
-                        size: 22, color: Colors.black),
-                    disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 1)),
+                    onPressed: () {
+                      if (_pageController.page == 1) {
+                        _pageController.animateToPage(0,
+                            duration: Duration(milliseconds: 100),
+                            curve: Curves.bounceIn);
+                      }
+                      setState(() => _page = 0);
+                    }),
+
                 // SizedBox(
                 //   width: 14,
                 // ),
@@ -508,49 +511,54 @@ class LandingPageState extends State<LandingPage>
                       ),
                       child: Icon(Ionicons.add, size: 20, color: Colors.black)),
                 ),
-                ValueListenableBuilder(
-                  valueListenable: Hive.box("Notifications").listenable(),
-                  builder: (context, box, snapshot) => ValueListenableBuilder(
-                    valueListenable: pgVal,
-                    builder: (context, box, snapshot) {
-                      var value = _prefs?.getBool("hasNotif") ?? false;
-                      print(value);
-                      return Stack(
-                        children: [
-                          IconButton(
-                              icon: Icon(Ionicons.notifications_outline,
-                                  size: 22, color: Colors.black),
-                              disabledColor: Colors.green,
-                              onPressed: () => setState(() {
-                                    _page = 3;
-                                    pgVal.value = 3;
-                                  })),
-                          Positioned(
-                            child: Container(
-                              height: 4,
-                              width: 4,
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: value
-                                      ? Colors.black
-                                      : Colors.transparent),
-                            ),
-                            top: 8,
-                            right: MediaQuery.of(context).size.width * .06,
-                          )
-                        ],
-                      );
-                    },
-                  ),
-                ),
                 IconButton(
-                    icon: Icon(Ionicons.person_outline,
+                    icon: Icon(Ionicons.search_outline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
-                    onPressed: () => setState(() {
-                          _page = 2;
-                          pgVal.value = 2;
-                        })),
+                    onPressed: () => setState(() => _page = 1)),
+                // ValueListenableBuilder(
+                //   valueListenable: Hive.box("Notifications").listenable(),
+                //   builder: (context, box, snapshot) => ValueListenableBuilder(
+                //     valueListenable: pgVal,
+                //     builder: (context, box, snapshot) {
+                //       var value = _prefs?.getBool("hasNotif") ?? false;
+                //       print(value);
+                //       return Stack(
+                //         children: [
+                //           IconButton(
+                //               icon: Icon(Ionicons.notifications_outline,
+                //                   size: 22, color: Colors.black),
+                //               disabledColor: Colors.green,
+                //               onPressed: () => setState(() {
+                //                     _page = 3;
+                //                     pgVal.value = 3;
+                //                   })),
+                //           Positioned(
+                //             child: Container(
+                //               height: 4,
+                //               width: 4,
+                //               decoration: BoxDecoration(
+                //                   shape: BoxShape.circle,
+                //                   color: value
+                //                       ? Colors.black
+                //                       : Colors.transparent),
+                //             ),
+                //             top: 8,
+                //             right: MediaQuery.of(context).size.width * .06,
+                //           )
+                //         ],
+                //       );
+                //     },
+                //   ),
+                // ),
+                // IconButton(
+                //     icon: Icon(Ionicons.person_outline,
+                //         size: 22, color: Colors.black),
+                //     disabledColor: Colors.green,
+                //     onPressed: () => setState(() {
+                //           _page = 2;
+                //           pgVal.value = 2;
+                //         })),
               ],
             ),
           ),
