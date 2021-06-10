@@ -558,9 +558,18 @@ class UserStoryModel extends HiveObject {
     }
   }
 
-  void deleteOldStory({int id, int userId}) {
+  void deleteStory({int id, int userId}) {
     for (int i = 0; i < stories.length; i++) {
       if (stories[i].storyId == id) {
+        _deleteMediaFromDrive(stories[i].file, userId);
+        stories.removeAt(i);
+      }
+    }
+  }
+
+  void deleteOldStory({Duration period}) {
+    for (int i = 0; i < stories.length; i++) {
+      if (DateTime.now().difference(stories[i].time) > period) {
         _deleteMediaFromDrive(stories[i].file, userId);
         stories.removeAt(i);
       }

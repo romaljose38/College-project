@@ -446,7 +446,7 @@ class SocketChannel {
       print(data);
 
       var userStory = storyBox.get(data['u_id']);
-      userStory.deleteOldStory(
+      userStory.deleteStory(
           id: data['s_id'].toInt(), userId: data['u_id'].toInt());
       userStory.save();
       sendToChannel(jsonEncode({'s_r': data['n_id']}));

@@ -60,6 +60,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     //_fetchStory();
     super.initState();
     setInitialData();
+    _checkAndDeleteOldStory(Duration(hours: 1));
     // _getNewPosts();
     //_getMyProfPic();
 
@@ -391,6 +392,16 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             ),
           );
         });
+  }
+
+  //The below function deletes stories that are older than a given period of time
+
+  Future<void> _checkAndDeleteOldStory(Duration timePeriod) async {
+    List<dynamic> boxList = Hive.box('MyStories').values.toList();
+    for (int i = 0; i < boxList.length; i++) {
+      print("Checking stories to delete");
+      boxList[i].deleteOldStory(period: timePeriod);
+    }
   }
 
   //
