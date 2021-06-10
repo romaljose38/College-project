@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:data_connection_checker/data_connection_checker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:foo/colour_palette.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
@@ -270,10 +271,12 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               if (boxList[item].userId == curUserId) {
                 myStory = boxList[item];
               } else {
-                if (boxList[item].hasUnSeen() == -1) {
-                  seenList.add(boxList[item]);
-                } else {
-                  unSeenList.add(boxList[item]);
+                if (boxList[item].stories.length > 0) {
+                  if (boxList[item].hasUnSeen() == -1) {
+                    seenList.add(boxList[item]);
+                  } else {
+                    unSeenList.add(boxList[item]);
+                  }
                 }
               }
             }
@@ -582,6 +585,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     var heightFactor = (height - 58) / height;
     // evict();
     Essentials.width = MediaQuery.of(context).size.width;
+
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Scaffold(
@@ -598,10 +602,34 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                         builder: (_) => NotificationScreen())),
                     child: Container(
                       margin: EdgeInsets.only(left: 15),
-                      child: Icon(
-                        Ionicons.notifications_outline,
-                        size: 20,
-                      ),
+                      child: ValueListenableBuilder(
+                          valueListenable:
+                              Hive.box("Notifications").listenable(),
+                          builder: (context, snapshot, child) {
+                            var value = prefs?.getBool("hasNotif") ?? false;
+
+                            return Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Icon(
+                                    Ionicons.notifications_outline,
+                                    size: 20,
+                                  ),
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    child: Container(
+                                      height: 6,
+                                      width: 6,
+                                      decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: value
+                                              ? Colors.orange
+                                              : Colors.transparent),
+                                    ),
+                                  ),
+                                ]);
+                          }),
                     ),
                   ),
                   Text(

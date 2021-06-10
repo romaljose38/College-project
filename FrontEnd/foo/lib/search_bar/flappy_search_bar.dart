@@ -343,6 +343,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
     return Padding(
       padding: widget.listPadding,
       child: StaggeredGridView.countBuilder(
+        physics: BouncingScrollPhysics(),
         crossAxisCount: widget.crossAxisCount,
         itemCount: items.length,
         shrinkWrap: widget.shrinkWrap,

@@ -257,7 +257,7 @@ class SocketChannel {
   Future<void> addMentionNotification(data) async {
     _prefs.setBool("hasNotif", true);
     DateTime time = DateTime.parse(data['time']);
-    _handler.mentionNotif(data['username']);
+    _handler.mentionNotif(data['u']);
     var notif = Notifications(
         type: NotificationType.mention,
         userName: data['u'],

@@ -54,7 +54,7 @@ class LandingPageState extends State<LandingPage>
   Timer timer;
   static bool isConnected = false;
   SocketChannel socket;
-  ValueNotifier pgVal = ValueNotifier(0);
+
   // NotificationController controller;
   int _page = 0;
   bool hasNewNotifications;
@@ -64,7 +64,7 @@ class LandingPageState extends State<LandingPage>
     notifInit();
     setPrefs();
     _page = widget.navBarIndex;
-    pgVal.value = widget.navBarIndex;
+
     super.initState();
     checkSocket();
 
@@ -490,7 +490,14 @@ class LandingPageState extends State<LandingPage>
                     icon: Icon(Ionicons.home_outline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
-                    onPressed: () => setState(() => _page = 0)),
+                    onPressed: () {
+                      if (_pageController.page == 1) {
+                        _pageController.animateToPage(0,
+                            duration: Duration(milliseconds: 100),
+                            curve: Curves.bounceIn);
+                      }
+                      setState(() => _page = 0);
+                    }),
 
                 // SizedBox(
                 //   width: 14,
