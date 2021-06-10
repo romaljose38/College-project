@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -13,6 +14,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:foo/custom_overlay.dart';
 
 class AudioUploadScreen extends StatefulWidget {
@@ -117,19 +120,39 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
         .whenComplete(() => _state.insert(_overlayEntry));
   }
 
+  Future<File> testCompressAndGetFile(File file, String extension) async {
+    String targetPath = (await getTemporaryDirectory()).path +
+        '/upload/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    File(targetPath).createSync(recursive: true);
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      quality: 80,
+      format: (extension == 'png') ? CompressFormat.png : CompressFormat.jpeg,
+    );
+
+    return result;
+  }
+
   Future<void> _upload(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int userId = prefs.getInt('id');
+    String extension =
+        (imageFile == null) ? "" : imageFile.path.split('.').last;
+    File compressedImage = (imageFile == null)
+        ? null
+        : await testCompressAndGetFile(imageFile, extension);
 
     var dio = Dio(BaseOptions(baseUrl: 'http://' + localhost));
     var formData = FormData.fromMap({
       'user_id': userId.toString(),
       'type': _isBlurred ? 'aud_blurred' : 'aud',
       'caption': captionController.text,
-      'hasThumbnail': (imageFile == null) ? '0' : '1',
+      'hasThumbnail': (compressedImage == null) ? '0' : '1',
       'file': await MultipartFile.fromFile(widget.audio.path),
-      'thumbnail':
-          imageFile != null ? await MultipartFile.fromFile(imageFile.path) : "",
+      'thumbnail': compressedImage != null
+          ? await MultipartFile.fromFile(compressedImage.path)
+          : "",
     });
 
     // var uri = Uri.http(
@@ -167,6 +190,9 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
 
       if (response.statusCode == 200) {
         overlay.show("Upload successful");
+        if (compressedImage.existsSync()) {
+          compressedImage.deleteSync();
+        }
         await _overlayAnimationController
             .reverse()
             .whenComplete(() => _overlayEntry.remove());
@@ -175,6 +201,9 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       } else {
+        if (imageFile.existsSync()) {
+          imageFile.deleteSync();
+        }
         overlay.show("Sorry. Upload Failed. \n Please try again later");
         await _overlayAnimationController
             .reverse()
@@ -186,6 +215,9 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       }
     } catch (e) {
+      if (imageFile.existsSync()) {
+        imageFile.deleteSync();
+      }
       overlay.show("Sorry. Upload Failed.\n Please try again later.");
       await _overlayAnimationController
           .reverse()
@@ -291,7 +323,8 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
   Future<void> _uploadThumbnail() async {
     if (await Permission.storage.request().isGranted) {
       FilePickerResult result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: ['png', 'jpg', 'jpeg'],
       );
 
       setState(() {

@@ -16,6 +16,7 @@ import 'package:foo/landing_page.dart';
 import 'package:foo/test_cred.dart';
 import 'package:foo/models.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import 'package:camera/camera.dart';
 import 'package:video_player/video_player.dart';
@@ -102,6 +103,19 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
     myProfPic = widget.myProfPic;
   }
 
+  Future<File> testCompressAndGetFile(File file, String extension) async {
+    String targetPath = (await getTemporaryDirectory()).path +
+        '/upload/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    File(targetPath).createSync(recursive: true);
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      quality: 80,
+    );
+
+    return result;
+  }
+
   _pickStoryToUpload(ctx, {bool isCamera = false}) async {
     File media;
     String mediaExt;
@@ -115,7 +129,7 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
     } else {
       FilePickerResult result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mkv'],
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'mp4', 'mkv'],
       );
 
       if (result != null) {
@@ -127,7 +141,8 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
 
     print(mediaExt);
 
-    if (['jpg', 'jpeg', 'png', 'gif'].contains(mediaExt)) {
+    if (['jpg', 'jpeg', 'png'].contains(mediaExt)) {
+      media = await testCompressAndGetFile(media, mediaExt);
       Navigator.of(context).push(MaterialPageRoute(builder: (context) {
         return CropMyImage(file: media, uploadFunc: _uploadStory);
       }));
