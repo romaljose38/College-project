@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:image_crop/image_crop.dart';
 import 'package:path_provider/path_provider.dart';
@@ -60,7 +62,7 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
     var decodedResponse = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      var myBox = await Hive.box('MyStories');
+      var myBox = Hive.box('MyStories');
 
       if (myBox.containsKey(userId)) {
         var userStory = myBox.get(userId);
@@ -973,7 +975,8 @@ class VideoTrimmerTest extends StatefulWidget {
   _VideoTrimmerTestState createState() => _VideoTrimmerTestState();
 }
 
-class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
+class _VideoTrimmerTestState extends State<VideoTrimmerTest>
+    with TickerProviderStateMixin {
   VideoPlayerController _videoController;
   bool inited = false;
 
@@ -997,16 +1000,71 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
 
-  AnimationController _animationController;
+  AnimationController _overlayAnimationController;
+  Animation _overlayAnimation;
+  AnimationController _animController;
+  OverlayEntry _overlayEntry;
 
   List<String> thumbnailList = <String>[];
   bool gotThumbnail = false;
+
   @override
   void initState() {
     super.initState();
+    _animController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     // _animationContro
+    _overlayAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _overlayAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(_overlayAnimationController);
     _captionController = TextEditingController();
     initVideo();
+  }
+
+  showProgressOverlay() {
+    OverlayState _state = Overlay.of(context);
+    _overlayEntry = OverlayEntry(builder: (context) {
+      return FadeTransition(
+        opacity: _overlayAnimation,
+        child: Scaffold(
+          backgroundColor: Colors.black.withOpacity(.4),
+          body: Center(
+            child: Container(
+              width: 100,
+              height: 150,
+              child: Column(
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          backgroundColor: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    ],
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 15),
+                    child: Text("Uploading..",
+                        style: GoogleFonts.raleway(
+                            color: Colors.white, fontSize: 16)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+    _overlayAnimationController
+        .forward()
+        .whenComplete(() => _state.insert(_overlayEntry));
   }
 
   Future<File> _trimVideo() async {
@@ -1079,8 +1137,83 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
   }
 
   _handleUpload() async {
+    showProgressOverlay();
+    CustomOverlay _overlay =
+        CustomOverlay(context: context, animationController: _animController);
+
     File file = await _trimVideo();
-    await widget.uploadFunc(context, file, _captionController.text ?? '');
+    bool status = await _uploadStory(file, _captionController.text ?? '');
+    await _overlayAnimationController
+        .reverse()
+        .whenComplete(() => _overlayEntry.remove());
+    if (status) {
+      _overlay.show("Upload successful", duration: 1);
+      Timer(
+          Duration(seconds: 1),
+          () => Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => LandingPage())));
+    } else {
+      _overlay.show("Sorry something went wrong.", duration: 1);
+      Timer(
+          Duration(seconds: 1),
+          () => Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => LandingPage())));
+    }
+  }
+
+  Future<bool> _uploadStory(File mediaFile, String caption) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String username = prefs.getString('username');
+    int userId = prefs.getInt('id');
+    var uri = Uri.http(localhost, '/api/story_upload');
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['username'] = username
+      ..fields['caption'] = caption
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        mediaFile.path,
+      ));
+
+    try {
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      var decodedResponse = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        var myBox = Hive.box('MyStories');
+
+        if (myBox.containsKey(userId)) {
+          var userStory = myBox.get(userId);
+          userStory.addStory(Story(
+            file: decodedResponse['url'],
+            time: DateTime.now(),
+            storyId: decodedResponse['s_id'],
+            caption: caption,
+          ));
+          userStory.save();
+        } else {
+          UserStoryModel newUser = UserStoryModel()
+            ..username = username
+            ..userId = userId
+            ..stories = <Story>[];
+          newUser.addStory(Story(
+            file: decodedResponse['url'],
+            time: DateTime.now(),
+            storyId: decodedResponse['s_id'],
+            caption: caption,
+          ));
+
+          await myBox.put(userId, newUser);
+          newUser.save();
+        }
+
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
   }
 
   addlistener() {

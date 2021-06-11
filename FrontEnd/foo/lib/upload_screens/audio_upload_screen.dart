@@ -83,15 +83,6 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
                     alignment: Alignment.center,
                     children: [
                       SizedBox(
-                        height: 100,
-                        width: 100,
-                        child: Center(
-                          child: Text((percent ?? 0).toString(),
-                              style: GoogleFonts.raleway(
-                                  color: Colors.white, fontSize: 16)),
-                        ),
-                      ),
-                      SizedBox(
                         width: 80,
                         height: 80,
                         child: CircularProgressIndicator(
