@@ -331,7 +331,9 @@ class _StoryScreenState extends State<StoryScreen>
                             videoFile: mediaFile,
                             notifier: notifier,
                             animController: _animController)
-                    : CircularProgressIndicator(),
+                    : CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white)),
               ),
               Positioned(
                 top: 40.0,
@@ -747,7 +749,9 @@ class _MyStoryScreenState extends State<MyStoryScreen>
                             videoFile: mediaFile,
                             notifier: notifier,
                           )
-                    : CircularProgressIndicator(),
+                    : CircularProgressIndicator(
+                        strokeWidth: 1,
+                        valueColor: AlwaysStoppedAnimation(Colors.white)),
               ),
               Positioned(
                 top: 40.0,
