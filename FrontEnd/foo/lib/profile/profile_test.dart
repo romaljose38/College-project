@@ -471,11 +471,16 @@ class _ProfileTestState extends State<ProfileTest>
     }
     return Row(children: [
       Spacer(),
-      Text(
-        widget.fName + " " + widget.lName,
-        style: GoogleFonts.raleway(
-          fontSize: 23,
-          fontWeight: FontWeight.w600,
+      Container(
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .58),
+        child: Text(
+          widget.fName + " " + widget.lName,
+          maxLines: 3,
+          style: GoogleFonts.raleway(
+            fontSize: 23,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       Spacer(),

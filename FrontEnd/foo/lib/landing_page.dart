@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -487,11 +488,11 @@ class LandingPageState extends State<LandingPage>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 IconButton(
-                    icon: Icon(Ionicons.home_outline,
+                    icon: Icon(EvaIcons.homeOutline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
                     onPressed: () {
-                      if (_pageController.page == 1) {
+                      if ((curpgviewIndex == 1) && (_page == 0)) {
                         _pageController.animateToPage(0,
                             duration: Duration(milliseconds: 100),
                             curve: Curves.bounceIn);
@@ -512,7 +513,7 @@ class LandingPageState extends State<LandingPage>
                       child: Icon(Ionicons.add, size: 20, color: Colors.black)),
                 ),
                 IconButton(
-                    icon: Icon(Ionicons.search_outline,
+                    icon: Icon(EvaIcons.searchOutline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
                     onPressed: () => setState(() => _page = 1)),

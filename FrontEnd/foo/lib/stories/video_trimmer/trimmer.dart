@@ -979,8 +979,8 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   Duration totalDuration;
   double value = 10;
-  double startThumbValue = 10;
-  double endThumbValue = 16;
+  double startThumbValue;
+  double endThumbValue;
   int videoStart;
   int videoEnd;
   int maxDuration = 35;
@@ -997,11 +997,14 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
 
+  AnimationController _animationController;
+
   List<String> thumbnailList = <String>[];
   bool gotThumbnail = false;
   @override
   void initState() {
     super.initState();
+    // _animationContro
     _captionController = TextEditingController();
     initVideo();
   }
@@ -1039,14 +1042,21 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     await _videoController.initialize();
 
     if (_videoController.value.duration <= Duration(seconds: maxDuration)) {
-      startThumbValue = 2;
-      endThumbValue = (Essentials.width * .95) - 3;
+      setState(() {
+        startThumbValue = 2;
+        endThumbValue = (Essentials.width * .95) - 3;
+      });
     } else {
-      startThumbValue = 2;
       double lengthPerSec =
-          _videoController.value.duration.inSeconds / (Essentials.width * .95);
-      endThumbValue = 2 + (lengthPerSec * maxDuration);
+          (Essentials.width * .95) / _videoController.value.duration.inSeconds;
+      setState(() {
+        startThumbValue = 2;
+
+        endThumbValue = 2 + (lengthPerSec * maxDuration);
+      });
     }
+    print("Start thumb value $startThumbValue");
+    print("End thumb value $endThumbValue");
     var startVal = startThumbValue / (Essentials.width * .95);
     var endVal = endThumbValue / (Essentials.width * .95);
     setState(() {
@@ -1240,7 +1250,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
       );
 
   startThumb() => Positioned(
-        left: startThumbValue,
+        left: startThumbValue ?? 0,
         child: Container(
             height: height,
             width: 5,
@@ -1264,7 +1274,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
       );
 
   endThumb() => Positioned(
-        left: endThumbValue,
+        left: endThumbValue ?? 5,
         child: Container(
             height: height,
             width: 5,
@@ -1294,7 +1304,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
         onPanStart: _sliderAreaDragStart,
         onPanUpdate: _sliderAreaDragUpdate,
         child: Container(
-            width: endThumbValue - startThumbValue,
+            width: (endThumbValue ?? 5) - (startThumbValue ?? 0),
             height: height,
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(.3),

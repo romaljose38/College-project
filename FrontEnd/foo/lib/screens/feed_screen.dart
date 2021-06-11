@@ -595,7 +595,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       int curMood = _curMoodNotifier.value;
       int userId = prefs.getInt('id');
       http.Response response = await http.get(Uri.http(
-          localhost, '/api/change_mood', {'user': userId, 'mood': curMood}));
+          localhost,
+          '/api/change_mood',
+          {'user': userId.toString(), 'mood': curMood.toString()}));
 
       if (response.statusCode == 200) {
         prefs.setInt("curMood", curMood);
@@ -604,6 +606,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       _curMoodNotifier.value = prefs.getInt("curMood");
       return false;
     } catch (e) {
+      print(e);
       _curMoodNotifier.value = prefs.getInt("curMood");
 
       return false;
@@ -683,11 +686,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             Spacer(),
                             emogiTile('😶', moodSetState, 2),
                             Spacer(),
-                            emogiTile('😬', moodSetState, 3),
+                            emogiTile('😃', moodSetState, 3),
                             Spacer(),
                             emogiTile('😌', moodSetState, 4),
                             Spacer(),
-                            emogiTile('🤒', moodSetState, 5),
+                            emogiTile('😎', moodSetState, 5),
                             Spacer(),
                           ],
                         ),
@@ -752,15 +755,20 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   getProperText(index) {
     switch (index) {
       case 1:
-        return Text("IDK, Cursed or somethin!");
+        return Text("IDK, Cursed or somethin!",
+            style: TextStyle(color: Colors.red, fontSize: 14));
       case 2:
-        return Text("Existential crisis");
+        return Text("Existential crisis",
+            style: TextStyle(color: Colors.orange, fontSize: 14));
       case 3:
-        return Text("O..k..a ..y");
+        return Text("O..k..a ..y",
+            style: TextStyle(color: Colors.blueGrey, fontSize: 14));
       case 4:
-        return Text("Happie");
+        return Text("Happie",
+            style: TextStyle(color: Colors.greenAccent, fontSize: 14));
       case 5:
-        return Text("Hasta la vista bby");
+        return Text("Ellarum dence kelii",
+            style: TextStyle(color: Colors.green, fontSize: 14));
       default:
         return Text("Ayinu");
     }
@@ -772,14 +780,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       selected = true;
     }
     return GestureDetector(
-      onTap: () => moodSet(() {
-        if (_curMoodNotifier.value == index) {
-          _curMoodNotifier.value = 0;
-        } else {
-          _curMoodNotifier.value = index;
-        }
-      }),
-      child: Container(
+        onTap: () => moodSet(() {
+              if (_curMoodNotifier.value == index) {
+                _curMoodNotifier.value = 0;
+              } else {
+                _curMoodNotifier.value = index;
+              }
+            }),
+        child: Container(
           width: 50,
           height: 50,
           alignment: Alignment.center,
@@ -787,8 +795,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               shape: BoxShape.circle,
               border: Border.all(
                   color: selected ? Colors.blue : Colors.white, width: 2)),
-          child: Text(emogi, style: TextStyle(fontSize: 20))),
-    );
+          child: Image.asset(Essentials.emojis[index],
+              width: 28,
+              height:
+                  28), // child: Text(emogi, style: TextStyle(fontSize: 20))),
+        ));
   }
 
   @override
@@ -867,35 +878,17 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
                               return Container(
-                                  height: 40,
-                                  width: 40,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(15),
-                                    image: DecorationImage(
-                                      image: FileImage(
-                                        File(snapshot.data),
-                                      ),
+                                height: 40,
+                                width: 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  image: DecorationImage(
+                                    image: FileImage(
+                                      File(snapshot.data),
                                     ),
                                   ),
-                                  child: Stack(children: [
-                                    ValueListenableBuilder(
-                                        valueListenable: _curMoodNotifier,
-                                        builder: (context, snapshot, child) {
-                                          return Positioned(
-                                            top: 0,
-                                            right: 0,
-                                            child: Container(
-                                                height: 9,
-                                                width: 9,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child:
-                                                    Center(child: Text('😑'))),
-                                          );
-                                        })
-                                  ]));
+                                ),
+                              );
                             } else {
                               return SizedBox(
                                   height: 30,
@@ -1021,4 +1014,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
 class Essentials {
   static var width;
+  static Map emojis = {
+    1: "assets/emojis/very_sad.png",
+    2: "assets/emojis/sad.png",
+    3: "assets/emojis/normal.png",
+    4: "assets/emojis/happy.png",
+    5: "assets/emojis/very_happy.png",
+  };
 }
