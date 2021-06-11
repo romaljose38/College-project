@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as vidThumbnail;
-// import 'package:video_trimmer/video_trimmer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
@@ -20,10 +19,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import 'package:camera/camera.dart';
 import 'package:video_player/video_player.dart';
-import 'package:foo/stories/video_trimmer/videoediting.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
-import 'package:flutter_ffmpeg/statistics.dart';
 
 import 'package:foo/stories/story_new.dart';
 import 'package:foo/main.dart' show deviceCameras;
@@ -999,7 +996,6 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
   TextEditingController _captionController;
 
   final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
-  FlutterFFmpegConfig _flutterFFmpegConfig;
 
   List<String> thumbnailList = <String>[];
   bool gotThumbnail = false;
@@ -1007,23 +1003,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
   void initState() {
     super.initState();
     _captionController = TextEditingController();
-    _flutterFFmpegConfig = FlutterFFmpegConfig();
-    _flutterFFmpegConfig.enableStatisticsCallback(this.statisticsCallback);
     initVideo();
-  }
-
-  void statisticsCallback(Statistics statistics) {
-    if (((statistics.time * 0.1) ~/ (durationTime.inSeconds + 1) < 20) &&
-        exporting == false) {
-      exporting = true;
-      statistics.time = 0;
-    }
-    setState(() {
-      totalProgress = exporting
-          ? (statistics.time * 0.1) ~/ (durationTime.inSeconds + 1)
-          : 0;
-    });
-    print("Statistics: $totalProgress");
   }
 
   Future<File> _trimVideo() async {
@@ -1071,7 +1051,6 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   @override
   void dispose() {
-    _flutterFFmpegConfig.disableStatistics();
     _videoController?.dispose();
     _captionController?.dispose();
     super.dispose();
@@ -1079,7 +1058,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   _handleUpload() async {
     File file = await _trimVideo();
-    // await widget.uploadFunc(context, file, _captionController.text ?? '');
+    await widget.uploadFunc(context, file, _captionController.text ?? '');
   }
 
   addlistener() {
