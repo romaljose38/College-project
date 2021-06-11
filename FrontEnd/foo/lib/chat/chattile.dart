@@ -37,11 +37,6 @@ class ChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("has Unseen");
-    print(thread.hasUnseen);
-    print(thread.second?.f_name);
-    print(thread.second?.l_name);
-    print(thread.second?.dpUrl);
     return Container(
         //margin: EdgeInsets.symmetric(horizontal: 0, vertical: 5),
         decoration: BoxDecoration(
@@ -67,7 +62,7 @@ class ChatTile extends StatelessWidget {
                   padding: EdgeInsets.only(top: 10),
                   child: Column(
                     children: [
-                      Text(getDate(thread.lastAccessed),
+                      Text(getDate(thread.lastAccessed ?? DateTime.now()),
                           style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey.shade600,

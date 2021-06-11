@@ -309,7 +309,20 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                               return StoryUploadPick(
                                   myStory: myStory, myProfPic: snapshot.data);
                             } else {
-                              return CircularProgressIndicator();
+                              return SizedBox(
+                                width: 80,
+                                height: 80,
+                                child: Center(
+                                  child: SizedBox(
+                                      width: 40,
+                                      height: 40,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1,
+                                        valueColor: AlwaysStoppedAnimation(
+                                            Colors.green),
+                                      )),
+                                ),
+                              );
                             }
                           }),
                       //StoryUploadPick(myStory: myStory, myProfPic: myProfPic),

@@ -127,6 +127,8 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
       if (pickedFile != null) {
         mediaExt = pickedFile.path.split('.').last;
         media = File(pickedFile.path);
+      } else {
+        Navigator.pop(ctx);
       }
     } else {
       FilePickerResult result = await FilePicker.platform.pickFiles(
@@ -138,28 +140,31 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
         PlatformFile file = result.files.first;
         mediaExt = file.extension;
         media = File(file.path);
+      } else {
+        Navigator.pop(ctx);
       }
     }
+    if (media != null) {
+      print(mediaExt);
 
-    print(mediaExt);
-
-    if (['jpg', 'jpeg', 'png'].contains(mediaExt)) {
-      media = await testCompressAndGetFile(media, mediaExt);
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-        return CropMyImage(file: media, uploadFunc: _uploadStory);
-      }));
-    } else {
-      // await _trimmer.loadVideo(videoFile: media);
-      Navigator.of(ctx).push(MaterialPageRoute(builder: (context) {
-        // return TrimmerView(_trimmer,
-        //     uploadFunc: _uploadStory);
-        return VideoTrimmerTest(
-            file: media, extension: mediaExt, uploadFunc: _uploadStory);
-        // return VideoEditor(
-        //   file: media,
-        //   uploadFunc: _uploadStory,
-        // ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
-      }));
+      if (['jpg', 'jpeg', 'png'].contains(mediaExt)) {
+        media = await testCompressAndGetFile(media, mediaExt);
+        Navigator.of(ctx).push(MaterialPageRoute(builder: (context) {
+          return CropMyImage(file: media, uploadFunc: _uploadStory);
+        }));
+      } else {
+        // await _trimmer.loadVideo(videoFile: media);
+        Navigator.of(ctx).push(MaterialPageRoute(builder: (context) {
+          // return TrimmerView(_trimmer,
+          //     uploadFunc: _uploadStory);
+          return VideoTrimmerTest(
+              file: media, extension: mediaExt, uploadFunc: _uploadStory);
+          // return VideoEditor(
+          //   file: media,
+          //   uploadFunc: _uploadStory,
+          // ); //TrimmerView(_trimmer, uploadFunc: _uploadStory);
+        }));
+      }
     }
   }
 
@@ -1004,6 +1009,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
   Animation _overlayAnimation;
   AnimationController _animController;
   OverlayEntry _overlayEntry;
+  String currentStatus;
 
   List<String> thumbnailList = <String>[];
   bool gotThumbnail = false;
@@ -1051,7 +1057,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
                   ),
                   Container(
                     margin: EdgeInsets.only(top: 15),
-                    child: Text("Uploading..",
+                    child: Text(currentStatus ?? "",
                         style: GoogleFonts.raleway(
                             color: Colors.white, fontSize: 16)),
                   ),
@@ -1085,7 +1091,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
         : durationTime.toString();
 
     String command =
-        '-i ${widget.file.path} -ss ${begin} -t ${duration} -y $targetFilePath';
+        '-i ${widget.file.path} -ss ${begin} -t ${duration} -y $targetFilePath -c:v libx265 -c:a copy';
     print("mpegcommand = $command");
     int rc = await _flutterFFmpeg.execute(command);
     print("FFmpeg exited with rc: $rc");
@@ -1137,11 +1143,17 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
   }
 
   _handleUpload() async {
+    setState(() {
+      currentStatus = "Trimming...";
+    });
     showProgressOverlay();
     CustomOverlay _overlay =
         CustomOverlay(context: context, animationController: _animController);
 
     File file = await _trimVideo();
+    setState(() {
+      currentStatus = "Uploading...";
+    });
     bool status = await _uploadStory(file, _captionController.text ?? '');
     await _overlayAnimationController
         .reverse()

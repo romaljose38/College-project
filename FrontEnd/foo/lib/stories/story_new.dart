@@ -124,7 +124,8 @@ class _StoryScreenState extends State<StoryScreen>
   initState() {
     _setEssentialVariables();
     _setMedia();
-    _animController = AnimationController(vsync: this);
+    _animController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
 
     _animate();
     _animController.addStatusListener((status) {
@@ -672,6 +673,7 @@ class _MyStoryScreenState extends State<MyStoryScreen>
           _currentIndex -= 1;
           _setMedia();
           _animate();
+
           // _loadStory(story: widget.stories[_currentIndex]);
         } else {
           disableWakeLock();
@@ -679,13 +681,14 @@ class _MyStoryScreenState extends State<MyStoryScreen>
         }
       });
     } else if (dx > screenWidth / 2) {
+      videoController?.pause();
       setState(() {
-        videoController?.pause();
         if (_currentIndex + 1 < stories.length) {
           mediaFile = null;
           _currentIndex += 1;
           _setMedia();
           _animate();
+
           // _loadStory(story: widget.stories[_currentIndex]);
         } else {
           // Out of bounds - loop story
@@ -884,7 +887,10 @@ class _StoryVideoProviderState extends State<StoryVideoProvider> {
                     child: VideoPlayer(widget.notifier.value),
                   ),
                 )
-              : Center(child: CircularProgressIndicator());
+              : Center(
+                  child: CircularProgressIndicator(
+                      strokeWidth: 1,
+                      valueColor: AlwaysStoppedAnimation(Colors.white)));
         });
   }
 }
