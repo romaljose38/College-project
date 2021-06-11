@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as vidThumbnail;
-import 'package:video_trimmer/video_trimmer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
@@ -20,7 +19,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import 'package:camera/camera.dart';
 import 'package:video_player/video_player.dart';
-import 'package:foo/stories/video_trimmer/videoediting.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 import 'package:foo/stories/story_new.dart';
 import 'package:foo/main.dart' show deviceCameras;
@@ -38,7 +38,7 @@ class StoryUploadPick extends StatefulWidget {
 }
 
 class _StoryUploadPickState extends State<StoryUploadPick> {
-  final Trimmer _trimmer = Trimmer();
+  // final Trimmer _trimmer = Trimmer();
   ImagePicker _picker = ImagePicker();
   String myProfPic;
 
@@ -147,11 +147,12 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
         return CropMyImage(file: media, uploadFunc: _uploadStory);
       }));
     } else {
-      await _trimmer.loadVideo(videoFile: media);
+      // await _trimmer.loadVideo(videoFile: media);
       Navigator.of(ctx).push(MaterialPageRoute(builder: (context) {
         // return TrimmerView(_trimmer,
         //     uploadFunc: _uploadStory);
-        return VideoTrimmerTest(file: media);
+        return VideoTrimmerTest(
+            file: media, extension: mediaExt, uploadFunc: _uploadStory);
         // return VideoEditor(
         //   file: media,
         //   uploadFunc: _uploadStory,
@@ -448,147 +449,147 @@ Container plusButton() => Container(
       ),
     );
 
-class TrimmerView extends StatefulWidget {
-  final Trimmer _trimmer;
-  final Function uploadFunc;
-  TrimmerView(this._trimmer, {this.uploadFunc});
-  @override
-  _TrimmerViewState createState() => _TrimmerViewState();
-}
+// class TrimmerView extends StatefulWidget {
+//   final Trimmer _trimmer;
+//   final Function uploadFunc;
+//   TrimmerView(this._trimmer, {this.uploadFunc});
+//   @override
+//   _TrimmerViewState createState() => _TrimmerViewState();
+// }
 
-class _TrimmerViewState extends State<TrimmerView> {
-  double _startValue = 0.0;
-  double _endValue = 0.0;
+// class _TrimmerViewState extends State<TrimmerView> {
+//   double _startValue = 0.0;
+//   double _endValue = 0.0;
 
-  bool _isPlaying = false;
-  bool _progressVisibility = false;
+//   bool _isPlaying = false;
+//   bool _progressVisibility = false;
 
-  Future<String> _saveVideo() async {
-    setState(() {
-      _progressVisibility = true;
-    });
+//   Future<String> _saveVideo() async {
+//     setState(() {
+//       _progressVisibility = true;
+//     });
 
-    String _value;
-    print("Startvalue = $_startValue and Endvalue = $_endValue");
-    await widget._trimmer
-        .saveTrimmedVideo(startValue: _startValue, endValue: _endValue)
-        .then((value) {
-      setState(() {
-        _progressVisibility = false;
-        _value = value;
-      });
-    });
+//     String _value;
+//     print("Startvalue = $_startValue and Endvalue = $_endValue");
+//     await widget._trimmer
+//         .saveTrimmedVideo(startValue: _startValue, endValue: _endValue)
+//         .then((value) {
+//       setState(() {
+//         _progressVisibility = false;
+//         _value = value;
+//       });
+//     });
 
-    return _value;
-  }
+//     return _value;
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Builder(
-          builder: (context) => Center(
-            child: Container(
-              padding: EdgeInsets.only(bottom: 30.0),
-              color: Colors.black,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  Visibility(
-                    visible: _progressVisibility,
-                    child: LinearProgressIndicator(
-                      backgroundColor: Colors.red,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.arrow_back, color: Colors.white),
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      Spacer(),
-                      IconButton(
-                        onPressed: _progressVisibility
-                            ? null
-                            : () async {
-                                _saveVideo().then((outputPath) {
-                                  print('OUTPUT PATH: $outputPath');
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (context) => Preview(outputPath),
-                                    ),
-                                  );
-                                  // final snackBar = SnackBar(
-                                  //     content:
-                                  //         Text('Video Saved successfully'));
-                                  // ScaffoldMessenger.of(context)
-                                  //     .showSnackBar(snackBar);
-                                  // widget.uploadFunc(context, File(outputPath));
-                                });
-                              },
-                        icon: Icon(Icons.save, color: Colors.white),
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        VideoViewer(),
-                        Center(
-                            child: TextButton(
-                          child: _isPlaying
-                              ? Container()
-                              : Icon(
-                                  Icons.play_arrow,
-                                  size: 80.0,
-                                  color: Colors.white,
-                                ),
-                          onPressed: () async {
-                            bool playbackState =
-                                await widget._trimmer.videPlaybackControl(
-                              startValue: _startValue,
-                              endValue: _endValue,
-                            );
-                            setState(() {
-                              _isPlaying = playbackState;
-                            });
-                          },
-                        ))
-                      ],
-                    ),
-                  ),
-                  Center(
-                    child: TrimEditor(
-                      viewerHeight: 50.0,
-                      viewerWidth: MediaQuery.of(context).size.width,
-                      //maxVideoLength: Duration(seconds: 30),
-                      onChangeStart: (value) {
-                        _startValue = value;
-                      },
-                      onChangeEnd: (value) {
-                        _endValue = value;
-                      },
-                      onChangePlaybackState: (value) {
-                        setState(() {
-                          _isPlaying = value;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return SafeArea(
+//       child: Scaffold(
+//         body: Builder(
+//           builder: (context) => Center(
+//             child: Container(
+//               padding: EdgeInsets.only(bottom: 30.0),
+//               color: Colors.black,
+//               child: Column(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 mainAxisSize: MainAxisSize.max,
+//                 children: <Widget>[
+//                   Visibility(
+//                     visible: _progressVisibility,
+//                     child: LinearProgressIndicator(
+//                       backgroundColor: Colors.red,
+//                     ),
+//                   ),
+//                   Row(
+//                     children: [
+//                       IconButton(
+//                         icon: Icon(Icons.arrow_back, color: Colors.white),
+//                         padding: EdgeInsets.symmetric(horizontal: 20.0),
+//                         onPressed: () {
+//                           Navigator.of(context).pop();
+//                         },
+//                       ),
+//                       Spacer(),
+//                       IconButton(
+//                         onPressed: _progressVisibility
+//                             ? null
+//                             : () async {
+//                                 _saveVideo().then((outputPath) {
+//                                   print('OUTPUT PATH: $outputPath');
+//                                   Navigator.of(context).pushReplacement(
+//                                     MaterialPageRoute(
+//                                       builder: (context) => Preview(outputPath),
+//                                     ),
+//                                   );
+//                                   // final snackBar = SnackBar(
+//                                   //     content:
+//                                   //         Text('Video Saved successfully'));
+//                                   // ScaffoldMessenger.of(context)
+//                                   //     .showSnackBar(snackBar);
+//                                   // widget.uploadFunc(context, File(outputPath));
+//                                 });
+//                               },
+//                         icon: Icon(Icons.save, color: Colors.white),
+//                         padding: EdgeInsets.symmetric(horizontal: 20.0),
+//                       ),
+//                     ],
+//                   ),
+//                   Expanded(
+//                     child: Stack(
+//                       children: [
+//                         VideoViewer(),
+//                         Center(
+//                             child: TextButton(
+//                           child: _isPlaying
+//                               ? Container()
+//                               : Icon(
+//                                   Icons.play_arrow,
+//                                   size: 80.0,
+//                                   color: Colors.white,
+//                                 ),
+//                           onPressed: () async {
+//                             bool playbackState =
+//                                 await widget._trimmer.videPlaybackControl(
+//                               startValue: _startValue,
+//                               endValue: _endValue,
+//                             );
+//                             setState(() {
+//                               _isPlaying = playbackState;
+//                             });
+//                           },
+//                         ))
+//                       ],
+//                     ),
+//                   ),
+//                   Center(
+//                     child: TrimEditor(
+//                       viewerHeight: 50.0,
+//                       viewerWidth: MediaQuery.of(context).size.width,
+//                       //maxVideoLength: Duration(seconds: 30),
+//                       onChangeStart: (value) {
+//                         _startValue = value;
+//                       },
+//                       onChangeEnd: (value) {
+//                         _endValue = value;
+//                       },
+//                       onChangePlaybackState: (value) {
+//                         setState(() {
+//                           _isPlaying = value;
+//                         });
+//                       },
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class CropMyImage extends StatefulWidget {
   final File file;
@@ -961,7 +962,12 @@ class _BottomSheetCameraState extends State<BottomSheetCamera> {
 
 class VideoTrimmerTest extends StatefulWidget {
   final File file;
-  VideoTrimmerTest({this.file});
+  final String extension;
+  final Function uploadFunc;
+  VideoTrimmerTest(
+      {@required this.file,
+      @required this.extension,
+      @required this.uploadFunc});
 
   @override
   _VideoTrimmerTestState createState() => _VideoTrimmerTestState();
@@ -979,32 +985,77 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
   int videoEnd;
   int maxDuration = 35;
 
+  Duration beginTime;
+  Duration durationTime;
+  int totalProgress = 0;
+  bool exporting = false;
+
   double height = 50;
   bool isPlaying = false;
   Color boxColor = Colors.white;
-  TextEditingController _captionController = TextEditingController();
+  TextEditingController _captionController;
+
+  final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
 
   List<String> thumbnailList = <String>[];
   bool gotThumbnail = false;
   @override
   void initState() {
     super.initState();
+    _captionController = TextEditingController();
     initVideo();
+  }
+
+  Future<File> _trimVideo() async {
+    totalProgress = 0;
+    final String targetFilePath =
+        '/storage/emulated/0/foo/stories/upload/${DateTime.now().millisecondsSinceEpoch}.${widget.extension}';
+    await Permission.storage.request();
+    File(targetFilePath).createSync(recursive: true);
+
+    beginTime = Duration(milliseconds: videoStart);
+    durationTime =
+        Duration(milliseconds: videoEnd) - Duration(milliseconds: videoStart);
+    String begin = (videoStart < 36000000)
+        ? '0${beginTime.toString()}'
+        : beginTime.toString();
+    String duration = (durationTime.inMilliseconds < 36000000)
+        ? '0${durationTime.toString()}'
+        : durationTime.toString();
+
+    String command =
+        '-i ${widget.file.path} -ss ${begin} -t ${duration} -crf 28 -y $targetFilePath';
+    print("mpegcommand = $command");
+    int rc = await _flutterFFmpeg.execute(command);
+    print("FFmpeg exited with rc: $rc");
+    return File(targetFilePath);
   }
 
   initVideo() async {
     _videoController = VideoPlayerController.file(
       widget.file,
     );
-    await _videoController.initialize();
-    var val = startThumbValue / (Essentials.width * .95);
 
+    await _videoController.initialize();
+
+    if (_videoController.value.duration <= Duration(seconds: maxDuration)) {
+      startThumbValue = 2;
+      endThumbValue = (Essentials.width * .95) - 3;
+    } else {
+      startThumbValue = 2;
+      double lengthPerSec =
+          _videoController.value.duration.inSeconds / (Essentials.width * .95);
+      endThumbValue = 2 + (lengthPerSec * maxDuration);
+    }
+    var startVal = startThumbValue / (Essentials.width * .95);
+    var endVal = endThumbValue / (Essentials.width * .95);
     setState(() {
       totalDuration = _videoController.value.duration;
       inited = true;
-      videoEnd = _videoController.value.duration.inMilliseconds;
+      videoEnd =
+          (_videoController.value.duration.inMilliseconds * endVal).toInt();
       videoStart =
-          (_videoController.value.duration.inMilliseconds * val).toInt();
+          (_videoController.value.duration.inMilliseconds * startVal).toInt();
     });
     thumbnails();
     addlistener();
@@ -1012,13 +1063,14 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   @override
   void dispose() {
-    super.dispose();
     _videoController?.dispose();
+    _captionController?.dispose();
+    super.dispose();
   }
 
-  _handleUpload() {
-    var duration = videoEnd - videoStart;
-    print(Duration(milliseconds: duration).inSeconds);
+  _handleUpload() async {
+    File file = await _trimVideo();
+    await widget.uploadFunc(context, file, _captionController.text ?? '');
   }
 
   addlistener() {
@@ -1048,10 +1100,10 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     if ((val >= endThumbValue) ||
         (((videoEnd ?? 10000000000) - requiredMill) >= (maxDuration * 1000))) {
       print(videoEnd - requiredMill);
-      print(maxDuration * 1000000);
+      print(maxDuration * 1000);
       return;
     }
-    _videoController.seekTo(Duration(microseconds: requiredMill));
+    _videoController.seekTo(Duration(milliseconds: requiredMill));
 
     setState(() {
       videoStart = requiredMill;
@@ -1067,10 +1119,10 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     int duration = totalDuration.inMilliseconds;
     int requiredMill = (duration * videoDecimal).toInt();
     if ((val > endThumbValue) ||
-        (((videoEnd ?? 10000000000) - videoStart) >= (maxDuration * 1000))) {
+        (((videoEnd ?? 10000000000) - requiredMill) >= (maxDuration * 1000))) {
       return;
     }
-    _videoController.seekTo(Duration(microseconds: requiredMill));
+    _videoController.seekTo(Duration(milliseconds: requiredMill));
 
     setState(() {
       videoStart = requiredMill;
@@ -1108,8 +1160,13 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     double videoDecimal = val / (width * .95);
     int duration = totalDuration.inMilliseconds;
     int requiredMill = (duration * videoDecimal).toInt();
-    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000))
+    print("$requiredMill, ${videoStart ?? 10000000000}, $maxDuration");
+    print(requiredMill - (videoStart ?? 10000000000) >= (maxDuration * 1000));
+    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000)) {
+      print(requiredMill - (videoStart ?? 10000000000) >= (maxDuration * 1000));
       return;
+    }
+    // return;
     setState(() {
       endThumbValue = val;
     });
@@ -1124,12 +1181,12 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
       double videoDecimal = startThumbValue / (width * .95);
       int duration = totalDuration.inMilliseconds;
       int requiredMill = (duration * videoDecimal).toInt();
-      await _videoController.seekTo(Duration(microseconds: requiredMill));
+      await _videoController.seekTo(Duration(milliseconds: requiredMill));
     } else if (value <= startThumbValue) {
       double videoDecimal = startThumbValue / (width * .95);
       int duration = totalDuration.inMilliseconds;
       int requiredMill = (duration * videoDecimal).toInt();
-      await _videoController.seekTo(Duration(microseconds: requiredMill));
+      await _videoController.seekTo(Duration(milliseconds: requiredMill));
     }
     _videoController.play();
   }
@@ -1184,53 +1241,50 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   startThumb() => Positioned(
         left: startThumbValue,
-        child: GestureDetector(
-          onHorizontalDragStart: _dragStart1,
-          // onHorizontalDragEnd: _dragEnd1,
-          onHorizontalDragUpdate: _dragUpdate1,
-          child: Container(
-              height: height,
-              width: 5,
-              color: boxColor,
-              child: Stack(alignment: Alignment.center, children: [
-                OverflowBox(
-                  maxWidth: 15,
-                  maxHeight: 15,
+        child: Container(
+            height: height,
+            width: 5,
+            color: boxColor,
+            child: Stack(alignment: Alignment.center, children: [
+              OverflowBox(
+                maxWidth: 18,
+                child: GestureDetector(
+                  onHorizontalDragStart: _dragStart1,
+                  onHorizontalDragUpdate: _dragUpdate1,
                   child: Container(
-                      height: 15,
-                      width: 15,
+                      height: 18,
+                      width: 18,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
                       )),
-                )
-              ])),
-        ),
+                ),
+              )
+            ])),
       );
 
   endThumb() => Positioned(
         left: endThumbValue,
-        child: GestureDetector(
-          onHorizontalDragStart: _dragStart2,
-          // onHorizontalDragEnd: _dragEnd1,
-          onHorizontalDragUpdate: _dragUpdate2,
-          child: Container(
-              height: height,
-              width: 5,
-              color: boxColor,
-              child: Stack(alignment: Alignment.center, children: [
-                OverflowBox(
-                  maxWidth: 12,
+        child: Container(
+            height: height,
+            width: 5,
+            color: boxColor,
+            child: Stack(alignment: Alignment.center, children: [
+              OverflowBox(
+                maxWidth: 18,
+                child: GestureDetector(
+                  onHorizontalDragStart: _dragStart2,
+                  onHorizontalDragUpdate: _dragUpdate2,
                   child: Container(
-                      height: 12,
-                      width: 12,
+                      height: 18,
+                      width: 18,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
                       )),
-                )
-              ])),
-        ),
+                ),
+              )
+            ])),
       );
 
   sliderArea() {
@@ -1295,129 +1349,137 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     final size = MediaQuery.of(context).size;
     return Padding(
       padding: const EdgeInsets.only(top: 35),
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        appBar: PreferredSize(
-            preferredSize: Size(size.width, 60),
-            child: Container(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
-                    onPressed: () {},
-                  )
-                ],
-              ),
-            )),
-        body: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          Container(
-              width: MediaQuery.of(context).size.width * .95,
-              height: height,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                border: Border.all(width: 1, color: Colors.white54),
-              ),
-              child: Stack(children: [
-                Container(
-                    decoration: BoxDecoration(color: Colors.black),
-                    clipBehavior: Clip.antiAlias,
-                    child: Row(
-                        children: gotThumbnail
-                            ? <Widget>[
-                                ...thumbnailList
-                                    .map((path) => bgTile(path))
-                                    .toList()
-                              ]
-                            : [])),
-                videoProgressSlider(),
-                sliderArea(),
-                startThumb(),
-                endThumb(),
-              ])),
-
-          Expanded(
-            child: Container(
-                // height: size.height * .6,
-                width: double.infinity,
-                child: inited
-                    ? Center(
-                        child: GestureDetector(
-                          onTap: playerHandler,
-                          child: Stack(
-                            children: [
-                              AspectRatio(
-                                  aspectRatio:
-                                      _videoController.value.aspectRatio,
-                                  child: VideoPlayer(_videoController)),
-                              Positioned.fill(
-                                  child: Center(
-                                      child: IconButton(
-                                icon: Icon(
-                                    isPlaying
-                                        ? Ionicons.pause_circle
-                                        : Ionicons.play_circle,
-                                    size: 35,
-                                    color: Colors.white),
-                                onPressed: playerHandler,
-                              )))
-                            ],
-                          ),
-                        ),
-                      )
-                    : Text("initing")),
-          ),
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _captionController,
-                cursorColor: Colors.black,
-                cursorWidth: .3,
-                textAlign: TextAlign.start,
-                style: GoogleFonts.lato(color: Colors.white),
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: "     Add a caption...",
-                  hintStyle: GoogleFonts.openSans(
-                      fontSize: 15,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                        color: Colors.grey.withOpacity(.4), width: .6),
-                  ),
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                        color: Colors.grey.withOpacity(.4), width: .6),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                        color: Colors.grey.withOpacity(.4), width: .8),
-                  ),
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: _handleUpload,
+      child: WillPopScope(
+        onWillPop: () async {
+          _flutterFFmpeg.cancel();
+          Navigator.pop(context);
+          return Future.value(false);
+        },
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          appBar: PreferredSize(
+              preferredSize: Size(size.width, 60),
               child: Container(
-                margin: EdgeInsets.only(
-                  right: 10,
-                  bottom: 5,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      onPressed: () {},
+                    )
+                  ],
                 ),
-                width: 35,
-                height: 35,
-                decoration:
-                    BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                child: Icon(Ionicons.send, color: Colors.black, size: 15),
-              ),
-            )
-          ])
+              )),
+          body:
+              Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            Container(
+                width: MediaQuery.of(context).size.width * .95,
+                height: height,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  border: Border.all(width: 1, color: Colors.white54),
+                ),
+                child: Stack(children: [
+                  Container(
+                      decoration: BoxDecoration(color: Colors.black),
+                      clipBehavior: Clip.antiAlias,
+                      child: Row(
+                          children: gotThumbnail
+                              ? <Widget>[
+                                  ...thumbnailList
+                                      .map((path) => bgTile(path))
+                                      .toList()
+                                ]
+                              : [])),
+                  videoProgressSlider(),
+                  sliderArea(),
+                  startThumb(),
+                  endThumb(),
+                ])),
 
-          // RangeSlider(
-          //     onChanged: sliderChange,
-          //     values: RangeValues(start, end),
-          //     activeColor: Colors.black)
-        ]),
+            Expanded(
+              child: Container(
+                  // height: size.height * .6,
+                  width: double.infinity,
+                  child: inited
+                      ? Center(
+                          child: GestureDetector(
+                            onTap: playerHandler,
+                            child: Stack(
+                              children: [
+                                AspectRatio(
+                                    aspectRatio:
+                                        _videoController.value.aspectRatio,
+                                    child: VideoPlayer(_videoController)),
+                                Positioned.fill(
+                                    child: Center(
+                                        child: IconButton(
+                                  icon: Icon(
+                                      isPlaying
+                                          ? Ionicons.pause_circle
+                                          : Ionicons.play_circle,
+                                      size: 35,
+                                      color: Colors.white),
+                                  onPressed: playerHandler,
+                                )))
+                              ],
+                            ),
+                          ),
+                        )
+                      : Text("initing")),
+            ),
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _captionController,
+                  cursorColor: Colors.black,
+                  cursorWidth: .3,
+                  textAlign: TextAlign.start,
+                  style: GoogleFonts.lato(color: Colors.white),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: "     Add a caption...",
+                    hintStyle: GoogleFonts.openSans(
+                        fontSize: 15,
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w500),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Colors.grey.withOpacity(.4), width: .6),
+                    ),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Colors.grey.withOpacity(.4), width: .6),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Colors.grey.withOpacity(.4), width: .8),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: _handleUpload,
+                child: Container(
+                  margin: EdgeInsets.only(
+                    right: 10,
+                    bottom: 5,
+                  ),
+                  width: 35,
+                  height: 35,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle, color: Colors.white),
+                  child: Icon(Ionicons.send, color: Colors.black, size: 15),
+                ),
+              )
+            ])
+
+            // RangeSlider(
+            //     onChanged: sliderChange,
+            //     values: RangeValues(start, end),
+            //     activeColor: Colors.black)
+          ]),
+        ),
       ),
     );
   }

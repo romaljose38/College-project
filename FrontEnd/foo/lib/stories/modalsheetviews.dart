@@ -167,7 +167,7 @@ class _ModalSheetContentState extends State<ModalSheetContent>
         int userId = _prefs.getInt('id');
         var myBox = Hive.box('MyStories');
         UserStoryModel myStoryUser = myBox.get(userId);
-        myStoryUser.deleteOldStory(id: widget.story.storyId, userId: userId);
+        myStoryUser.deleteStory(id: widget.story.storyId, userId: userId);
         Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => LandingPage()),
         );
