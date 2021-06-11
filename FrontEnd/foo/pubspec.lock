@@ -350,12 +350,12 @@ packages:
     source: hosted
     version: "3.1.1"
   flutter_ffmpeg:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_ffmpeg
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.0"
+    version: "0.2.10"
   flutter_image_compress:
     dependency: "direct main"
     description:
@@ -1029,13 +1029,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.3.3"
-  video_trimmer:
-    dependency: "direct main"
-    description:
-      name: video_trimmer
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.5.1"
   visibility_detector:
     dependency: transitive
     description:
