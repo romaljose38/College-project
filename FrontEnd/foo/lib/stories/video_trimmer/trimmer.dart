@@ -1027,7 +1027,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
         : durationTime.toString();
 
     String command =
-        '-i ${widget.file.path} -ss ${begin} -t ${duration} -crf 28 -y $targetFilePath';
+        '-i ${widget.file.path} -ss ${begin} -t ${duration} -y $targetFilePath';
     print("mpegcommand = $command");
     int rc = await _flutterFFmpeg.execute(command);
     print("FFmpeg exited with rc: $rc");
