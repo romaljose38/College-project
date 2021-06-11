@@ -152,6 +152,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     prefs = await SharedPreferences.getInstance();
     curUser = prefs.getString("username");
     curUserId = prefs.getInt("id");
+    _curMoodNotifier.value = prefs.getInt("curMood");
     var feedBox = Hive.box("Feed");
     Feed feed;
     String id;
@@ -578,6 +579,206 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   // evict() async{
   //   await CachedNetworkImage.evictFromCa
   // }
+  _updateMood() async {
+    try {
+      int curMood = _curMoodNotifier.value;
+      int userId = prefs.getInt('id');
+      http.Response response = await http.get(Uri.http(
+          localhost, '/api/change_mood', {'user': userId, 'mood': curMood}));
+
+      if (response.statusCode == 200) {
+        prefs.setInt("curMood", curMood);
+        return true;
+      }
+      _curMoodNotifier.value = prefs.getInt("curMood");
+      return false;
+    } catch (e) {
+      _curMoodNotifier.value = prefs.getInt("curMood");
+
+      return false;
+    }
+  }
+
+  ValueNotifier _curMoodNotifier = ValueNotifier(0);
+  _showMoodSelector(BuildContext context) {
+    showModalBottomSheet(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(25),
+            topRight: Radius.circular(25),
+          ),
+        ),
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+              builder: (ctx, moodSetState) {
+                return Container(
+                    height: 320,
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(children: [
+                      Container(
+                          margin: EdgeInsets.only(top: 40, bottom: 30),
+                          child: Center(
+                              child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "How are you ",
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.merriweather(
+                                  wordSpacing: 5,
+                                  fontSize: 25,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              RichText(
+                                  textAlign: TextAlign.center,
+                                  text: TextSpan(
+                                      text: "feeling today ",
+                                      style: GoogleFonts.merriweather(
+                                        wordSpacing: 5,
+                                        fontSize: 25,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                            text: "?",
+                                            style: GoogleFonts.lato(
+                                                fontSize: 25,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w600))
+                                      ])
+                                  // "feeling today?",
+                                  // textAlign: TextAlign.center,
+                                  // style: GoogleFonts.merriweather(
+                                  //   wordSpacing: 5,
+                                  //   fontSize: 25,
+                                  //   fontWeight: FontWeight.w600,
+                                  // ),
+                                  ),
+                            ],
+                          ))),
+                      Container(
+                          child: Center(
+                              child: getProperText(_curMoodNotifier.value))),
+                      SizedBox(height: 10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Spacer(),
+                            emogiTile('😑', moodSetState, 1),
+                            Spacer(),
+                            emogiTile('😶', moodSetState, 2),
+                            Spacer(),
+                            emogiTile('😬', moodSetState, 3),
+                            Spacer(),
+                            emogiTile('😌', moodSetState, 4),
+                            Spacer(),
+                            emogiTile('🤒', moodSetState, 5),
+                            Spacer(),
+                          ],
+                        ),
+                      ),
+                      Divider(),
+                      Container(
+                        margin: EdgeInsets.only(top: 6, bottom: 14),
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              child: Text(
+                                "Cancel",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade500,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(ctx),
+                              // margin: EdgeInsets.fromLTRB(0, 0, 20, 0),
+                            ),
+                            GestureDetector(
+                              onTap: () async {
+                                bool status = await _updateMood();
+                                CustomOverlay overlay = CustomOverlay(
+                                    context: context,
+                                    animationController: _animationController);
+                                if (status) {
+                                  overlay.show("Mood update", duration: 1);
+                                  Navigator.pop(ctx);
+                                } else {
+                                  overlay.show(
+                                      "Something went wrong please try again later",
+                                      duration: 1);
+                                  Navigator.pop(ctx);
+                                }
+                              },
+                              child: Container(
+                                // margin: EdgeInsets.only(left: 7),
+                                child: Text(
+                                  "Confirm",
+                                  style: GoogleFonts.openSans(
+                                    fontSize: 16,
+                                    color: Colors.blueAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                alignment: Alignment.centerLeft,
+                                // margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    ]));
+              },
+            ));
+  }
+
+  getProperText(index) {
+    switch (index) {
+      case 1:
+        return Text("IDK, Cursed or somethin!");
+      case 2:
+        return Text("Existential crisis");
+      case 3:
+        return Text("O..k..a ..y");
+      case 4:
+        return Text("Happie");
+      case 5:
+        return Text("Hasta la vista bby");
+      default:
+        return Text("Ayinu");
+    }
+  }
+
+  emogiTile(String emogi, Function moodSet, int index) {
+    bool selected = false;
+    if (_curMoodNotifier.value == index) {
+      selected = true;
+    }
+    return GestureDetector(
+      onTap: () => moodSet(() {
+        if (_curMoodNotifier.value == index) {
+          _curMoodNotifier.value = 0;
+        } else {
+          _curMoodNotifier.value = index;
+        }
+      }),
+      child: Container(
+          width: 50,
+          height: 50,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: selected ? Colors.blue : Colors.white, width: 2)),
+          child: Text(emogi, style: TextStyle(fontSize: 20))),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -641,6 +842,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   GestureDetector(
+                    onLongPress: () => _showMoodSelector(context),
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => Profile(
                               myProfile: true,
@@ -650,16 +852,39 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                       child: FutureBuilder(
                           future: _getMyProfPic(),
                           builder: (context, snapshot) {
+                            print("future builder called again");
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
                               return Container(
-                                height: 40,
-                                width: 40,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
+                                  height: 40,
+                                  width: 40,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
                                     image: DecorationImage(
-                                        image: FileImage(File(snapshot.data)))),
-                              );
+                                      image: FileImage(
+                                        File(snapshot.data),
+                                      ),
+                                    ),
+                                  ),
+                                  child: Stack(children: [
+                                    ValueListenableBuilder(
+                                        valueListenable: _curMoodNotifier,
+                                        builder: (context, snapshot, child) {
+                                          return Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: Container(
+                                                height: 9,
+                                                width: 9,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child:
+                                                    Center(child: Text('😑'))),
+                                          );
+                                        })
+                                  ]));
                             } else {
                               return SizedBox(
                                   height: 30,

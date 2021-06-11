@@ -6,6 +6,7 @@ import 'package:foo/models.dart';
 import 'package:foo/notifications/friend_request_tile.dart';
 import 'package:foo/notifications/mention_tile.dart';
 import 'package:foo/profile/profile_test.dart';
+import 'package:foo/screens/comment_screen.dart';
 import 'package:foo/test_cred.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -219,7 +220,9 @@ class PostLikeTile extends StatelessWidget {
         Navigator.push(
             context,
             PageRouteBuilder(pageBuilder: (context, animation, secAnimation) {
-              return Profile(userId: notification.userId);
+              return CommentScreen(
+                postId: notification.postId,
+              );
             }, transitionsBuilder: (context, animation, secAnimation, child) {
               return SlideTransition(
                 child: child,

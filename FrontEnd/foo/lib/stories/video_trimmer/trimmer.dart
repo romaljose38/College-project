@@ -997,11 +997,14 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
       widget.file,
     );
     await _videoController.initialize();
+    var val = startThumbValue / (Essentials.width * .95);
 
     setState(() {
       totalDuration = _videoController.value.duration;
       inited = true;
-      videoEnd = _videoController.value.duration.inMicroseconds;
+      videoEnd = _videoController.value.duration.inMilliseconds;
+      videoStart =
+          (_videoController.value.duration.inMilliseconds * val).toInt();
     });
     thumbnails();
     addlistener();
@@ -1015,7 +1018,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
 
   _handleUpload() {
     var duration = videoEnd - videoStart;
-    print(Duration(microseconds: duration).inSeconds);
+    print(Duration(milliseconds: duration).inSeconds);
   }
 
   addlistener() {
@@ -1039,12 +1042,11 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     double val = details.globalPosition.dx - (width * .025);
 
     double videoDecimal = val / (width * .95);
-    int duration = totalDuration.inMicroseconds;
+    int duration = totalDuration.inMilliseconds;
     int requiredMill = (duration * videoDecimal).toInt();
     print(val);
     if ((val >= endThumbValue) ||
-        (((videoEnd ?? 10000000000) - requiredMill) >=
-            (maxDuration * 1000000))) {
+        (((videoEnd ?? 10000000000) - requiredMill) >= (maxDuration * 1000))) {
       print(videoEnd - requiredMill);
       print(maxDuration * 1000000);
       return;
@@ -1062,10 +1064,10 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     double val = details.globalPosition.dx - (width * .025);
 
     double videoDecimal = val / (width * .95);
-    int duration = totalDuration.inMicroseconds;
+    int duration = totalDuration.inMilliseconds;
     int requiredMill = (duration * videoDecimal).toInt();
     if ((val > endThumbValue) ||
-        (((videoEnd ?? 10000000000) - videoStart) >= (maxDuration * 1000000))) {
+        (((videoEnd ?? 10000000000) - videoStart) >= (maxDuration * 1000))) {
       return;
     }
     _videoController.seekTo(Duration(microseconds: requiredMill));
@@ -1084,9 +1086,9 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     }
 
     double videoDecimal = val / (width * .95);
-    int duration = totalDuration.inMicroseconds;
+    int duration = totalDuration.inMilliseconds;
     int requiredMill = (duration * videoDecimal).toInt();
-    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000000))
+    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000))
       return;
     setState(() {
       endThumbValue = val;
@@ -1104,9 +1106,9 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     }
 
     double videoDecimal = val / (width * .95);
-    int duration = totalDuration.inMicroseconds;
+    int duration = totalDuration.inMilliseconds;
     int requiredMill = (duration * videoDecimal).toInt();
-    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000000))
+    if ((requiredMill - (videoStart ?? 10000000000)) >= (maxDuration * 1000))
       return;
     setState(() {
       endThumbValue = val;
@@ -1120,12 +1122,12 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
     double width = MediaQuery.of(context).size.width;
     if (value >= endThumbValue) {
       double videoDecimal = startThumbValue / (width * .95);
-      int duration = totalDuration.inMicroseconds;
+      int duration = totalDuration.inMilliseconds;
       int requiredMill = (duration * videoDecimal).toInt();
       await _videoController.seekTo(Duration(microseconds: requiredMill));
     } else if (value <= startThumbValue) {
       double videoDecimal = startThumbValue / (width * .95);
-      int duration = totalDuration.inMicroseconds;
+      int duration = totalDuration.inMilliseconds;
       int requiredMill = (duration * videoDecimal).toInt();
       await _videoController.seekTo(Duration(microseconds: requiredMill));
     }
@@ -1152,14 +1154,20 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
       });
       return;
     }
+
+    double videoDecimal = startThumbValue / width;
+    int duration = totalDuration.inMilliseconds;
+    int requiredMill = (duration * videoDecimal).toInt();
+    _videoController.seekTo(Duration(microseconds: requiredMill));
+    double newStartThumbVal = startThumbValue + details.delta.dx;
+    double newEndThumbVal = endThumbValue + details.delta.dx;
+
     setState(() {
       startThumbValue += details.delta.dx;
       endThumbValue += details.delta.dx;
+      videoStart = ((newStartThumbVal / width) * duration).toInt();
+      videoEnd = ((newEndThumbVal / width) * duration).toInt();
     });
-    double videoDecimal = startThumbValue / width;
-    int duration = totalDuration.inMicroseconds;
-    int requiredMill = (duration * videoDecimal).toInt();
-    _videoController.seekTo(Duration(microseconds: requiredMill));
   }
 
   //Widgets
@@ -1186,10 +1194,11 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest> {
               color: boxColor,
               child: Stack(alignment: Alignment.center, children: [
                 OverflowBox(
-                  maxWidth: 12,
+                  maxWidth: 15,
+                  maxHeight: 15,
                   child: Container(
-                      height: 12,
-                      width: 12,
+                      height: 15,
+                      width: 15,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,

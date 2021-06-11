@@ -218,7 +218,7 @@ class SocketChannel {
     _prefs.setBool("hasNotif", true);
     var notif = Notifications(
         type: NotificationType.postLike,
-        userId: data['id'],
+        postId: data['id'],
         userDpUrl: data['dp'],
         userName: data['u'],
         timeCreated: DateTime.parse(data['time']));

@@ -16,7 +16,7 @@ class CustomOverlay {
     _initiate();
   }
 
-  _showOverlay(text) {
+  _showOverlay(text, duration) {
     OverlayState overlayState = Overlay.of(this.context);
     _entry = OverlayEntry(builder: (context) {
       return Stack(alignment: Alignment.center, children: [
@@ -51,7 +51,7 @@ class CustomOverlay {
         .forward()
         .whenComplete(() => overlayState.insert(_entry));
     Timer(
-        Duration(seconds: 2),
+        Duration(seconds: duration),
         () =>
             animationController.reverse().whenComplete(() => _entry.remove()));
   }
@@ -61,7 +61,7 @@ class CustomOverlay {
         Tween<double>(begin: 0, end: 1).animate(this.animationController);
   }
 
-  show(String text) {
-    _showOverlay(text);
+  show(String text, {int duration = 2}) {
+    _showOverlay(text, duration);
   }
 }
