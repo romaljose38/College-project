@@ -300,10 +300,10 @@ class _StoryScreenState extends State<StoryScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         resizeToAvoidBottomInset: false,
         body: Container(
-          color: Colors.white,
+          color: Colors.black,
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
           child: Stack(
