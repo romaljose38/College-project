@@ -1739,7 +1739,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
                   children: [
                     IconButton(
                       icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
-                      onPressed: () {},
+                      onPressed: () => Navigator.of(context).pop(),
                     )
                   ],
                 ),

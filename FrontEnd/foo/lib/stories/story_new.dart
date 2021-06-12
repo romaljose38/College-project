@@ -11,6 +11,7 @@ import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:foo/stories/modalsheetviews.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:foo/profile/profile_test.dart';
 
 import 'dart:io';
 import 'dart:async';
@@ -299,6 +300,28 @@ class _StoryScreenState extends State<StoryScreen>
           _backwardOrForward(details);
         }
       },
+      onVerticalDragUpdate: (details) {
+        if (details.primaryDelta.isNegative) {
+          _animController.stop();
+          if (mediaType == 'video') videoController?.pause();
+          showModalBottomSheet(
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              context: context,
+              builder: (context) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom),
+                  child:
+                      ReplyModalSheet(storyId: stories[_currentIndex].storyId),
+                );
+              })
+            ..then((_) {
+              _animController.forward();
+              if (mediaType == 'video') videoController?.play();
+            });
+        }
+      },
       child: Scaffold(
         backgroundColor: Colors.black,
         resizeToAvoidBottomInset: false,
@@ -360,6 +383,7 @@ class _StoryScreenState extends State<StoryScreen>
                         // timeUploaded: "53 minutes ago",
                         timeUploaded: timeUploaded,
                         profilePic: profilePic, //widget.profilePic,
+                        userId: widget.storyObject.userId,
                       ),
                     ),
                   ],
@@ -402,11 +426,17 @@ class _StoryScreenState extends State<StoryScreen>
                     _animController.stop();
                     if (mediaType == 'video') videoController?.pause();
                     showModalBottomSheet(
+                        isScrollControlled: true,
                         backgroundColor: Colors.transparent,
                         context: context,
                         builder: (context) {
-                          return ReplyModalSheet(
-                              storyId: stories[_currentIndex].storyId);
+                          return Padding(
+                            padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).viewInsets.bottom),
+                            child: ReplyModalSheet(
+                                storyId: stories[_currentIndex].storyId),
+                          );
                         })
                       ..then((_) {
                         _animController.forward();
@@ -489,6 +519,7 @@ class UserInfo extends StatelessWidget {
   final String username;
   final String timeUploaded;
   final String profilePic;
+  final int userId;
   final bool mine;
 
   const UserInfo(
@@ -496,6 +527,7 @@ class UserInfo extends StatelessWidget {
       @required this.username,
       @required this.timeUploaded,
       @required this.profilePic,
+      this.userId,
       this.mine = false})
       : super(key: key);
 
@@ -503,15 +535,34 @@ class UserInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        CircleAvatar(
-          radius: 20.0,
-          backgroundColor: Colors.grey[300],
-          // backgroundImage: CachedNetworkImageProvider(
-          //   profilePic,
-          // ),
-          backgroundImage: mine
-              ? FileImage(File(profilePic))
-              : CachedNetworkImageProvider(profilePic),
+        GestureDetector(
+          onTap: () {
+            print("Your prof pic");
+            Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                    pageBuilder: (context, animation, secAnimation) =>
+                        Profile(userId: userId),
+                    transitionsBuilder:
+                        (context, animation, secAnimation, child) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                                begin: Offset(1, 0), end: Offset(0, 0))
+                            .animate(animation),
+                        child: child,
+                      );
+                    }));
+          },
+          child: CircleAvatar(
+            radius: 20.0,
+            backgroundColor: Colors.grey[300],
+            // backgroundImage: CachedNetworkImageProvider(
+            //   profilePic,
+            // ),
+            backgroundImage: mine
+                ? FileImage(File(profilePic))
+                : CachedNetworkImageProvider(profilePic),
+          ),
         ),
         const SizedBox(width: 10.0),
         Expanded(
@@ -718,6 +769,24 @@ class _MyStoryScreenState extends State<MyStoryScreen>
         }
         if (_timer.isActive) {
           _backwardOrForward(details);
+        }
+      },
+      onVerticalDragUpdate: (details) {
+        if (details.primaryDelta.isNegative) {
+          _animController.stop();
+          if (mediaType == 'video') videoController?.pause();
+          showModalBottomSheet(
+              backgroundColor: Colors.transparent,
+              context: context,
+              builder: (context) {
+                return ModalSheetContent(
+                  story: stories[_currentIndex],
+                );
+              })
+            ..then((_) {
+              _animController.forward();
+              if (mediaType == 'video') videoController?.play();
+            });
         }
       },
       child: Scaffold(

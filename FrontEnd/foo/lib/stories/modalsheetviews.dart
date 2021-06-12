@@ -232,7 +232,7 @@ class _ReplyModalSheetState extends State<ReplyModalSheet> {
               controller: _textController,
               autofocus: true,
               decoration: InputDecoration(
-                hintStyle: GoogleFonts.sourceSansPro(),
+                hintStyle: GoogleFonts.sourceSansPro(fontSize: 15),
                 hintText: "Reply",
                 border: InputBorder.none,
                 isCollapsed: true,
