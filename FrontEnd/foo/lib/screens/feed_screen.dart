@@ -51,6 +51,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   AnimationController _tileAnimationController;
 
   String myProfPic;
+  bool hasFetchedPic = false;
   //
 
   bool isStacked = false;
@@ -64,6 +65,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     listKey = GlobalKey<SliverAnimatedListState>();
     //_fetchStory();
     super.initState();
+    _getMyProfPic();
     setInitialData();
     _checkAndDeleteOldStory(Duration(hours: 1));
     // _getNewPosts();
@@ -248,9 +250,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         print(e);
       }
     }
-    // setState(() {
-    //   myProfPic = pic;
-    // });
+    setState(() {
+      myProfPic = pic;
+      hasFetchedPic = true;
+    });
     return pic;
   }
 
@@ -301,30 +304,24 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 if (index == 0) {
                   return Column(
                     children: [
-                      FutureBuilder(
-                          future: _getMyProfPic(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.done) {
-                              return StoryUploadPick(
-                                  myStory: myStory, myProfPic: snapshot.data);
-                            } else {
-                              return SizedBox(
-                                width: 80,
-                                height: 80,
-                                child: Center(
-                                  child: SizedBox(
-                                      width: 40,
-                                      height: 40,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 1,
-                                        valueColor: AlwaysStoppedAnimation(
-                                            Colors.green),
-                                      )),
-                                ),
-                              );
-                            }
-                          }),
+                      hasFetchedPic
+                          ? StoryUploadPick(
+                              myStory: myStory, myProfPic: myProfPic)
+                          : SizedBox(
+                              width: 80,
+                              height: 80,
+                              child: Center(
+                                child: SizedBox(
+                                    width: 40,
+                                    height: 40,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1,
+                                      valueColor:
+                                          AlwaysStoppedAnimation(Colors.green),
+                                    )),
+                              ),
+                            ),
+
                       //StoryUploadPick(myStory: myStory, myProfPic: myProfPic),
                       SizedBox(
                         width: 80,
@@ -884,35 +881,27 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                             ))),
                     child: Container(
                       margin: EdgeInsets.only(right: 15),
-                      child: FutureBuilder(
-                          future: _getMyProfPic(),
-                          builder: (context, snapshot) {
-                            print("future builder called again");
-                            if (snapshot.connectionState ==
-                                ConnectionState.done) {
-                              return Container(
-                                height: 40,
-                                width: 40,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  image: DecorationImage(
-                                    image: FileImage(
-                                      File(snapshot.data),
-                                    ),
+                      child: hasFetchedPic
+                          ? Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                image: DecorationImage(
+                                  image: FileImage(
+                                    File(myProfPic),
                                   ),
                                 ),
-                              );
-                            } else {
-                              return SizedBox(
-                                  height: 30,
-                                  width: 30,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1.5,
-                                    valueColor:
-                                        AlwaysStoppedAnimation(Colors.green),
-                                  ));
-                            }
-                          }),
+                              ),
+                            )
+                          : SizedBox(
+                              height: 30,
+                              width: 30,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.green),
+                              )),
                     ),
                   ),
                 ],
