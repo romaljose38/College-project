@@ -50,6 +50,7 @@ Future<void> main() async {
   //   print("in main");
   //   socket = SocketChannel();
   // }
+  makeEveryoneOffline();
 
   await Firebase.initializeApp();
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -67,6 +68,15 @@ Future<void> main() async {
   deviceCameras = await availableCameras();
 
   runApp(MyApp(prefs: prefs));
+}
+
+makeEveryoneOffline() {
+  Hive.box("Threads").values.toList().forEach((element) {
+    if (element.isOnline ?? false) {
+      element.isOnline = false;
+      element.save();
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {

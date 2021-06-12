@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -134,9 +135,11 @@ class _EditProfileState extends State<EditProfile>
         setState(() {
           absorbing = false;
         });
-        overlay.show(
-            "Profile update successfully.\nYou may have to reload the profile to see changes");
         FileImage(file).evict();
+        overlay.show(
+            "Profile update successfully.\nYou may have to reload the profile to see changes",
+            duration: 1);
+        Timer(Duration(seconds: 1), () => Navigator.pop(context));
       } else {
         setState(() {
           absorbing = false;

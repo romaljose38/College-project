@@ -160,16 +160,39 @@ class _CommentScreenState extends State<CommentScreen>
   }
 
   resizeContainer() {
+    var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
     print("resizeContainer");
     setState(() {
-      hasCommentExpanded = !hasCommentExpanded;
+      if (hasCommentExpanded) {
+        commentListPosition = height;
+        commentListHeight = MediaQuery.of(context).size.height - height - 146;
+        hasCommentExpanded = false;
+      } else {
+        commentListPosition = 60;
+        commentListHeight = MediaQuery.of(context).size.height - 146;
+        hasCommentExpanded = true;
+      }
     });
   }
 
   void addMention(username) {
-    _commentController.text += "@$username";
-
+    String char = "@$username ";
+    String text = _commentController.text;
+    TextSelection textSelection = _commentController.selection;
     mentionList.add(username);
+    if (textSelection.extentOffset == -1) {
+      //Before first selection
+      _commentController.text += char;
+    } else {
+      String newText =
+          text.replaceRange(textSelection.start, textSelection.end, char);
+      final emojiLength = char.length;
+      _commentController.text = newText;
+      _commentController.selection = textSelection.copyWith(
+        baseOffset: textSelection.start + emojiLength,
+        extentOffset: textSelection.start + emojiLength,
+      );
+    }
     textFocus.requestFocus();
   }
 
@@ -482,7 +505,10 @@ class _CommentScreenState extends State<CommentScreen>
       return Future.value(false);
     }
     if (hasCommentExpanded) {
+      var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
       setState(() {
+        commentListPosition = height;
+        commentListHeight = MediaQuery.of(context).size.height - height - 146;
         hasCommentExpanded = false;
       });
       return Future.value(false);
@@ -579,6 +605,9 @@ class _CommentScreenState extends State<CommentScreen>
           child: Icon(Ionicons.play_circle, size: 45, color: Colors.white),
         ),
       ));
+
+  double commentListPosition;
+  double commentListHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -951,66 +980,73 @@ class _CommentScreenState extends State<CommentScreen>
 
                     AnimatedPositioned(
                       duration: Duration(milliseconds: 200),
-                      top: hasCommentExpanded ? 34 : height,
-                      child: AnimatedContainer(
-                        duration: Duration(milliseconds: 200),
-                        height: MediaQuery.of(context).size.height * .8,
-                        width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white,
-                              Color.fromRGBO(226, 235, 243, 1)
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
+                      top: commentListPosition ?? height,
+                      child: GestureDetector(
+                        onPanStart: _commentDragStart,
+                        onPanUpdate: _commentDragUpdate,
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 200),
+                          height: commentListHeight ??
+                              (MediaQuery.of(context).size.height - 146),
+                          width: MediaQuery.of(context).size.width,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white,
+                                Color.fromRGBO(226, 235, 243, 1)
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                                hasCommentExpanded ? 30 : 0),
                           ),
-                          borderRadius: BorderRadius.circular(
-                              hasCommentExpanded ? 30 : 0),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            hasFetched
-                                ? GestureDetector(
-                                    onTap: resizeContainer,
-                                    child: Container(
-                                      height: 20,
-                                      color: Colors.transparent,
-                                      margin: EdgeInsets.only(bottom: 5),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(hasCommentExpanded
-                                                ? Icons.arrow_drop_down_rounded
-                                                : Icons.arrow_drop_up_rounded),
-                                            onPressed: resizeContainer,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : Container(),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                physics: BouncingScrollPhysics(),
-                                child: hasFetched
-                                    ? Column(
-                                        children: commentsList,
-                                      )
-                                    : Container(
-                                        alignment: Alignment.center,
-                                        margin: EdgeInsets.only(top: 20),
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1,
-                                          backgroundColor: Colors.purple,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              hasFetched
+                                  ? GestureDetector(
+                                      onTap: resizeContainer,
+                                      child: Container(
+                                        height: 20,
+                                        color: Colors.transparent,
+                                        margin: EdgeInsets.only(bottom: 5),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            IconButton(
+                                              icon: Icon(hasCommentExpanded
+                                                  ? Icons
+                                                      .arrow_drop_down_rounded
+                                                  : Icons
+                                                      .arrow_drop_up_rounded),
+                                              onPressed: resizeContainer,
+                                            ),
+                                          ],
                                         ),
                                       ),
+                                    )
+                                  : Container(),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  physics: BouncingScrollPhysics(),
+                                  child: hasFetched
+                                      ? Column(
+                                          children: commentsList,
+                                        )
+                                      : Container(
+                                          alignment: Alignment.center,
+                                          margin: EdgeInsets.only(top: 20),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 1,
+                                            backgroundColor: Colors.purple,
+                                          ),
+                                        ),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -1021,6 +1057,38 @@ class _CommentScreenState extends State<CommentScreen>
         ),
       ),
     );
+  }
+
+  _commentDragStart(DragStartDetails details) {
+    var pos = math.min(540.0, MediaQuery.of(context).size.height * .7);
+    var listHeight = MediaQuery.of(context).size.height - pos - 146;
+    if (commentListPosition == null) {
+      setState(() {
+        commentListPosition = pos;
+      });
+    }
+    if (commentListHeight == null) {
+      setState(() {
+        commentListHeight = listHeight;
+      });
+    }
+  }
+
+  _commentDragUpdate(DragUpdateDetails details) {
+    var height = math.min(540.0, MediaQuery.of(context).size.height * .7);
+
+    if (commentListPosition <= 60 && details.delta.dy < 0) {
+      return;
+    }
+    if (commentListPosition >= height && details.delta.dy > 0) {
+      return;
+    }
+    setState(() {
+      hasCommentExpanded =
+          (commentListPosition >= (height - 10)) ? false : true;
+      commentListPosition += details.delta.dy;
+      commentListHeight -= details.delta.dy;
+    });
   }
 }
 

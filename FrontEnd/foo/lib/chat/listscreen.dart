@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:foo/chat/chatscreen.dart';
 import 'package:foo/models.dart';
+import 'package:foo/screens/feed_screen.dart';
 import 'package:foo/search_bar/flappy_search_bar.dart';
 import 'package:foo/search_bar/search_bar_style.dart';
 import 'package:foo/test_cred.dart';
@@ -18,6 +19,9 @@ import 'package:foo/screens/feed_icons.dart' as doubleMoreVert;
 import 'package:foo/custom_overlay.dart';
 
 class ChatListScreen extends StatefulWidget {
+  bool searchActive;
+  Function toggleSearch;
+  ChatListScreen({this.searchActive, this.toggleSearch});
   @override
   _ChatListScreenState createState() => _ChatListScreenState();
 }
@@ -52,8 +56,8 @@ class _ChatListScreenState extends State<ChatListScreen>
       returList.add(UserTest(
           name: e["username"],
           id: e['id'],
-          dp: 'http://' + localhost + e['dp'],
-          fname: e['f name'],
+          dp: e['dp'],
+          fname: e['f_name'],
           lname: e['l_name']));
     });
     print(returList);
@@ -332,9 +336,12 @@ class _ChatListScreenState extends State<ChatListScreen>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: SafeArea(
+    return SafeArea(
+      child: WillPopScope(
+        onWillPop: () async {
+          print("in list screen");
+          return Future.value(false);
+        },
         child: Scaffold(
           backgroundColor: Colors.white,
           extendBodyBehindAppBar: true,
@@ -358,7 +365,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                       flex: 3,
                     ),
                     IconButton(
-                        icon: Icon(isSearching
+                        icon: Icon((isSearching && widget.searchActive)
                             ? Ionicons.chatbox_outline
                             : Icons.search),
                         onPressed: () {
@@ -368,12 +375,14 @@ class _ChatListScreenState extends State<ChatListScreen>
                                 .whenComplete(() => setState(() {
                                       isSearching = true;
                                     }));
+                            widget.toggleSearch(true);
                           } else {
                             _animationController
                                 .reverse()
                                 .whenComplete(() => setState(() {
                                       isSearching = false;
                                     }));
+                            widget.toggleSearch(false);
                           }
                         }),
                     isSearching
@@ -388,7 +397,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                 ),
               ),
               Expanded(
-                child: isSearching ? searchBar() : tiles(),
+                child: widget.searchActive ? searchBar() : tiles(),
               ),
             ],
           ),
@@ -426,7 +435,11 @@ class SearchTile extends StatelessWidget {
     } else {
       thread = Thread(
         first: User(name: curUser),
-        second: User(name: user.name),
+        second: User(
+            name: user.name,
+            dpUrl: user.dp,
+            f_name: user.fname,
+            l_name: user.lname),
       );
       thread.lastAccessed = DateTime.now();
       await threadBox.put(threadName, thread);
@@ -481,7 +494,8 @@ class SearchTile extends StatelessWidget {
                     child: Image(
                       height: 60.0,
                       width: 60.0,
-                      image: CachedNetworkImageProvider(user.dp),
+                      image: CachedNetworkImageProvider(
+                          'http://' + localhost + user.dp),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -492,11 +506,11 @@ class SearchTile extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(this.user.name,
+                    Text(this.user.fname + " " + this.user.lname,
+                        maxLines: 2,
                         style: GoogleFonts.raleway(
                             fontWeight: FontWeight.w600, fontSize: 17)),
                     SizedBox(height: 6),
-                    Text(this.user.fname, style: TextStyle(fontSize: 13)),
                   ],
                 ),
               ],

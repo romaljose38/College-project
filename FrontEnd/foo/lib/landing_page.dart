@@ -274,8 +274,21 @@ class LandingPageState extends State<LandingPage>
   // To exit the overlay on back press
 
   bool overlayVisible = false;
+  bool searchActive = false;
+  toggleSearch(bool val) {
+    setState(() {
+      searchActive = val;
+    });
+  }
 
   Future<bool> onBackPress() async {
+    print(searchActive);
+    if (searchActive) {
+      setState(() {
+        searchActive = false;
+      });
+      return Future.value(false);
+    }
     if (overlayVisible == true) {
       animationController.reverse().whenComplete(() {
         overlayVisible = false;
@@ -425,7 +438,13 @@ class LandingPageState extends State<LandingPage>
         },
         child: PageView(
           controller: _pageController,
-          children: [FeedScreen(), ChatListScreen()],
+          children: [
+            FeedScreen(),
+            ChatListScreen(
+              searchActive: searchActive,
+              toggleSearch: toggleSearch,
+            )
+          ],
           onPageChanged: (index) {
             print("current page is " + index.toString());
             setState(() {
