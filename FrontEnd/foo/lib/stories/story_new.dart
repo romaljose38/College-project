@@ -32,7 +32,7 @@ mixin StoryEssentials {
     return timeago.format(time);
   }
 
-  String storyDir = 'storage/emulated/0/foo/stories';
+  String storyDir = '/storage/emulated/0/foo/stories';
 
   String _getMediaName(String url) {
     return url.split('/').last;
