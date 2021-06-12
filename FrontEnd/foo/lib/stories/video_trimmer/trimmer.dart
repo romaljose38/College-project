@@ -100,9 +100,6 @@ class _StoryUploadPickState extends State<StoryUploadPick>
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => LandingPage()));
     } else {
-      await _overlayAnimationController.reverse().whenComplete(() {
-        _overlayEntry.remove();
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Upload failed")),
       );
@@ -192,7 +189,7 @@ class _StoryUploadPickState extends State<StoryUploadPick>
     } else {
       FilePickerResult result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'mp4', 'mkv', '3gp'],
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'mp4', 'mkv'],
       );
 
       if (result != null) {
@@ -206,7 +203,7 @@ class _StoryUploadPickState extends State<StoryUploadPick>
     if (media != null) {
       print(mediaExt);
 
-      if (['jpg', 'jpeg', 'png'].contains(mediaExt.toLowerCase())) {
+      if (['jpg', 'jpeg', 'png'].contains(mediaExt)) {
         media = await testCompressAndGetFile(media, mediaExt);
         Navigator.of(ctx).push(MaterialPageRoute(builder: (context) {
           return CropMyImage(file: media, uploadFunc: _uploadStory);
@@ -667,7 +664,8 @@ class CropMyImage extends StatefulWidget {
   _CropMyImageState createState() => _CropMyImageState();
 }
 
-class _CropMyImageState extends State<CropMyImage> {
+class _CropMyImageState extends State<CropMyImage>
+    with SingleTickerProviderStateMixin {
   final cropKey = GlobalKey<CropState>();
   File _file;
   File _sample;
@@ -684,6 +682,10 @@ class _CropMyImageState extends State<CropMyImage> {
   void initState() {
     super.initState();
     requestPermission();
+    _overlayAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _overlayAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(_overlayAnimationController);
     _captionController = TextEditingController();
   }
 
@@ -691,6 +693,111 @@ class _CropMyImageState extends State<CropMyImage> {
   void dispose() {
     _captionController.dispose();
     super.dispose();
+  }
+
+  OverlayEntry _overlayEntry;
+  Animation _overlayAnimation;
+  AnimationController _overlayAnimationController;
+
+  Future<void> _uploadStory(File mediaFile, String caption) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String username = prefs.getString('username');
+    int userId = prefs.getInt('id');
+    var uri = Uri.http(localhost, '/api/story_upload');
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['username'] = username
+      ..fields['caption'] = caption
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        mediaFile.path,
+      ));
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    var decodedResponse = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      var myBox = Hive.box('MyStories');
+
+      if (myBox.containsKey(userId)) {
+        var userStory = myBox.get(userId);
+        userStory.addStory(Story(
+          file: decodedResponse['url'],
+          time: DateTime.now(),
+          storyId: decodedResponse['s_id'],
+          caption: caption,
+        ));
+        userStory.save();
+      } else {
+        UserStoryModel newUser = UserStoryModel()
+          ..username = username
+          ..userId = userId
+          ..stories = <Story>[];
+        newUser.addStory(Story(
+          file: decodedResponse['url'],
+          time: DateTime.now(),
+          storyId: decodedResponse['s_id'],
+          caption: caption,
+        ));
+
+        await myBox.put(userId, newUser);
+        newUser.save();
+      }
+      await _overlayAnimationController.reverse().whenComplete(() {
+        _overlayEntry.remove();
+      });
+      print("Uploaded");
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => LandingPage()));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload failed")),
+      );
+    }
+  }
+
+  showProgressOverlay() {
+    OverlayState _state = Overlay.of(context);
+    _overlayEntry = OverlayEntry(builder: (context) {
+      return FadeTransition(
+        opacity: _overlayAnimation,
+        child: Scaffold(
+          backgroundColor: Colors.black.withOpacity(.4),
+          body: Center(
+            child: Container(
+              width: 100,
+              height: 150,
+              child: Column(
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          backgroundColor: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    ],
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 15),
+                    child: Text("Uploading...",
+                        style: GoogleFonts.raleway(
+                            color: Colors.white, fontSize: 16)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+    _overlayAnimationController
+        .forward()
+        .whenComplete(() => _state.insert(_overlayEntry));
   }
 
   Future<void> requestPermission() async {
@@ -914,6 +1021,7 @@ class _CropMyImageState extends State<CropMyImage> {
                       ),
                       GestureDetector(
                         onTap: () {
+                          showProgressOverlay();
                           String fileFormat = widget.file.path.split('.').last;
                           Directory(dirPath).createSync(recursive: true);
                           filePath = dirPath +
@@ -926,8 +1034,7 @@ class _CropMyImageState extends State<CropMyImage> {
                           setState(() {
                             _isUploading = true;
                           });
-                          widget.uploadFunc(
-                              context, uploadFile, _captionController.text);
+                          _uploadStory(uploadFile, _captionController.text);
                         },
                         // onTap: _handleUpload,
                         child: Container(
@@ -1203,7 +1310,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
         : durationTime.toString();
 
     String command =
-        '-i "${widget.file.path}" -ss ${begin} -t ${duration} -y $targetFilePath';
+        '-i ${widget.file.path} -ss ${begin} -t ${duration} -y $targetFilePath -c:v libx265 -c:a copy';
     print("mpegcommand = $command");
     int rc = await _flutterFFmpeg.execute(command);
     print("FFmpeg exited with rc: $rc");
@@ -1219,16 +1326,16 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
 
     if (_videoController.value.duration <= Duration(seconds: maxDuration)) {
       setState(() {
-        startThumbValue = 8;
-        endThumbValue = (Essentials.width * .95) - 8;
+        startThumbValue = 2;
+        endThumbValue = (Essentials.width * .95) - 3;
       });
     } else {
       double lengthPerSec =
           (Essentials.width * .95) / _videoController.value.duration.inSeconds;
       setState(() {
-        startThumbValue = 8;
+        startThumbValue = 2;
 
-        endThumbValue = 8 + (lengthPerSec * maxDuration);
+        endThumbValue = 2 + (lengthPerSec * maxDuration);
       });
     }
     print("Start thumb value $startThumbValue");
