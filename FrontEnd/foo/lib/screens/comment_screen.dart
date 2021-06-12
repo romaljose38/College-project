@@ -587,8 +587,9 @@ class _CommentScreenState extends State<CommentScreen>
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: PreferredSize(
-            preferredSize: Size(double.infinity, 50),
+            preferredSize: Size(double.infinity, 75),
             child: Container(
+                padding: EdgeInsets.only(top: 30),
                 color: Colors.transparent,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

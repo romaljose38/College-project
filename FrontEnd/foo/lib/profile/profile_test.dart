@@ -683,7 +683,7 @@ class _ProfileTestState extends State<ProfileTest>
 
   topPortion() {
     return Padding(
-      padding: const EdgeInsets.all(25.0),
+      padding: const EdgeInsets.all(35.0),
       child: Column(children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

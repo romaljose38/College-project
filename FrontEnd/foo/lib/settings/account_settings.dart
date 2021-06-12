@@ -14,6 +14,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 class EditProfile extends StatefulWidget {
   @override
@@ -87,6 +88,7 @@ class _EditProfileState extends State<EditProfile>
   }
 
   void _submitHandler() async {
+    await SystemChannels.textInput.invokeMethod('TextInput.hide');
     setState(() {
       absorbing = true;
     });
@@ -132,7 +134,8 @@ class _EditProfileState extends State<EditProfile>
         setState(() {
           absorbing = false;
         });
-        overlay.show("Profile update successfully");
+        overlay.show(
+            "Profile update successfully.\nYou may have to reload the profile to see changes");
         FileImage(file).evict();
       } else {
         setState(() {
