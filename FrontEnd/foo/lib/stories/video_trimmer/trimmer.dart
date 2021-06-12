@@ -133,7 +133,7 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
     } else {
       FilePickerResult result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'mp4', 'mkv'],
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'mp4', 'mkv', '3gp'],
       );
 
       if (result != null) {
@@ -147,7 +147,7 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
     if (media != null) {
       print(mediaExt);
 
-      if (['jpg', 'jpeg', 'png'].contains(mediaExt)) {
+      if (['jpg', 'jpeg', 'png'].contains(mediaExt.toLowerCase())) {
         media = await testCompressAndGetFile(media, mediaExt);
         Navigator.of(ctx).push(MaterialPageRoute(builder: (context) {
           return CropMyImage(file: media, uploadFunc: _uploadStory);
@@ -1091,7 +1091,7 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
         : durationTime.toString();
 
     String command =
-        '-i ${widget.file.path} -ss ${begin} -t ${duration} -y $targetFilePath -c:v libx265 -c:a copy';
+        '-i "${widget.file.path}" -ss ${begin} -t ${duration} -y $targetFilePath';
     print("mpegcommand = $command");
     int rc = await _flutterFFmpeg.execute(command);
     print("FFmpeg exited with rc: $rc");
@@ -1107,16 +1107,16 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
 
     if (_videoController.value.duration <= Duration(seconds: maxDuration)) {
       setState(() {
-        startThumbValue = 2;
-        endThumbValue = (Essentials.width * .95) - 3;
+        startThumbValue = 8;
+        endThumbValue = (Essentials.width * .95) - 8;
       });
     } else {
       double lengthPerSec =
           (Essentials.width * .95) / _videoController.value.duration.inSeconds;
       setState(() {
-        startThumbValue = 2;
+        startThumbValue = 8;
 
-        endThumbValue = 2 + (lengthPerSec * maxDuration);
+        endThumbValue = 8 + (lengthPerSec * maxDuration);
       });
     }
     print("Start thumb value $startThumbValue");
