@@ -39,13 +39,18 @@ class StoryUploadPick extends StatefulWidget {
   _StoryUploadPickState createState() => _StoryUploadPickState();
 }
 
-class _StoryUploadPickState extends State<StoryUploadPick> {
+class _StoryUploadPickState extends State<StoryUploadPick>
+    with SingleTickerProviderStateMixin {
   // final Trimmer _trimmer = Trimmer();
   ImagePicker _picker = ImagePicker();
   String myProfPic;
+  OverlayEntry _overlayEntry;
+  Animation _overlayAnimation;
+  AnimationController _overlayAnimationController;
 
   Future<void> _uploadStory(
       BuildContext context, File mediaFile, String caption) async {
+    showProgressOverlay();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String username = prefs.getString('username');
     int userId = prefs.getInt('id');
@@ -88,11 +93,16 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
         await myBox.put(userId, newUser);
         newUser.save();
       }
-
+      await _overlayAnimationController.reverse().whenComplete(() {
+        _overlayEntry.remove();
+      });
       print("Uploaded");
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => LandingPage()));
     } else {
+      await _overlayAnimationController.reverse().whenComplete(() {
+        _overlayEntry.remove();
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Upload failed")),
       );
@@ -103,6 +113,55 @@ class _StoryUploadPickState extends State<StoryUploadPick> {
   void initState() {
     super.initState();
     myProfPic = widget.myProfPic;
+    _overlayAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _overlayAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(_overlayAnimationController);
+  }
+
+  showProgressOverlay() {
+    OverlayState _state = Overlay.of(context);
+    _overlayEntry = OverlayEntry(builder: (context) {
+      return FadeTransition(
+        opacity: _overlayAnimation,
+        child: Scaffold(
+          backgroundColor: Colors.black.withOpacity(.4),
+          body: Center(
+            child: Container(
+              width: 100,
+              height: 150,
+              child: Column(
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          backgroundColor: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    ],
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 15),
+                    child: Text("Uploading...",
+                        style: GoogleFonts.raleway(
+                            color: Colors.white, fontSize: 16)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+    _overlayAnimationController
+        .forward()
+        .whenComplete(() => _state.insert(_overlayEntry));
   }
 
   Future<File> testCompressAndGetFile(File file, String extension) async {
@@ -785,35 +844,19 @@ class _CropMyImageState extends State<CropMyImage> {
                             _openImage();
                           },
                         ),
-                  _isCropping
-                      ? Container()
-                      : _isUploading
-                          ? Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: CircularProgressIndicator(),
-                            )
-                          : IconButton(
-                              icon:
-                                  Icon(Icons.upload_file, color: Colors.white),
-                              onPressed: () {
-                                String fileFormat =
-                                    widget.file.path.split('.').last;
-                                Directory(dirPath).createSync(recursive: true);
-                                filePath = dirPath +
-                                    '/${DateTime.now().millisecondsSinceEpoch}.' +
-                                    fileFormat;
-                                widget.file.copySync(filePath);
-                                File uploadFile = File(filePath);
-                                widget.file.delete();
-                                print(uploadFile);
-                                setState(() {
-                                  _isUploading = true;
-                                });
-                                widget.uploadFunc(context, uploadFile,
-                                    _captionController.text);
-                              },
-                            ),
+                  // _isCropping
+                  //     ? Container()
+                  //     : _isUploading
+                  //         ? Padding(
+                  //             padding:
+                  //                 const EdgeInsets.symmetric(horizontal: 8.0),
+                  //             child: CircularProgressIndicator(),
+                  //           )
+                  //         : IconButton(
+                  //             icon:
+                  //                 Icon(Icons.upload_file, color: Colors.white),
+                  //             onPressed:
+                  //           ),
                 ],
               ),
             ),
@@ -832,40 +875,109 @@ class _CropMyImageState extends State<CropMyImage> {
                 ),
               ),
               Offstage(
-                offstage: _sample != null,
-                child: Container(
-                  height: 50,
-                  width: double.infinity,
-                  // child: Expanded(
-                  child: TextField(
-                    cursorColor: Colors.white,
-                    cursorWidth: .8,
-                    style: GoogleFonts.lato(color: Colors.white),
-                    controller: _captionController,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintStyle: GoogleFonts.sourceSansPro(color: Colors.grey),
-                      hintText: "Add a caption",
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(.4), width: .6),
+                  offstage: _sample != null,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _captionController,
+                          cursorColor: Colors.black,
+                          cursorWidth: .3,
+                          textAlign: TextAlign.start,
+                          style: GoogleFonts.lato(color: Colors.white),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: "     Add a caption...",
+                            hintStyle: GoogleFonts.openSans(
+                                fontSize: 15,
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w500),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Colors.grey.withOpacity(.4),
+                                  width: .6),
+                            ),
+                            border: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Colors.grey.withOpacity(.4),
+                                  width: .6),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Colors.grey.withOpacity(.4),
+                                  width: .8),
+                            ),
+                            // contentPadding: EdgeInsets.only(left: 8, bottom: 0),
+                          ),
+                        ),
                       ),
-                      border: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(.4), width: .6),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(.4), width: .8),
-                      ),
-                      isCollapsed: true,
-                      contentPadding: EdgeInsets.only(
-                          left: 20, right: 8.0, top: 5.0, bottom: 8.0),
-                    ),
-                  ),
+                      GestureDetector(
+                        onTap: () {
+                          String fileFormat = widget.file.path.split('.').last;
+                          Directory(dirPath).createSync(recursive: true);
+                          filePath = dirPath +
+                              '/${DateTime.now().millisecondsSinceEpoch}.' +
+                              fileFormat;
+                          widget.file.copySync(filePath);
+                          File uploadFile = File(filePath);
+                          widget.file.delete();
+                          print(uploadFile);
+                          setState(() {
+                            _isUploading = true;
+                          });
+                          widget.uploadFunc(
+                              context, uploadFile, _captionController.text);
+                        },
+                        // onTap: _handleUpload,
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            right: 10,
+                            bottom: 5,
+                          ),
+                          width: 35,
+                          height: 35,
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle, color: Colors.white),
+                          child: Icon(Ionicons.send,
+                              color: Colors.black, size: 15),
+                        ),
+                      )
+                    ]),
+                  )
+                  // child: Container(
+                  //   height: 50,
+                  //   width: double.infinity,
+                  //   // child: Expanded(
+                  //   child: TextField(
+                  //     cursorColor: Colors.white,
+                  //     cursorWidth: .8,
+                  //     style: GoogleFonts.lato(color: Colors.white),
+                  //     controller: _captionController,
+                  //     decoration: InputDecoration(
+                  //       isDense: true,
+                  //       hintStyle: GoogleFonts.sourceSansPro(color: Colors.grey),
+                  //       hintText: "Add a caption",
+                  //       enabledBorder: UnderlineInputBorder(
+                  //         borderSide: BorderSide(
+                  //             color: Colors.grey.withOpacity(.4), width: .6),
+                  //       ),
+                  //       border: UnderlineInputBorder(
+                  //         borderSide: BorderSide(
+                  //             color: Colors.grey.withOpacity(.4), width: .6),
+                  //       ),
+                  //       focusedBorder: UnderlineInputBorder(
+                  //         borderSide: BorderSide(
+                  //             color: Colors.grey.withOpacity(.4), width: .8),
+                  //       ),
+                  //       isCollapsed: true,
+                  //       contentPadding: EdgeInsets.only(
+                  //           left: 20, right: 8.0, top: 5.0, bottom: 8.0),
+                  //     ),
+                  //   ),
+                  //   // ),
                   // ),
-                ),
-              ),
+                  ),
             ],
           ),
         ),

@@ -32,7 +32,7 @@ mixin StoryEssentials {
     return timeago.format(time);
   }
 
-  String storyDir = '/storage/emulated/0/foo/stories';
+  String storyDir = 'storage/emulated/0/foo/stories';
 
   String _getMediaName(String url) {
     return url.split('/').last;
@@ -300,10 +300,10 @@ class _StoryScreenState extends State<StoryScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         resizeToAvoidBottomInset: false,
         body: Container(
-          color: Colors.black,
+          color: Colors.white,
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
           child: Stack(
