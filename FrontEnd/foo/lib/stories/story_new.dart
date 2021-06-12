@@ -21,9 +21,9 @@ mixin StoryEssentials {
   }
 
   String _getTypeOf(String url) {
-    List<String> video_formats = ['mp4', 'mkv', 'flv'];
+    List<String> video_formats = ['mp4', 'mkv', '3gp', 'MP4', 'MKV', '3GP'];
     // List<String> image_formats = ['jpeg', 'gif', 'png', 'jpg'];
-    String format = url.split('.').last;
+    String format = url.split('.').last.toLowerCase();
     return (video_formats.contains(format)) ? 'video' : 'image';
   }
 
