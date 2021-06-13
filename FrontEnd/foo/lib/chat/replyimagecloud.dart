@@ -176,8 +176,8 @@ class _ImageReplyCloudState extends State<ImageReplyCloud> {
 
   processHerImage() async {
     var ext = widget.msgObj.filePath.split('.').last;
-    String mediaName =
-        '/storage/emulated/0/foo/images/${widget.msgObj.time.toString()}.$ext';
+    String appDir = await storageLocation();
+    String mediaName = '$appDir/images/${widget.msgObj.time.toString()}.$ext';
     if (await Permission.storage.request().isGranted) {
       if (widget.msgObj.hasSeen != true) {
         var url = 'http://$localhost${widget.msgObj.filePath}';

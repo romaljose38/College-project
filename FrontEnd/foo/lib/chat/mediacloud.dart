@@ -171,8 +171,9 @@ class _MediaCloudState extends State<MediaCloud> {
 
   processHerImage() async {
     var ext = widget.msgObj.filePath.split('.').last;
+    String appDir = await storageLocation();
     String mediaName =
-        '/storage/emulated/0/foo/images/${widget.msgObj.time.millisecondsSinceEpoch.toString()}.$ext';
+        '$appDir/images/${widget.msgObj.time.millisecondsSinceEpoch.toString()}.$ext';
     if (await Permission.storage.request().isGranted) {
       if (widget.msgObj.hasSeen != true) {
         var url = 'http://$localhost${widget.msgObj.filePath}';

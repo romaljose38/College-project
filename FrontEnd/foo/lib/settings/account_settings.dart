@@ -56,7 +56,7 @@ class _EditProfileState extends State<EditProfile>
 
   Future<File> testCompressAndGetFile(File file) async {
     String targetPath = (await getApplicationDocumentsDirectory()).path +
-        '/images/dp/dp_new.jpg'; //'/storage/emulated/0/foo/profile_pic/dp.jpg';
+        '/images/dp/dp_new.jpg';
     await Permission.storage.request();
     try {
       File(targetPath).createSync(recursive: true);

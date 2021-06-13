@@ -16,6 +16,9 @@ import 'package:foo/socket.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:camera/camera.dart';
+import 'package:foo/main.dart' show deviceCameras;
 
 import 'chatcloudlist.dart';
 import 'dart:convert';
@@ -413,13 +416,14 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   void _sendImage() async {
+    String appDir = await storageLocation();
     var _id = DateTime.now().microsecondsSinceEpoch;
     var curTime = DateTime.now();
     FilePickerResult fetchedResult =
         await FilePicker.platform.pickFiles(withData: true);
     String ext = fetchedResult.files.single.path.split('.').last;
     String sentPath =
-        '/storage/emulated/0/foo/images/sent/${DateTime.now().millisecondsSinceEpoch}.$ext';
+        '$appDir/images/sent/${DateTime.now().millisecondsSinceEpoch}.$ext';
     File result;
     if (fetchedResult.files.length > 0) {
       try {
@@ -1363,6 +1367,156 @@ class _RecordAppState extends State<RecordApp>
     file.delete();
   }
 
+  Future<File> testCompressAndGetFile(File file, String extension) async {
+    String targetPath = (await getTemporaryDirectory()).path +
+        '/upload/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    File(targetPath).createSync(recursive: true);
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      quality: 80,
+    );
+
+    return result;
+  }
+
+  GestureDetector bottomSheetTile(
+          String type, Color color, IconData icon, Function onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              height: 100,
+              width: 100,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey.shade600,
+                size: 30,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              type,
+              style: GoogleFonts.raleway(
+                color: Color.fromRGBO(176, 183, 194, 1),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  GestureDetector bottomSheetCamera(
+          String type, Color color, IconData icon, Function onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  clipBehavior: Clip.antiAlias,
+                  height: 100,
+                  width: 100,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child:
+                      AspectRatio(aspectRatio: 1, child: BottomSheetCamera()),
+                ),
+                Positioned(
+                  right: 35,
+                  top: 35,
+                  child: Icon(
+                    Ionicons.camera,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              type,
+              style: GoogleFonts.raleway(
+                color: Color.fromRGBO(176, 183, 194, 1),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  showOverlay() {
+    showModalBottomSheet(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
+        context: context,
+        builder: (context) {
+          return Container(
+            height: 250,
+            margin: EdgeInsets.fromLTRB(10, 20, 10, 0),
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Set Your Moments",
+                        style: GoogleFonts.lato(
+                            fontSize: 20, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                SizedBox(height: 30),
+                Expanded(
+                  child: Container(
+                    child: Center(
+                      child: Row(
+                        children: [
+                          Spacer(),
+                          bottomSheetCamera(
+                              "Camera",
+                              Color.fromRGBO(232, 252, 246, 1),
+                              Ionicons.trash_outline, () async {
+                            await widget.sendImage();
+                            //await _pickStoryToUpload(context, isCamera: true);
+                          }),
+                          Spacer(),
+                          bottomSheetTile(
+                              "Upload status",
+                              Color.fromRGBO(235, 221, 217, 1),
+                              Ionicons.images_outline, () async {
+                            await widget.sendImage();
+                          }),
+                          Spacer(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
   Widget myTextBox() {
     return Container(
         height: 60,
@@ -1412,7 +1566,8 @@ class _RecordAppState extends State<RecordApp>
               IconButton(
                 icon: Icon(Icons.image_outlined),
                 onPressed: () {
-                  widget.sendImage();
+                  showOverlay();
+                  // widget.sendImage();
                   setState(() {
                     _hasTyped = false;
                   });
@@ -1634,5 +1789,42 @@ class ImageThumb extends StatelessWidget {
             }),
       ),
     );
+  }
+}
+
+class BottomSheetCamera extends StatefulWidget {
+  const BottomSheetCamera({Key key}) : super(key: key);
+
+  @override
+  _BottomSheetCameraState createState() => _BottomSheetCameraState();
+}
+
+class _BottomSheetCameraState extends State<BottomSheetCamera> {
+  CameraController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = CameraController(deviceCameras[0], ResolutionPreset.max);
+    controller.initialize().then((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!controller.value.isInitialized) {
+      return Container();
+    }
+    return CameraPreview(controller);
   }
 }

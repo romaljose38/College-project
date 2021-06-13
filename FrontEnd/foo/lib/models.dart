@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:foo/test_cred.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -551,10 +552,10 @@ class UserStoryModel extends HiveObject {
 
   Future<void> _deleteMediaFromDrive(String url, int id) async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
+    String appDir = await storageLocation();
     int prefId = _prefs.getInt('id');
-    String folderPath = (prefId == id)
-        ? '/storage/emulated/0/foo/stories/upload'
-        : '/storage/emulated/0/foo/stories';
+    String folderPath =
+        (prefId == id) ? '$appDir/stories/upload' : '$appDir/stories';
     String fileName = url.split('/').last;
     String fileNameWithPath = '$folderPath/$fileName';
     File file = File(fileNameWithPath);

@@ -670,7 +670,7 @@ class _CropMyImageState extends State<CropMyImage>
   File _file;
   File _sample;
   File _lastCropped;
-  final String dirPath = '/storage/emulated/0/foo/stories/upload';
+  String dirPath;
   String filePath;
 
   bool _isCropping = false;
@@ -1020,7 +1020,9 @@ class _CropMyImageState extends State<CropMyImage>
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
+                          String appDir = await storageLocation();
+                          dirPath = '$appDir/stories/upload';
                           showProgressOverlay();
                           String fileFormat = widget.file.path.split('.').last;
                           Directory(dirPath).createSync(recursive: true);
@@ -1294,8 +1296,9 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
 
   Future<File> _trimVideo() async {
     totalProgress = 0;
+    String appDir = await storageLocation();
     final String targetFilePath =
-        '/storage/emulated/0/foo/stories/upload/${DateTime.now().millisecondsSinceEpoch}.${widget.extension}';
+        '$appDir/stories/upload/${DateTime.now().millisecondsSinceEpoch}.${widget.extension}';
     await Permission.storage.request();
     File(targetFilePath).createSync(recursive: true);
 
