@@ -332,7 +332,12 @@ class _MediaCloudState extends State<MediaCloud> {
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(.3),
                               ),
-                              child: Center(child: CircularProgressIndicator()),
+                              child: Center(
+                                  child: CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.black),
+                                strokeWidth: 2,
+                              )),
                             )
                           : Container(
                               width: 250,
@@ -363,8 +368,9 @@ class _MediaCloudState extends State<MediaCloud> {
                                   color: Colors.black.withOpacity(.2),
                                   child: Center(
                                     child: CircularProgressIndicator(
-                                      backgroundColor: Colors.white,
-                                      strokeWidth: 1,
+                                      valueColor:
+                                          AlwaysStoppedAnimation(Colors.black),
+                                      strokeWidth: 2,
                                     ),
                                   ),
                                 )
@@ -435,8 +441,9 @@ class _MediaCloudState extends State<MediaCloud> {
                               color: Colors.black.withOpacity(.2),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  backgroundColor: Colors.white,
-                                  strokeWidth: 1,
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.black),
+                                  strokeWidth: 2,
                                 ),
                               ),
                             )

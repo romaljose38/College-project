@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:ionicons/ionicons.dart';
@@ -532,6 +533,11 @@ class _AudioUploadScreenState extends State<AudioUploadScreen>
                       ),
                       child: TextField(
                         controller: captionController,
+                        buildCounter: (_,
+                                {currentLength, isFocused, maxLength}) =>
+                            Offstage(),
+                        maxLength: 500,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
                         decoration: InputDecoration(
                           hintText: "Add a caption",
                           hintStyle: GoogleFonts.lato(

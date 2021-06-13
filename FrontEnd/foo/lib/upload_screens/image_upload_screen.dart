@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,20 +23,27 @@ class ImageUploadScreen extends StatefulWidget {
 }
 
 class _ImageUploadScreenState extends State<ImageUploadScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   AnimationController _animationController;
-  Animation _animation;
+
   TextEditingController captionController;
   bool uploading = false;
+  AnimationController _overlayAnimationController;
+  Animation _overlayAnimation;
+  OverlayEntry _overlayEntry;
 
   @override
   void initState() {
     super.initState();
     _animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
-    _animation =
-        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+
     captionController = TextEditingController();
+
+    _overlayAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _overlayAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(_overlayAnimationController);
   }
 
   @override
@@ -43,6 +51,51 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
     _animationController.dispose();
     captionController.dispose();
     super.dispose();
+  }
+
+  showProgressOverlay() {
+    OverlayState _state = Overlay.of(context);
+    _overlayEntry = OverlayEntry(builder: (context) {
+      return FadeTransition(
+        opacity: _overlayAnimation,
+        child: Scaffold(
+          backgroundColor: Colors.black.withOpacity(.4),
+          body: Center(
+            child: Container(
+              width: 100,
+              height: 150,
+              child: Column(
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          backgroundColor: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    ],
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 15),
+                    child: Text("Uploading..",
+                        style: GoogleFonts.raleway(
+                            color: Colors.white, fontSize: 16)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+    _overlayAnimationController
+        .forward()
+        .whenComplete(() => _state.insert(_overlayEntry));
   }
 
   Future<File> testCompressAndGetFile(File file, String extension) async {
@@ -60,25 +113,29 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
   }
 
   Future<void> _upload(BuildContext context) async {
+    CustomOverlay overlay = CustomOverlay(
+        context: context, animationController: _animationController);
+    showProgressOverlay();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int userId = prefs.getInt('id');
     String extension = widget.mediaInserted.path.split('.').last;
-    File compressedImage =
-        await testCompressAndGetFile(widget.mediaInserted, extension);
-    var uri = Uri.http(
-        localhost, '/api/post_upload'); //This web address has to be changed
-    var request = http.MultipartRequest('POST', uri)
-      ..fields['user_id'] = userId.toString()
-      ..fields['type'] = 'img'
-      ..fields['caption'] = captionController.text
-      ..files.add(await http.MultipartFile.fromPath(
-        'file',
-        compressedImage.path,
-      ));
     try {
-      setState(() {
-        uploading = true;
-      });
+      File compressedImage =
+          await testCompressAndGetFile(widget.mediaInserted, extension);
+      var uri = Uri.http(
+          localhost, '/api/post_upload'); //This web address has to be changed
+      var request = http.MultipartRequest('POST', uri)
+        ..fields['user_id'] = userId.toString()
+        ..fields['type'] = 'img'
+        ..fields['caption'] = captionController.text
+        ..files.add(await http.MultipartFile.fromPath(
+          'file',
+          compressedImage.path,
+        ));
+
+      // setState(() {
+      //   uploading = true;
+      // });
       var response = await request.send();
 
       if (response.statusCode == 200) {
@@ -86,20 +143,46 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
         if (compressedImage.existsSync()) {
           compressedImage.deleteSync();
         }
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => LandingPage()));
+        overlay.show("Upload successful", duration: 1);
+        await _overlayAnimationController
+            .reverse()
+            .whenComplete(() => _overlayEntry.remove());
+
+        Timer(
+            Duration(seconds: 1),
+            () => Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (_) => LandingPage())));
+      } else {
+        overlay.show("Sorry upload failed.\nTry again later.", duration: 1);
+        await _overlayAnimationController
+            .reverse()
+            .whenComplete(() => _overlayEntry.remove());
+
+        Timer(
+            Duration(seconds: 1),
+            () => Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (_) => LandingPage())));
       }
-      setState(() {
-        uploading = false;
-      });
+      // setState(() {
+      //   uploading = false;
+      // });
     } catch (e) {
-      setState(() {
-        uploading = false;
-      });
+      // setState(() {
+      //   uploading = false;
+      // });
       print(e);
-      CustomOverlay overlay = CustomOverlay(
-          context: context, animationController: _animationController);
-      overlay.show("Sorry. Upload Failed.\n Please try again later.");
+
+      overlay.show("Sorry. Upload Failed.\n Please try again later.",
+          duration: 1);
+
+      await _overlayAnimationController
+          .reverse()
+          .whenComplete(() => _overlayEntry.remove());
+
+      Timer(
+          Duration(seconds: 1),
+          () => Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => LandingPage())));
     }
   }
 
@@ -287,6 +370,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                       ),
                       child: TextField(
                         controller: captionController,
+                        buildCounter: (_,
+                                {currentLength, isFocused, maxLength}) =>
+                            Offstage(),
+                        maxLength: 500,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
                         decoration: InputDecoration(
                           hintText: "Add a caption",
                           hintStyle: GoogleFonts.lato(
