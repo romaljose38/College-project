@@ -22,9 +22,11 @@ class PostTile extends StatefulWidget {
   final Post post;
   final int index;
   final bool isLast;
+
   List postsList;
 
-  PostTile({this.post, this.index, this.isLast, this.postsList});
+  PostTile({Key key, this.post, this.index, this.isLast, this.postsList})
+      : super(key: key);
 
   @override
   _PostTileState createState() => _PostTileState();
@@ -84,6 +86,9 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
         'id': postId.toString(),
       }));
       if (response.statusCode == 200) {
+        if (likeCount == 0) {
+          return;
+        }
         setState(() {
           hasLiked = false;
           likeCount -= 1;
@@ -315,6 +320,7 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                     builder: (_) => CommentScreen(
                           heroIndex: widget.index,
                           postId: widget.post.postId,
+                          postUrl: widget.post.postUrl,
 
                           // ViewPostScreen(post: widget.post, index: widget.index),
                         )));
@@ -546,15 +552,58 @@ class _PostTileState extends State<PostTile> with TickerProviderStateMixin {
                                 icon:
                                     Icon(Ionicons.chatbox, color: Colors.white),
                                 iconSize: 25.0,
-                                onPressed: () {
-                                  // Navigator.push(
-                                  //   context,
-                                  //   MaterialPageRoute(
-                                  //     builder: (_) => ViewPostScreen(
-                                  //       post: widget.post,
-                                  //     ),
-                                  //   ),
-                                  // );
+                                onPressed: () async {
+                                  var result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) => CommentScreen(
+                                                heroIndex: widget.index,
+                                                postId: widget.post.postId,
+
+                                                // ViewPostScreen(post: widget.post, index: widget.index),
+                                              )));
+                                  print(result);
+                                  if (result['postExists']) {
+                                    if (likeCount != result['likeCount']) {
+                                      print('likeCount updated');
+                                      widget.post.likeCount =
+                                          result['likeCount'];
+                                      setState(() {
+                                        likeCount = result['likeCount'];
+                                      });
+                                    }
+                                    if (commentCount !=
+                                        result['commentCount']) {
+                                      widget.post.commentCount =
+                                          result['commentCount'];
+
+                                      setState(() {
+                                        commentCount = result['commentCount'];
+                                      });
+                                    }
+                                    if (hasLiked != result['hasLiked']) {
+                                      widget.post.haveLiked =
+                                          result['hasLiked'];
+                                      setState(() {
+                                        hasLiked = result['hasLiked'];
+                                      });
+                                    }
+                                    var feedBox = Hive.box("Feed");
+                                    Feed feed = feedBox.get('feed');
+                                    feed.updatePostStatus(widget.post.postId,
+                                        hasLiked, commentCount, likeCount);
+                                    feed.save();
+                                  } else {
+                                    setState(() {
+                                      postDeleted = true;
+                                    });
+                                    var feedBox = Hive.box("Feed");
+                                    Feed feed = feedBox.get('feed');
+                                    feed.deletePost(widget.post.postId);
+                                    feed.save();
+                                    widget.postsList.removeAt(widget.index);
+                                    print("post deleted");
+                                  }
                                 },
                               ),
                               Text(

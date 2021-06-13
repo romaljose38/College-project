@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:foo/models.dart';
@@ -231,6 +232,10 @@ class _ReplyModalSheetState extends State<ReplyModalSheet> {
                 child: TextField(
               controller: _textController,
               autofocus: true,
+              buildCounter: (_, {currentLength, isFocused, maxLength}) =>
+                  Offstage(),
+              maxLength: 200,
+              maxLengthEnforcement: MaxLengthEnforcement.enforced,
               decoration: InputDecoration(
                 hintStyle: GoogleFonts.sourceSansPro(fontSize: 15),
                 hintText: "Reply",

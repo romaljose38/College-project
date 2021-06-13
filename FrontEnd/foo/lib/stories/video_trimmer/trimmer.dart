@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/screens/feed_screen.dart';
 import 'package:image_crop/image_crop.dart';
@@ -991,6 +992,11 @@ class _CropMyImageState extends State<CropMyImage>
                           controller: _captionController,
                           cursorColor: Colors.black,
                           cursorWidth: .3,
+                          buildCounter: (_,
+                                  {currentLength, isFocused, maxLength}) =>
+                              Offstage(),
+                          maxLength: 200,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
                           textAlign: TextAlign.start,
                           style: GoogleFonts.lato(color: Colors.white),
                           decoration: InputDecoration(
@@ -1808,6 +1814,10 @@ class _VideoTrimmerTestState extends State<VideoTrimmerTest>
                   controller: _captionController,
                   cursorColor: Colors.black,
                   cursorWidth: .3,
+                  buildCounter: (_, {currentLength, isFocused, maxLength}) =>
+                      Offstage(),
+                  maxLength: 200,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
                   textAlign: TextAlign.start,
                   style: GoogleFonts.lato(color: Colors.white),
                   decoration: InputDecoration(

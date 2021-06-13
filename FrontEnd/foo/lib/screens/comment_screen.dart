@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:foo/custom_overlay.dart';
 import 'package:foo/models.dart';
 import 'package:foo/profile/profile_test.dart';
@@ -28,10 +29,12 @@ class CommentScreen extends StatefulWidget {
   final int postId;
   final int heroIndex;
   final bool isMe;
+  final String postUrl;
 
   CommentScreen({
     this.postId,
     this.heroIndex,
+    this.postUrl,
     this.isMe = false,
   });
 
@@ -346,6 +349,7 @@ class _CommentScreenState extends State<CommentScreen>
         var feed = feedBox.get("feed");
         feed.deletePost(widget.postId);
         feed.save();
+        Navigator.pop(context);
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -458,10 +462,14 @@ class _CommentScreenState extends State<CommentScreen>
                     controller: _commentController,
                     cursorColor: Colors.black,
                     focusNode: textFocus,
+                    buildCounter: (_, {currentLength, isFocused, maxLength}) =>
+                        Offstage(),
+                    maxLength: 950,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
                     decoration: InputDecoration(
                       hintText: "Add a comment",
                       hintStyle: GoogleFonts.raleway(fontSize: 12),
-                      contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 15),
+                      contentPadding: EdgeInsets.fromLTRB(10, 5, 5, 5),
                       focusedBorder: InputBorder.none,
                       border: InputBorder.none,
                       suffix: InkWell(
@@ -533,7 +541,8 @@ class _CommentScreenState extends State<CommentScreen>
           //   fit: BoxFit.cover,
           // ),
           ),
-      child: CachedNetworkImage(imageUrl: postUrl, fit: BoxFit.cover));
+      child: CachedNetworkImage(
+          imageUrl: postUrl ?? widget.postUrl, fit: BoxFit.cover));
   Container postAudio(height) => Container(
       height: height,
       width: double.infinity,
@@ -606,6 +615,128 @@ class _CommentScreenState extends State<CommentScreen>
         ),
       ));
 
+  showSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(15),
+        topRight: Radius.circular(15),
+      )),
+      builder: (context) {
+        return StatefulBuilder(builder: (context, tester) {
+          return Container(
+            height: 340,
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(left: 7),
+                        child: Text(
+                          "Settings",
+                          style: GoogleFonts.lato(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        alignment: Alignment.centerLeft,
+                        // margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
+                      ),
+                      TextButton(
+                        child: Text(
+                          "Cancel",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        // margin: EdgeInsets.fromLTRB(0, 0, 20, 0),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.fromLTRB(7, 0, 7, 15),
+                  alignment: Alignment.centerLeft,
+                  child: Text("General",
+                      style: GoogleFonts.lato(
+                          fontSize: 13, color: Colors.grey.shade500)),
+                ),
+                Container(
+                    // height: 70,
+                    width: double.infinity,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        TextButton(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Delete",
+                                    style: GoogleFonts.lato(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600,
+                                    )),
+                                SizedBox(height: 3),
+                                Text(
+                                    "Delete this post and all associated content.",
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade500,
+                                    )),
+                              ],
+                            ),
+                            onPressed: () async {
+                              bool shouldDelete = false;
+                              await showDialog(
+                                  context: context,
+                                  builder: (ctx) {
+                                    return AlertDialog(
+                                      title: Text(
+                                          "Are you sure you want to delete this post?",
+                                          style: GoogleFonts.lato(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 18)),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Yes"),
+                                          onPressed: () {
+                                            shouldDelete = true;
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("No"),
+                                          onPressed: () {
+                                            shouldDelete = false;
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  });
+                              if (shouldDelete) {
+                                await deletePost();
+                              }
+                            }),
+                      ],
+                    )),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
   double commentListPosition;
   double commentListHeight;
 
@@ -630,36 +761,7 @@ class _CommentScreenState extends State<CommentScreen>
                     widget.isMe
                         ? IconButton(
                             icon: Icon(icons.Feed.colon, size: 20),
-                            onPressed: () async {
-                              var shouldDelete = false;
-                              await showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Text(
-                                          "Are you sure you want to delete this post?"),
-                                      actions: [
-                                        TextButton(
-                                          child: Text("Yes"),
-                                          onPressed: () {
-                                            shouldDelete = true;
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("No"),
-                                          onPressed: () {
-                                            shouldDelete = false;
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  });
-                              if (shouldDelete) {
-                                await deletePost();
-                              }
-                            },
+                            onPressed: () => showSettings(context),
                           )
                         : Container(),
                   ],

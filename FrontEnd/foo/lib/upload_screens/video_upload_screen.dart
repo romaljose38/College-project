@@ -314,26 +314,27 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
         if (imageFile.existsSync()) {
           imageFile.deleteSync();
         }
-        overlay.show("Upload successful");
+        overlay.show("Upload successful", duration: 1);
         await _overlayAnimationController
             .reverse()
             .whenComplete(() => _overlayEntry.remove());
 
         Timer(
-            Duration(seconds: 2),
+            Duration(seconds: 1),
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       } else {
         if (imageFile.existsSync()) {
           imageFile.deleteSync();
         }
-        overlay.show("Sorry. Upload failed. \n Please try again later.");
+        overlay.show("Sorry. Upload failed. \n Please try again later.",
+            duration: 1);
         await _overlayAnimationController
             .reverse()
             .whenComplete(() => _overlayEntry.remove());
 
         Timer(
-            Duration(seconds: 2),
+            Duration(seconds: 1),
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => LandingPage())));
       }
@@ -342,13 +343,14 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
       if (imageFile.existsSync()) {
         imageFile.deleteSync();
       }
-      overlay.show("Sorry. Upload Failed.\n Please try again later.");
+      overlay.show("Sorry. Upload Failed.\n Please try again later.",
+          duration: 1);
       await _overlayAnimationController
           .reverse()
           .whenComplete(() => _overlayEntry.remove());
 
       Timer(
-          Duration(seconds: 2),
+          Duration(seconds: 1),
           () => Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (_) => LandingPage())));
     }
@@ -550,6 +552,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen>
                         ),
                       ),
                       child: TextField(
+                        controller: captionController,
+                        buildCounter: (_,
+                                {currentLength, isFocused, maxLength}) =>
+                            Offstage(),
+                        maxLength: 500,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
                         decoration: InputDecoration(
                           hintText: "Add a caption",
                           hintStyle: GoogleFonts.lato(

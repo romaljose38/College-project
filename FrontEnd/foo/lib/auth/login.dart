@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:foo/custom_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../test_cred.dart';
 import 'elevatedgradientbutton.dart';
@@ -13,10 +15,13 @@ class LoginScreen extends StatefulWidget {
   _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _emailController = TextEditingController();
 
   final TextEditingController _passwordController = TextEditingController();
+
+  AnimationController _animationController;
 
   FocusNode focusMail;
   FocusNode focusPassword;
@@ -24,9 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _buttonPressed = false;
 
+  String emailErr;
+  String passErr;
+
   @override
   void initState() {
     super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     focusMail = FocusNode();
     focusPassword = FocusNode();
     focusSubmit = FocusNode();
@@ -40,54 +50,117 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  changeErr(val) {
+    if (val == "Email") {
+      setState(() {
+        emailErr = null;
+      });
+    } else if (val == "Password") {
+      setState(() {
+        passErr = null;
+      });
+    }
+  }
+
   void _authenticate() async {
+    focusMail.unfocus();
+    focusPassword.unfocus();
+    await SystemChannels.textInput.invokeMethod('TextInput.hide');
+    CustomOverlay _overlay = CustomOverlay(
+        context: context, animationController: _animationController);
+
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    if (email == "" && password == "") {
+      setState(() {
+        emailErr = "This field cannot be empty";
+        passErr = "This field cannot be empty";
+      });
+      return;
+    }
+    if (email == "") {
+      setState(() {
+        emailErr = "This field cannot be empty";
+      });
+      return;
+    }
+    if (password == "") {
+      setState(() {
+        passErr = "This field cannot be empty";
+      });
+      return;
+    }
     setState(() {
       _buttonPressed = true;
     });
 
-    final email = _emailController.text;
-    final password = _passwordController.text;
     print(email + password);
     var url = Uri.http(localhost, "api/login");
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
 
-    setState(() {
-      _buttonPressed = false;
-    });
+    try {
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      var data = jsonDecode(response.body);
-      bool dobVerified;
-      print(data);
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      data.forEach((key, value) {
-        if ((key == "uprn") | (key == "id")) {
-          prefs.setInt(key, value);
-        } else if (key == "dobVerified") {
-          dobVerified = data[key];
-        } else if (key == "username") {
-          prefs.setString("username", value);
-          prefs.setString("username_alias", value);
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        bool dobVerified;
+        print(data);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        data.forEach((key, value) {
+          if ((key == "uprn") | (key == "id")) {
+            prefs.setInt(key, value);
+          } else if (key == "dobVerified") {
+            dobVerified = data[key];
+          } else if (key == "username") {
+            prefs.setString("username", value);
+            prefs.setString("username_alias", value);
+          } else if (key == "general_last_seen") {
+            prefs.setBool('general_hide_last_seen', value);
+          } else if (key == "mood") {
+            prefs.setInt("curMood", value);
+          } else if (key == "last_seen_hidden") {
+            for (String user in value) {
+              prefs.setBool("am_i_hiding_last_seen_from_$user", true);
+            }
+          } else {
+            prefs.setString(key, value);
+          }
+        });
+        setState(() {
+          _buttonPressed = false;
+        });
+        if (dobVerified == true) {
+          prefs.setBool('loggedIn', true);
+          Navigator.pushNamed(context, '/landingPage');
         } else {
-          prefs.setString(key, value);
+          Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => CalendarBackground()));
         }
-      });
-      if (dobVerified == true) {
-        prefs.setBool('loggedIn', true);
-        Navigator.pushNamed(context, '/landingPage');
       } else {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => CalendarBackground()));
+        setState(() {
+          emailErr = "";
+          passErr = "";
+
+          _buttonPressed = false;
+        });
+        _overlay.show("Invalid credentials", duration: 3);
       }
+    } catch (e) {
+      setState(() {
+        _buttonPressed = false;
+      });
+      _overlay.show(
+          "Something went wrong.\nPlease check your network connection and try again.",
+          duration: 3);
     }
   }
 
@@ -143,6 +216,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   labelText: "Email",
                                   isObscure: false,
                                   controller: _emailController,
+                                  errorText: emailErr,
+                                  errorChange: changeErr,
                                   toggleHidePassword: () {},
                                 ),
                                 SizedBox(height: 15),
@@ -151,6 +226,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   nextFocusField: focusSubmit,
                                   labelText: "Password",
                                   isObscure: hidePassword,
+                                  errorText: passErr,
+                                  errorChange: changeErr,
                                   controller: _passwordController,
                                   toggleHidePassword: _toggleHidePassword,
                                 ),
@@ -176,7 +253,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                         onPressed: _authenticate,
                                       )
                                     : Center(
-                                        child: CircularProgressIndicator()),
+                                        child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation(
+                                            Colors.purple),
+                                        strokeWidth: 2,
+                                      )),
                               ])),
                           Align(
                             child: GestureDetector(

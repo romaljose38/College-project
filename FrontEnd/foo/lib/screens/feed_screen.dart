@@ -993,6 +993,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                 heightFactor: 1 - value,
                                 alignment: Alignment.topCenter,
                                 child: PostTile(
+                                    key: ValueKey(postsList[index].postId),
                                     postsList: postsList,
                                     post: postsList[index],
                                     index: index,
