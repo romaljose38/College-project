@@ -17,6 +17,7 @@ import 'package:foo/test_cred.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:foo/main.dart' show deviceCameras;
 
@@ -422,17 +423,84 @@ class _ChatScreenState extends State<ChatScreen>
     FilePickerResult fetchedResult =
         await FilePicker.platform.pickFiles(withData: true);
     String ext = fetchedResult.files.single.path.split('.').last;
-    String sentPath =
-        '$appDir/images/sent/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    // String sentPath =
+    //     '$appDir/images/sent/${DateTime.now().millisecondsSinceEpoch}.$ext';
     File result;
     if (fetchedResult.files.length > 0) {
       try {
-        await Permission.storage.request();
-        File(sentPath).createSync(recursive: true);
-        File(fetchedResult.files.single.path).copySync(sentPath);
-        result = File(sentPath);
+        result = await testCompressAndGetFile(
+            File(fetchedResult.files.single.path), ext);
       } catch (e) {
         print("Copy failed");
+        return;
+      }
+      ChatMessage obj;
+      File file = File(result.path);
+      if (replyingMsgObj != null) {
+        obj = ChatMessage(
+            filePath: file.path,
+            id: _id,
+            time: curTime,
+            senderName: curUser,
+            msgType: "reply_img",
+            isMe: true,
+            replyMsgId: replyingMsgObj.id,
+            replyMsgTxt: replyingMsgObj.msgType == "txt"
+                ? replyingMsgObj.message
+                : (replyingMsgObj.msgType == "img")
+                    ? imageUTF
+                    : audioUTF);
+      } else {
+        obj = ChatMessage(
+            filePath: file.path,
+            id: _id,
+            time: curTime,
+            senderName: curUser,
+            msgType: "img",
+            isMe: true);
+      }
+      var threadBox = Hive.box('Threads');
+      Thread currentThread = threadBox.get(threadName);
+      currentThread.addChat(obj);
+      currentThread.save();
+      setState(() {
+        replyingMsg = null;
+        replyingMsgObj = null;
+      });
+      _chatController.text = "";
+    }
+  }
+
+  Future<File> testCompressAndGetFile(File file, String extension) async {
+    String appDir = await storageLocation();
+    String targetPath =
+        '$appDir/images/sent/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    if (await Permission.storage.request().isGranted) {
+      File(targetPath).createSync(recursive: true);
+      var result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path,
+        targetPath,
+        quality: 80,
+      );
+
+      return result;
+    }
+  }
+
+  _sendCameraImage() async {
+    String appDir = await storageLocation();
+    var _id = DateTime.now().microsecondsSinceEpoch;
+    var curTime = DateTime.now();
+    ImagePicker _picker = ImagePicker();
+    PickedFile _file = await _picker.getImage(source: ImageSource.camera);
+    String ext = _file.path.split('.').last;
+    File result;
+    if (_file != null) {
+      try {
+        result = await testCompressAndGetFile(File(_file.path), ext);
+      } catch (e) {
+        print(e);
+        print("Copy Failed");
         return;
       }
       ChatMessage obj;
@@ -1200,6 +1268,7 @@ class _ChatScreenState extends State<ChatScreen>
             refreshId: refreshId,
             sendMessage: _sendMessage,
             sendImage: _sendImage,
+            sendCameraImage: _sendCameraImage,
             sendAudio: _sendAudio,
             focusNode: focusNode,
             prefs: widget.prefs,
@@ -1213,6 +1282,7 @@ class _ChatScreenState extends State<ChatScreen>
 class RecordApp extends StatefulWidget {
   final Function sendMessage;
   final Function sendImage;
+  final Function sendCameraImage;
   final Function sendAudio;
   final FocusNode focusNode;
   final int refreshId;
@@ -1221,6 +1291,7 @@ class RecordApp extends StatefulWidget {
   RecordApp(
       {this.sendMessage,
       this.sendImage,
+      this.sendCameraImage,
       this.prefs,
       this.sendAudio,
       this.focusNode,
@@ -1367,19 +1438,6 @@ class _RecordAppState extends State<RecordApp>
     file.delete();
   }
 
-  Future<File> testCompressAndGetFile(File file, String extension) async {
-    String targetPath = (await getTemporaryDirectory()).path +
-        '/upload/${DateTime.now().millisecondsSinceEpoch}.$extension';
-    File(targetPath).createSync(recursive: true);
-    var result = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path,
-      targetPath,
-      quality: 80,
-    );
-
-    return result;
-  }
-
   GestureDetector bottomSheetTile(
           String type, Color color, IconData icon, Function onTap) =>
       GestureDetector(
@@ -1495,7 +1553,8 @@ class _RecordAppState extends State<RecordApp>
                               "Camera",
                               Color.fromRGBO(232, 252, 246, 1),
                               Ionicons.trash_outline, () async {
-                            await widget.sendImage();
+                            await widget.sendCameraImage();
+                            Navigator.pop(context);
                             //await _pickStoryToUpload(context, isCamera: true);
                           }),
                           Spacer(),
@@ -1504,6 +1563,7 @@ class _RecordAppState extends State<RecordApp>
                               Color.fromRGBO(235, 221, 217, 1),
                               Ionicons.images_outline, () async {
                             await widget.sendImage();
+                            Navigator.pop(context);
                           }),
                           Spacer(),
                         ],
