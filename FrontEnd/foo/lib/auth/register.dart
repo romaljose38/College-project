@@ -13,10 +13,13 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:foo/custom_overlay.dart';
+import 'package:flutter/services.dart';
 
 import 'package:foo/test_cred.dart';
 
 import 'dart:io';
+import 'dart:async';
 
 //import 'registerinputdecoration.dart';
 
@@ -35,7 +38,8 @@ class RegisterForm extends StatefulWidget {
   _RegisterFormState createState() => _RegisterFormState();
 }
 
-class _RegisterFormState extends State<RegisterForm> {
+class _RegisterFormState extends State<RegisterForm>
+    with SingleTickerProviderStateMixin {
   bool _isUploading = false;
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> registerData = {
@@ -65,9 +69,13 @@ class _RegisterFormState extends State<RegisterForm> {
   FocusNode focusConfirmPassword;
   FocusNode focusSubmit;
 
+  AnimationController _animationController;
+
   @override
   void initState() {
     super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     // We need some focus nodes to move to the next textfield when hitting enter on the keyboard
     focusFirstName = FocusNode();
     focusLastName = FocusNode();
@@ -109,44 +117,108 @@ class _RegisterFormState extends State<RegisterForm> {
 
   //This function handles the http post request to the server
   Future<void> httpPostRegisterData() async {
-    var url = Uri.http(localhost, "api/register");
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: userJson,
-    );
-
-    setState(() {
-      _isUploading = false;
-    });
-
-    if (response.statusCode == 400) {
-      var jsonResponse = convert.jsonDecode(response.body);
-      print(jsonResponse);
-    } else if (response.statusCode == 200) {
-      var data = convert.jsonDecode(response.body);
-      print(data);
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      data.forEach((key, value) {
-        if ((key == "uprn") | (key == "id")) {
-          prefs.setInt(key, value);
-        } else {
-          prefs.setString(key, value);
-        }
-      });
-      // prefs.setBool('loggedIn', true);
-      // Navigator.pushNamed(context, '/landingPage');
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => CalendarBackground()),
+    try {
+      var url = Uri.http(localhost, "api/register");
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: userJson,
       );
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      if (response.statusCode == 400) {
+        _formKey.currentState.validate();
+        var jsonResponse = convert.jsonDecode(response.body);
+        if (jsonResponse['username'] != null) {
+          print(jsonResponse['username']);
+          ErrorField.usernameError = '${jsonResponse["username"][0]}';
+        }
+        if (jsonResponse['email'] != null) {
+          print(jsonResponse['email']);
+          ErrorField.emailError = '${jsonResponse["email"][0]}';
+        }
+        if (jsonResponse['uprn'] != null) {
+          print(jsonResponse['uprn']);
+          ErrorField.uprnError = '${jsonResponse["uprn"][0]}';
+        }
+        if (jsonResponse['password'] != null) {
+          print(jsonResponse['password']);
+          ErrorField.passwordError = '${jsonResponse["password"][0]}';
+        }
+        _formKey.currentState.validate();
+        print(jsonResponse);
+      } else if (response.statusCode == 200) {
+        _formKey.currentState.validate();
+        var data = convert.jsonDecode(response.body);
+        print(data);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        data.forEach((key, value) {
+          if ((key == "uprn") | (key == "id")) {
+            prefs.setInt(key, value);
+          } else {
+            prefs.setString(key, value);
+          }
+        });
+        // prefs.setBool('loggedIn', true);
+        // Navigator.pushNamed(context, '/landingPage');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => CalendarBackground()),
+        );
+      }
+      print(response);
+    } catch (e) {
+      setState(() {
+        _isUploading = false;
+      });
+      ErrorField.usernameError = '';
+      ErrorField.emailError = '';
+      ErrorField.uprnError = '';
+      ErrorField.passwordError = '';
+      _formKey.currentState.validate();
+      await SystemChannels.textInput.invokeMethod('TextInput.hide');
+      CustomOverlay _overlay = CustomOverlay(
+          context: context, animationController: _animationController);
+      _overlay.show("Check your internet connection and try again!");
+      ErrorField.usernameError = null;
+      ErrorField.emailError = null;
+      ErrorField.uprnError = null;
+      ErrorField.passwordError = null;
     }
-    print(response);
+  }
+
+  onChanged(String value, String fieldName) {
+    if (fieldName == 'username' && ErrorField.usernameError != null) {
+      ErrorField.usernameError = null;
+    }
+    if (fieldName == 'email' && ErrorField.emailError != null) {
+      ErrorField.emailError = null;
+    }
+    if (fieldName == 'uprn' && ErrorField.uprnError != null) {
+      ErrorField.uprnError = null;
+    }
+    if (fieldName == 'password' && ErrorField.passwordError != null) {
+      ErrorField.passwordError = null;
+    }
+    _formKey.currentState.validate();
+  }
+
+  void doValidate() {
+    _formKey.currentState.validate();
   }
 
   //OnSubmit
   void _submitHandle() {
+    ErrorField.notHadFocus = {
+      'username': true,
+      'email': true,
+      'uprn': true,
+      'password': true,
+    };
     if (_formKey.currentState.validate()) {
       setState(() {
         _isUploading = true;
@@ -234,9 +306,11 @@ class _RegisterFormState extends State<RegisterForm> {
                       focusField: focusUsername,
                       nextFocusField: focusEmail,
                       fieldName: 'username',
+                      onChanged: onChanged,
                       labeltext: 'Username',
                       passwordHidden: false,
                       whenSaved: _whenSaved,
+                      doValidate: doValidate,
                     ),
                     SizedBox(height: 15),
                     //Email
@@ -244,9 +318,11 @@ class _RegisterFormState extends State<RegisterForm> {
                       focusField: focusEmail,
                       nextFocusField: focusUprn,
                       fieldName: 'email',
-                      labeltext: 'Email ID',
+                      labeltext: 'Email',
                       passwordHidden: false,
                       whenSaved: _whenSaved,
+                      onChanged: onChanged,
+                      doValidate: doValidate,
                     ),
                     SizedBox(height: 15),
                     //UPRN
@@ -257,6 +333,8 @@ class _RegisterFormState extends State<RegisterForm> {
                       labeltext: 'UPRN',
                       passwordHidden: false,
                       whenSaved: _whenSaved,
+                      onChanged: onChanged,
+                      doValidate: doValidate,
                     ),
                     SizedBox(height: 15),
                     //Password
@@ -267,6 +345,8 @@ class _RegisterFormState extends State<RegisterForm> {
                       labeltext: 'Password',
                       passwordHidden: _passwordHidden,
                       whenSaved: _whenSaved,
+                      onChanged: onChanged,
+                      doValidate: doValidate,
                       isToggledView: _isTogglePassword,
                     ),
                     SizedBox(height: 60),

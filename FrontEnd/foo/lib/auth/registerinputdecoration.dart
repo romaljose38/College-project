@@ -26,6 +26,14 @@ InputDecoration decorationField(String labeltext, Function isToggleView,
       borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide(width: 1, color: Color.fromRGBO(250, 87, 142, .7)),
     ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(width: 1, color: Colors.red),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(width: 1, color: Color.fromRGBO(250, 87, 142, .7)),
+    ),
     suffix: (labeltext == "Password")
         ? GestureDetector(
             onTap: () {
@@ -36,7 +44,9 @@ InputDecoration decorationField(String labeltext, Function isToggleView,
                     text: TextSpan(
                         text: "Show",
                         style: TextStyle(
-                            color: Colors.black, fontWeight: FontWeight.w400)))
+                            color: Colors.black45,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400)))
                 : RichText(
                     text: TextSpan(
                         text: "Hide",
