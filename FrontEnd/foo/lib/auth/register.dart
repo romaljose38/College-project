@@ -360,8 +360,8 @@ class _CalendarBackgroundState extends State<CalendarBackground> {
   }
 
   Future<File> testCompressAndGetFile(File file) async {
-    String targetPath = (await getApplicationDocumentsDirectory()).path +
-        '/images/dp/dp.jpg'; //'/storage/emulated/0/foo/profile_pic/dp.jpg';
+    String targetPath =
+        (await getApplicationDocumentsDirectory()).path + '/images/dp/dp.jpg';
     await Permission.storage.request();
     try {
       File(targetPath).createSync(recursive: true);

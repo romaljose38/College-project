@@ -33,13 +33,13 @@ mixin StoryEssentials {
     return timeago.format(time);
   }
 
-  String storyDir = '/storage/emulated/0/foo/stories';
-
   String _getMediaName(String url) {
     return url.split('/').last;
   }
 
   Future<void> _downloadMedia(String url, {bool upload = false}) async {
+    String appDir = await storageLocation();
+    String storyDir = '$appDir/stories';
     var response = await get(Uri.parse(url));
     var mediaName = _getMediaName(url);
     var filePathAndName;
@@ -57,6 +57,8 @@ mixin StoryEssentials {
   }
 
   Future<bool> _isExistsInStorage(String url, {bool upload = false}) async {
+    String appDir = await storageLocation();
+    String storyDir = '$appDir/stories';
     String mediaName = _getMediaName(url);
     if (upload) {
       return await File("$storyDir/upload/$mediaName").exists();
@@ -67,6 +69,8 @@ mixin StoryEssentials {
 
   Future<File> _getOrDownload(String url, {bool upload = false}) async {
     // String url = 'http://$localhost${story.file}';
+    String appDir = await storageLocation();
+    String storyDir = '$appDir/stories';
     String mediaName = _getMediaName(url);
     if (await Permission.storage.request().isGranted) {
       if (upload) {

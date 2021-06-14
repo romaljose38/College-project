@@ -83,8 +83,9 @@ class _AudioReplyCloudState extends State<AudioReplyCloud> {
   tryDownloading() async {
     var ext = widget.msgObj.filePath.split('.').last;
 
+    String appDir = await storageLocation();
     String mediaName =
-        '/storage/emulated/0/foo/audio/${widget.msgObj.time.microsecondsSinceEpoch}.$ext';
+        '$appDir/audio/${widget.msgObj.time.microsecondsSinceEpoch}.$ext';
     setState(() {
       isUploading = true;
     });

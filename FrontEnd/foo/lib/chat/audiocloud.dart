@@ -82,10 +82,11 @@ class _AudioCloudState extends State<AudioCloud> {
   }
 
   tryDownloading() async {
+    String appDir = await storageLocation();
     var ext = widget.msgObj.filePath.split('.').last;
 
     String mediaName =
-        '/storage/emulated/0/foo/audio/${widget.msgObj.time.millisecondsSinceEpoch.toString()}.$ext';
+        '$appDir/audio/${widget.msgObj.time.millisecondsSinceEpoch.toString()}.$ext';
     print(mediaName);
     setState(() {
       isUploading = true;
