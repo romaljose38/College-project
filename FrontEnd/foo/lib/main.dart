@@ -17,10 +17,16 @@ import 'package:foo/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:foo/auth/register.dart';
+import 'package:flutter/services.dart';
 
 List<CameraDescription> deviceCameras;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   Directory directory = await pathProvider.getApplicationDocumentsDirectory();
   Hive.init(directory.path);

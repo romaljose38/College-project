@@ -253,10 +253,14 @@ class _LoginScreenState extends State<LoginScreen>
                                         onPressed: _authenticate,
                                       )
                                     : Center(
+                                        child: SizedBox(
+                                        height: 35,
+                                        width: 35,
                                         child: CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation(
-                                            Colors.purple),
-                                        strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation(
+                                              Colors.purple),
+                                          strokeWidth: 2,
+                                        ),
                                       )),
                               ])),
                           Align(
