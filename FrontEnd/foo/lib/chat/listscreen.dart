@@ -316,7 +316,8 @@ class _ChatListScreenState extends State<ChatListScreen>
                                   )),
                             ],
                           ),
-                          onPressed: () {}),
+                          onPressed: () =>
+                              changePreferences(!hidingLastSeen, tester)),
                       Checkbox(
                         value: hidingLastSeen,
                         onChanged: (val) => changePreferences(val, tester),

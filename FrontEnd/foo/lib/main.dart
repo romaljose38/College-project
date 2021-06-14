@@ -41,6 +41,7 @@ Future<void> main() async {
   await Hive.openBox('Feed');
   await Hive.openBox('Notifications');
   await Hive.openBox('MyStories');
+  await Hive.openBox('Misc');
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   prefs.setString("curUser", "");
@@ -93,11 +94,50 @@ class MyApp extends StatelessWidget {
       title: 'Foo Register',
       // theme: ThemeData.dark(),
       onGenerateRoute: generateRoute,
-
+      // home: KeyboardTest(),
       home: Renderer(prefs: prefs),
       // home: OverlayTest(),
       // home: CalendarBackground(),
     );
+  }
+}
+
+class KeyboardTest extends StatefulWidget {
+  @override
+  _KeyboardTestState createState() => _KeyboardTestState();
+}
+
+class _KeyboardTestState extends State<KeyboardTest> {
+  Timer _timer;
+  String status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: Center(
+            child: SizedBox(
+      height: 200,
+      child: Column(
+        children: [
+          Text(status ?? ""),
+          TextField(onChanged: (val) {
+            if (_timer == null || !_timer.isActive) {
+              setState(() {
+                status = "typing..";
+              });
+            }
+            if (_timer.isActive) {
+              _timer.cancel();
+            }
+            _timer = Timer(
+                Duration(seconds: 2),
+                () => setState(() {
+                      status = "online";
+                    }));
+          }),
+        ],
+      ),
+    )));
   }
 }
 

@@ -101,6 +101,7 @@ class _ChatScreenState extends State<ChatScreen>
   void initState() {
     super.initState();
     _prefs = widget.prefs;
+    listenToHive();
     _getUserName();
 
     // _scrollController = AutoScrollController(
@@ -127,61 +128,79 @@ class _ChatScreenState extends State<ChatScreen>
         Duration(seconds: 5), (Timer t) => _checkConnectionStatus());
 
     //
-    listenToHive();
   }
 
   void listenToHive() {
-    test = Hive.box('Threads').watch(key: threadName).listen((BoxEvent event) {
-      Thread existingThread = Hive.box('Threads').get(threadName);
-      if (chatCount == existingThread.chatList.length) {
-        print("hive listen");
-        if (mounted) {
-          if (!lastSeenHidden) {
-            if (existingThread.isOnline ?? false) {
-              print("hes online");
-
-              setState(() {
-                userStatus = "Online";
-              });
-            } else {
-              if ((existingThread.lastSeen ?? null) != null) {
-                setState(() {
-                  userStatus = timeago.format(existingThread.lastSeen);
-                });
-              }
-            }
-          }
-        }
-        if (!lastSeenHidden) {
-          if (existingThread.isTyping ?? false == true) {
-            print("typing");
-            if (mounted) {
-              setState(() {
-                userStatus = "typing..";
-              });
-            }
-          } else if (existingThread.isTyping == false) {
-            print("stopped");
-            if (mounted) {
-              print(existingThread.isOnline);
-              print(existingThread.lastSeen);
-              if (existingThread.isOnline ?? false) {
-                setState(() {
-                  userStatus = "Online";
-                });
-              } else if (existingThread.lastSeen != null) {
-                setState(() {
-                  userStatus = timeago.format(existingThread.lastSeen);
-                });
-              }
-            }
-          }
+    test = Hive.box('Misc').watch(key: threadName).listen((event) {
+      if (!lastSeenHidden) {
+        Map<dynamic, dynamic> userStatusMap = Hive.box('Misc').get(threadName);
+        if (userStatusMap['typing'] ?? false) {
+          setState(() {
+            userStatus = 'typing';
+          });
+        } else if (userStatusMap['online'] ?? false) {
+          setState(() {
+            userStatus = 'online';
+          });
+        } else if (!(userStatusMap['online'] ?? true)) {
+          setState(() {
+            userStatus = timeago.format(userStatusMap['last_seen']);
+          });
         }
       }
-      chatCount = existingThread.chatList.length;
-    }, onDone: () {
-      print('done');
     });
+
+    // test = Hive.box('Threads').watch(key: threadName).listen((BoxEvent event) {
+    //   Thread existingThread = Hive.box('Threads').get(threadName);
+    //   if (chatCount == existingThread.chatList.length) {
+    //     print("hive listen");
+    //     if (mounted) {
+    //       if (!lastSeenHidden) {
+    //         if (existingThread.isOnline ?? false) {
+    //           print("hes online");
+
+    //           setState(() {
+    //             userStatus = "Online";
+    //           });
+    //         } else {
+    //           if ((existingThread.lastSeen ?? null) != null) {
+    //             setState(() {
+    //               userStatus = timeago.format(existingThread.lastSeen);
+    //             });
+    //           }
+    //         }
+    //       }
+    //     }
+    //     if (!lastSeenHidden) {
+    //       if (existingThread.isTyping ?? false == true) {
+    //         print("typing");
+    //         if (mounted) {
+    //           setState(() {
+    //             userStatus = "typing..";
+    //           });
+    //         }
+    //       } else if (existingThread.isTyping == false) {
+    //         print("stopped");
+    //         if (mounted) {
+    //           print(existingThread.isOnline);
+    //           print(existingThread.lastSeen);
+    //           if (existingThread.isOnline ?? false) {
+    //             setState(() {
+    //               userStatus = "Online";
+    //             });
+    //           } else if (existingThread.lastSeen != null) {
+    //             setState(() {
+    //               userStatus = timeago.format(existingThread.lastSeen);
+    //             });
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    //   chatCount = existingThread.chatList.length;
+    // }, onDone: () {
+    //   print('done');
+    // });
   }
 
   void sendSeenTickerIfNeeded() async {
@@ -238,15 +257,20 @@ class _ChatScreenState extends State<ChatScreen>
 
   Future<void> obtainStatus() async {
     var id = _prefs.getInt("id");
-    Thread existingThread = Hive.box('Threads').get(threadName);
+
+    Map userStatusMap;
+    if (Hive.box('Misc').containsKey(threadName)) {
+      userStatusMap = Hive.box('Misc').get(threadName);
+    } else {
+      userStatusMap = {};
+    }
     var resp = await http.get(Uri.http(localhost, '/api/get_status',
         {"username": otherUser, "id": id.toString()}));
     if (resp.statusCode == 200) {
       Map body = jsonDecode(resp.body);
       print(body);
       if (body['status'] == "online") {
-        existingThread.isOnline = true;
-        existingThread.save();
+        userStatusMap['online'] = true;
         if (body['mood'] != null && body['mood'] != 0) {
           getEmogiFromIndex(body['mood']);
         }
@@ -265,15 +289,15 @@ class _ChatScreenState extends State<ChatScreen>
           getEmogiFromIndex(body['mood']);
         }
         DateTime time = DateTime.parse(body['status']);
-        existingThread.lastSeen = time;
+        userStatusMap['last_seen'] = time;
 
-        existingThread.save();
         if (mounted) {
           setState(() {
             userStatus = timeago.format(time);
           });
         }
       }
+      await Hive.box("Misc").put(threadName, userStatusMap);
     }
   }
 
@@ -286,6 +310,7 @@ class _ChatScreenState extends State<ChatScreen>
     }
     if ((result == true) && (userStatus == "") && (lastSeenHidden != true)) {
       obtainStatus();
+      print("fetching last seen");
     } else if ((result == false) && (userStatus != "")) {
       setState(() {
         userStatus = "";
@@ -905,7 +930,8 @@ class _ChatScreenState extends State<ChatScreen>
                                   )),
                             ],
                           ),
-                          onPressed: () {}),
+                          onPressed: () =>
+                              changePreferences(!hidingLastSeen, tester)),
                       Checkbox(
                         value: hidingLastSeen,
                         onChanged: (val) => changePreferences(val, tester),
@@ -986,10 +1012,11 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
-    checkAndSendKeyboardStatus();
+    // checkAndSendKeyboardStatus();
     return WillPopScope(
       onWillPop: () async {
         _prefs.setString("curUser", "");
+        thread.isOnline = false;
         Navigator.pop(context);
         // Navigator.pushNamedAndRemoveUntil(
         // context, '/chatlist', (Route route) => route is ChatListScreen);
@@ -1272,6 +1299,8 @@ class _ChatScreenState extends State<ChatScreen>
             sendAudio: _sendAudio,
             focusNode: focusNode,
             prefs: widget.prefs,
+            typingStartFunc: sendTypingStarted,
+            typingEndFunc: sendTypingStopped,
           ),
         ]),
       ),
@@ -1287,6 +1316,8 @@ class RecordApp extends StatefulWidget {
   final FocusNode focusNode;
   final int refreshId;
   final SharedPreferences prefs;
+  final Function typingStartFunc;
+  final Function typingEndFunc;
 
   RecordApp(
       {this.sendMessage,
@@ -1295,6 +1326,8 @@ class RecordApp extends StatefulWidget {
       this.prefs,
       this.sendAudio,
       this.focusNode,
+      this.typingStartFunc,
+      this.typingEndFunc,
       this.refreshId});
 
   @override
@@ -1319,10 +1352,12 @@ class _RecordAppState extends State<RecordApp>
   FocusNode _chatFocus;
   bool hasSent = false;
   int curSec;
+  Timer _typingTimer;
 
   @override
   void initState() {
     super.initState();
+
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
@@ -1605,6 +1640,8 @@ class _RecordAppState extends State<RecordApp>
                   focusNode: widget.focusNode,
                   controller: _chatController,
                   maxLines: null,
+                  cursorWidth: .5,
+                  cursorColor: Colors.black,
                   keyboardType: TextInputType.multiline,
                   decoration: InputDecoration.collapsed(
                       hintText: "Send a message",
@@ -1620,6 +1657,20 @@ class _RecordAppState extends State<RecordApp>
                       setState(() {
                         _hasTyped = true;
                       });
+                    if (_typingTimer == null) {
+                      print("typing started");
+                      widget.typingStartFunc();
+                    } else if (!(_typingTimer?.isActive ?? true)) {
+                      print("typing started");
+                      widget.typingStartFunc();
+                    }
+                    if (_typingTimer?.isActive ?? false) {
+                      _typingTimer.cancel();
+                    }
+                    _typingTimer = Timer(Duration(seconds: 3), () {
+                      print("typing ended");
+                      widget.typingEndFunc();
+                    });
                   },
                 ),
               ),

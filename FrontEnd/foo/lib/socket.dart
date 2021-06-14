@@ -348,20 +348,25 @@ class SocketChannel {
     thread.save();
   }
 
-  void changeUserStatus(data) {
+  void changeUserStatus(data) async {
     print(data);
     try {
       String me = _prefs.getString('username');
-      String threadName = me + '-' + data['u'];
-      var threadBox = Hive.box('Threads');
-      var existingThread = threadBox.get(threadName);
-      if (data['s'] == 'online') {
-        existingThread.isOnline = true;
-      } else if (data['s'] == 'offline') {
-        existingThread.isOnline = false;
-        existingThread.lastSeen = DateTime.now();
+      String statusName = me + '-' + data['u'];
+      Box statusBox = Hive.box('Misc');
+      Map userStatus;
+      if (statusBox.containsKey(statusName)) {
+        userStatus = statusBox.get(statusName);
+      } else {
+        userStatus = {};
       }
-      existingThread.save();
+      if (data['s'] == 'online') {
+        userStatus['online'] = true;
+      } else if (data['s'] == 'offline') {
+        userStatus['online'] = false;
+        userStatus['last_seen'] = DateTime.now();
+      }
+      await Hive.box("Misc").put(statusName, userStatus);
     } catch (e) {
       print(e);
     }
@@ -468,20 +473,29 @@ class SocketChannel {
     }
   }
 
-  void updateTypingStatus(data) {
+  void updateTypingStatus(data) async {
     try {
       String me = _prefs.getString('username');
       String threadName = me + '-' + data['from'];
-      var threadBox = Hive.box('Threads');
-      var existingThread = threadBox.get(threadName);
-      if (data['status'] == "typing") {
-        existingThread.isTyping = true;
+      Map typingStatus;
+      Box miscBox = Hive.box("Misc");
+      if (miscBox.containsKey(threadName)) {
+        typingStatus = miscBox.get(threadName);
       } else {
-        existingThread.isTyping = false;
+        typingStatus = {};
+      }
+      // var threadBox = Hive.box('Threads');
+      // var existingThread = threadBox.get(threadName);
+      if (data['status'] == "typing") {
+        // existingThread.isTyping = true;
+        typingStatus['typing'] = true;
+      } else {
+        typingStatus['typing'] = false;
+        // existingThread.isTyping = false;
         print("typing finished");
       }
-
-      existingThread.save();
+      await miscBox.put(threadName, typingStatus);
+      // existingThread.save();
     } catch (e) {
       print(e);
     }
