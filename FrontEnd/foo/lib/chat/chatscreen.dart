@@ -1657,14 +1657,20 @@ class _RecordAppState extends State<RecordApp>
                       setState(() {
                         _hasTyped = true;
                       });
-                    if (_typingTimer == null || !_typingTimer.isActive) {
+                    if (_typingTimer == null) {
+                      print("typing started");
+                      widget.typingStartFunc();
+                    } else if (!(_typingTimer?.isActive ?? true)) {
+                      print("typing started");
                       widget.typingStartFunc();
                     }
-                    if (_timer.isActive) {
-                      _timer.cancel();
+                    if (_typingTimer?.isActive ?? false) {
+                      _typingTimer.cancel();
                     }
-                    _timer =
-                        Timer(Duration(seconds: 3), widget.typingEndFunc());
+                    _typingTimer = Timer(Duration(seconds: 3), () {
+                      print("typing ended");
+                      widget.typingEndFunc();
+                    });
                   },
                 ),
               ),
