@@ -91,14 +91,18 @@ class FormTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Focus(
-      focusNode: focusField,
       onFocusChange: (hasFocus) {
-        ErrorField.notHadFocus[fieldName] = true;
         if (focusField.hasFocus == false) {
+          print(fieldName);
           doValidate();
+        } else {
+          Future.delayed(Duration(milliseconds: 1), () {
+            ErrorField.notHadFocus[fieldName] = true;
+          });
         }
       },
       child: TextFormField(
+        focusNode: focusField,
         style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
         onChanged: (value) {
           onChanged(value, fieldName);
