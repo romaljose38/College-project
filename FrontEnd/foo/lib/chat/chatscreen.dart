@@ -132,20 +132,23 @@ class _ChatScreenState extends State<ChatScreen>
 
   void listenToHive() {
     test = Hive.box('Misc').watch(key: threadName).listen((event) {
+      print("watching ");
       if (!lastSeenHidden) {
         Map<dynamic, dynamic> userStatusMap = Hive.box('Misc').get(threadName);
-        if (userStatusMap['typing'] ?? false) {
-          setState(() {
-            userStatus = 'typing';
-          });
-        } else if (userStatusMap['online'] ?? false) {
-          setState(() {
-            userStatus = 'online';
-          });
-        } else if (!(userStatusMap['online'] ?? true)) {
-          setState(() {
-            userStatus = timeago.format(userStatusMap['last_seen']);
-          });
+        if (mounted) {
+          if (userStatusMap['typing'] ?? false) {
+            setState(() {
+              userStatus = 'typing';
+            });
+          } else if (userStatusMap['online'] ?? false) {
+            setState(() {
+              userStatus = 'online';
+            });
+          } else if (!(userStatusMap['online'] ?? true)) {
+            setState(() {
+              userStatus = timeago.format(userStatusMap['last_seen']);
+            });
+          }
         }
       }
     });
@@ -290,6 +293,7 @@ class _ChatScreenState extends State<ChatScreen>
         }
         DateTime time = DateTime.parse(body['status']);
         userStatusMap['last_seen'] = time;
+        userStatusMap['online'] = false;
 
         if (mounted) {
           setState(() {
@@ -297,7 +301,9 @@ class _ChatScreenState extends State<ChatScreen>
           });
         }
       }
-      await Hive.box("Misc").put(threadName, userStatusMap);
+      await Future.delayed(Duration(milliseconds: 100), () {
+        Hive.box("Misc").put(threadName, userStatusMap);
+      });
     }
   }
 
