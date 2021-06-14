@@ -165,20 +165,24 @@ class ChatTile extends StatelessWidget {
               SizedBox(
                 height: 8,
               ),
-              thread.chatList.length > 0 ? recentChat() : Text(""),
+              thread.chatList.length > 0 ? recentChat(context) : Text(""),
               //recentChat(),
             ])));
   }
 
-  recentChat() {
+  recentChat(context) {
     var recentIndex = thread.chatList.length - 1;
-    text(text) => Text(
-          text,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Color.fromRGBO(100, 115, 142, 1),
-            fontWeight: FontWeight.w200,
-            fontSize: 15,
+    text(text) => SizedBox(
+          height: 14,
+          width: MediaQuery.of(context).size.width - 120,
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Color.fromRGBO(100, 115, 142, 1),
+              fontWeight: FontWeight.w200,
+              fontSize: 15,
+            ),
           ),
         );
     // if (thread.chatList.last.msgType == "txt" ||
