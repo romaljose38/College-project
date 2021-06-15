@@ -133,6 +133,7 @@ class _RegisterFormState extends State<RegisterForm>
 
       if (response.statusCode == 400) {
         _formKey.currentState.validate();
+        ErrorField.hasPressedSubmit = false;
         var jsonResponse = convert.jsonDecode(response.body);
         if (jsonResponse['username'] != null) {
           print(jsonResponse['username']);
@@ -178,6 +179,7 @@ class _RegisterFormState extends State<RegisterForm>
       print(response);
     } catch (e) {
       setState(() {
+        ErrorField.hasPressedSubmit = false;
         _isUploading = false;
       });
       ErrorField.usernameError = '';
@@ -209,6 +211,9 @@ class _RegisterFormState extends State<RegisterForm>
     if (fieldName == 'password' && ErrorField.passwordError != null) {
       ErrorField.passwordError = null;
     }
+    if (fieldName == 'uprn') {
+      ErrorField.hasPressedSubmit = false;
+    }
     _formKey.currentState.validate();
   }
 
@@ -224,6 +229,7 @@ class _RegisterFormState extends State<RegisterForm>
       'uprn': true,
       'password': true,
     };
+    ErrorField.hasPressedSubmit = true;
     if (_formKey.currentState.validate()) {
       setState(() {
         _isUploading = true;

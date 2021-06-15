@@ -67,6 +67,14 @@ dependencies:
   eva_icons_flutter: ^3.0.0
   flutter_ffmpeg: ^0.2.10
   device_info_plus: ^1.0.1
+  flutter_launcher_icons: ^0.9.0
+
+flutter_icons:
+  image_path: "assets/icons/main_icon.png"
+  adaptive_icon_foreground: "assets/icons/main_icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  android: true
+  ios: true
   
 
 dev_dependencies:
@@ -91,6 +99,7 @@ flutter:
     - assets/sounds/
     - assets/emojis/
     - assets/images/dp/
+    - assets/icons/
     
   fonts:
     - family:  Feed

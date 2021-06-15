@@ -15,6 +15,8 @@ class ErrorField {
     'uprn': false,
     'password': false,
   };
+
+  static bool hasPressedSubmit;
 }
 
 //ignore: must_be_immutable
@@ -70,8 +72,20 @@ class FormTextField extends StatelessWidget {
           if (ErrorField.uprnError != null) {
             return ErrorField.uprnError;
           }
-          if (num.tryParse(value) == null && ErrorField.notHadFocus[fieldName])
+          if (num.tryParse(value) == null &&
+              ErrorField.notHadFocus[fieldName]) {
             return "Your UPRN should only contain numbers";
+          } else {
+            try {
+              if ((num.tryParse(value) > 191106137 ||
+                      num.tryParse(value) < 191106101) &&
+                  ErrorField.hasPressedSubmit) {
+                return "Sorry! Currently only for 2nd DC Maths students";
+              }
+            } catch (e) {
+              print("Don't worry!");
+            }
+          }
           return null;
         }
         break;
@@ -103,6 +117,8 @@ class FormTextField extends StatelessWidget {
       },
       child: TextFormField(
         focusNode: focusField,
+        keyboardType:
+            fieldName == 'uprn' ? TextInputType.number : TextInputType.text,
         style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
         onChanged: (value) {
           onChanged(value, fieldName);

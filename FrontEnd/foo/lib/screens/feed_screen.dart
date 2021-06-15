@@ -866,7 +866,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   Text(
-                    "Picza",
+                    "Flutter",
                     style: GoogleFonts.dancingScript(
                       color: Colors.purple,
                       fontSize: 30,
