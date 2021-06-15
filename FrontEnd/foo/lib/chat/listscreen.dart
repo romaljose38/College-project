@@ -79,7 +79,7 @@ class _ChatListScreenState extends State<ChatListScreen>
             physics: BouncingScrollPhysics(),
             itemCount: threads.length,
             itemBuilder: (context, index) {
-              if ((threads[index].chatList?.length ?? -1) > 0) {
+              if ((threads[index].chatList?.length ?? -1) == 0) {
                 return Container();
               }
               return ChatTile(thread: threads[index]);
