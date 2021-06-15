@@ -507,7 +507,7 @@ class LandingPageState extends State<LandingPage>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 IconButton(
-                    icon: Icon(EvaIcons.homeOutline,
+                    icon: Icon(Ionicons.home_outline,
                         size: 22, color: Colors.black),
                     disabledColor: Colors.green,
                     onPressed: () {

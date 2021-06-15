@@ -148,7 +148,12 @@ class _RegisterFormState extends State<RegisterForm>
         }
         if (jsonResponse['password'] != null) {
           print(jsonResponse['password']);
-          ErrorField.passwordError = '${jsonResponse["password"][0]}';
+          String error = '${jsonResponse["password"][0]}';
+          if (error ==
+              'This password is too short. It must contain at least 9 characters.') {
+            error = "Password must contain at least 9 characters.";
+          }
+          ErrorField.passwordError = error;
         }
         _formKey.currentState.validate();
         print(jsonResponse);
@@ -351,7 +356,15 @@ class _RegisterFormState extends State<RegisterForm>
                     ),
                     SizedBox(height: 60),
                     _isUploading
-                        ? Center(child: CircularProgressIndicator())
+                        ? Center(
+                            child: SizedBox(
+                            height: 35,
+                            width: 35,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(Colors.purple),
+                            ),
+                          ))
                         : ElevatedGradientButton(
                             text: "Submit",
                             onPressed: _submitHandle,
