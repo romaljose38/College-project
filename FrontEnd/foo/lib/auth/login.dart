@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foo/custom_overlay.dart';
@@ -97,8 +98,9 @@ class _LoginScreenState extends State<LoginScreen>
 
     print(email + password);
     var url = Uri.http(localhost, "api/login");
-
+    FirebaseMessaging _firebaseInstance = FirebaseMessaging.instance;
     try {
+      String token = await _firebaseInstance.getToken();
       var response = await http.post(
         url,
         headers: <String, String>{
@@ -107,6 +109,7 @@ class _LoginScreenState extends State<LoginScreen>
         body: jsonEncode({
           'email': email,
           'password': password,
+          'token': token,
         }),
       );
 

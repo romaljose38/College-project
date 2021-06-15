@@ -173,7 +173,7 @@ class ChatTile extends StatelessWidget {
   recentChat(context) {
     var recentIndex = thread.chatList.length - 1;
     text(text) => SizedBox(
-          height: 14,
+          height: 20,
           width: MediaQuery.of(context).size.width - 120,
           child: Text(
             text,
