@@ -3,6 +3,9 @@
 This project is done by Pranav and Romal!!
 This project is now running from the branch named development
 
+The objective of this project was to create a social media platform exclusively for the CMS College students.
+
+## Screenshots
 ![Screenshot_20210624-212710](https://user-images.githubusercontent.com/49746983/205477308-d20ec683-b5b3-4a4b-b32c-a74a75c2c32e.png)
 ![Screenshot_20210624-212720](https://user-images.githubusercontent.com/49746983/205477312-a6174da9-947b-4210-a1df-dd91389c16c8.png)
 ![Screenshot_20220822-214331](https://user-images.githubusercontent.com/49746983/205477313-a1c574a2-c526-48ba-ae5c-a1bd962fc67f.png)
